@@ -1,0 +1,96 @@
+{
+  "batch_id": "batch_001",
+  "batch_number": 1,
+  "tier": 1,
+  "word_requirement": 1500,
+  "count": 5,
+  "total_volume": 351600,
+  "questions": [
+    {
+      "keyword": "how many kids does elon musk have",
+      "slug": "how-many-kids-does-elon-musk-have",
+      "volume": 110000,
+      "difficulty": 43,
+      "topic": "children",
+      "tier": 1,
+      "alternates": [
+        "how many children does elon musk have",
+        "how many baby mamas does elon musk have",
+        "how many wives does elon musk have",
+        "how many baby mommas does elon musk have"
+      ],
+      "alternate_slugs": [
+        "how-many-children-does-elon-musk-have",
+        "how-many-baby-mamas-does-elon-musk-have",
+        "how-many-wives-does-elon-musk-have",
+        "how-many-baby-mommas-does-elon-musk-have"
+      ]
+    },
+    {
+      "keyword": "where is elon musk from",
+      "slug": "where-is-elon-musk-from",
+      "volume": 74000,
+      "difficulty": 61,
+      "topic": "origin",
+      "tier": 1,
+      "alternates": [
+        "where was elon musk born",
+        "where is elon musk born",
+        "where is elon musk",
+        "where is elon musk from originally"
+      ],
+      "alternate_slugs": [
+        "where-was-elon-musk-born",
+        "where-is-elon-musk-born",
+        "where-is-elon-musk",
+        "where-is-elon-musk-from-originally"
+      ]
+    },
+    {
+      "keyword": "how old is elon musk",
+      "slug": "how-old-is-elon-musk",
+      "volume": 74000,
+      "difficulty": 52,
+      "topic": "age",
+      "tier": 1,
+      "alternates": ["how tall is elon musk", "how rich is elon musk"],
+      "alternate_slugs": ["how-tall-is-elon-musk", "how-rich-is-elon-musk"]
+    },
+    {
+      "keyword": "is elon musk a us citizen",
+      "slug": "is-elon-musk-a-us-citizen",
+      "volume": 60500,
+      "difficulty": 38,
+      "topic": "origin",
+      "tier": 1,
+      "alternates": [
+        "is elon musk an american citizen",
+        "is elon musk a citizen",
+        "is elon musk a citizen of the united states",
+        "is elon musk a citizen of the us",
+        "is elon musk a united states citizen",
+        "is elon musk american citizen",
+        "is elon musk us citizen"
+      ],
+      "alternate_slugs": [
+        "is-elon-musk-an-american-citizen",
+        "is-elon-musk-a-citizen",
+        "is-elon-musk-a-citizen-of-the-united-states",
+        "is-elon-musk-a-citizen-of-the-us",
+        "is-elon-musk-a-united-states-citizen",
+        "is-elon-musk-american-citizen",
+        "is-elon-musk-us-citizen"
+      ]
+    },
+    {
+      "keyword": "how much is elon musk worth",
+      "slug": "how-much-is-elon-musk-worth",
+      "volume": 33100,
+      "difficulty": 42,
+      "topic": "wealth",
+      "tier": 1,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

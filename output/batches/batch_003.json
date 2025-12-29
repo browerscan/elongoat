@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_003",
+  "batch_number": 3,
+  "start_index": 10,
+  "end_index": 15,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "is elon musk autistic",
+      "slug": "is-elon-musk-autistic",
+      "volume": 27100,
+      "difficulty": 20,
+      "category": "health",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk married",
+      "slug": "is-elon-musk-married",
+      "volume": 27100,
+      "difficulty": 31,
+      "category": "relationships",
+      "intent": "Informational, Transactional"
+    },
+    {
+      "keyword": "where does elon musk live",
+      "slug": "where-does-elon-musk-live",
+      "volume": 22200,
+      "difficulty": 39,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "who is elon musk",
+      "slug": "who-is-elon-musk",
+      "volume": 22200,
+      "difficulty": 81,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how did elon musk make his money",
+      "slug": "how-did-elon-musk-make-his-money",
+      "volume": 14800,
+      "difficulty": 51,
+      "category": "wealth",
+      "intent": "Informational"
+    }
+  ]
+}

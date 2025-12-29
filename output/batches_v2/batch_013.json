@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_013",
+  "batch_number": 13,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 12000,
+  "questions": [
+    {
+      "keyword": "is elon musk racist",
+      "slug": "is-elon-musk-racist",
+      "volume": 2400,
+      "difficulty": 70,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk paying for kirk's kids",
+      "slug": "is-elon-musk-paying-for-kirks-kids",
+      "volume": 2400,
+      "difficulty": 32,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk do a nazi salute",
+      "slug": "did-elon-musk-do-a-nazi-salute",
+      "volume": 2400,
+      "difficulty": 80,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk have a heart attack",
+      "slug": "did-elon-musk-have-a-heart-attack",
+      "volume": 2400,
+      "difficulty": 23,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk sell x",
+      "slug": "did-elon-musk-sell-x",
+      "volume": 2400,
+      "difficulty": 50,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

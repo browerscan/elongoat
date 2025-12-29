@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_004",
+  "batch_number": 4,
+  "start_index": 15,
+  "end_index": 20,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "what nationality is elon musk",
+      "slug": "what-nationality-is-elon-musk",
+      "volume": 14800,
+      "difficulty": 68,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk american",
+      "slug": "is-elon-musk-american",
+      "volume": 12100,
+      "difficulty": 53,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk net worth",
+      "slug": "what-is-elon-musk-net-worth",
+      "volume": 12100,
+      "difficulty": 64,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "does elon musk have autism",
+      "slug": "does-elon-musk-have-autism",
+      "volume": 12100,
+      "difficulty": 19,
+      "category": "health",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk jewish",
+      "slug": "is-elon-musk-jewish",
+      "volume": 9900,
+      "difficulty": 37,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

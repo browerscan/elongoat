@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_002",
+  "batch_number": 2,
+  "tier": 1,
+  "word_requirement": 1500,
+  "count": 5,
+  "total_volume": 131700,
+  "questions": [
+    {
+      "keyword": "how much money does elon musk have",
+      "slug": "how-much-money-does-elon-musk-have",
+      "volume": 33100,
+      "difficulty": 81,
+      "topic": "wealth",
+      "tier": 1,
+      "alternates": ["how much does elon musk have"],
+      "alternate_slugs": ["how-much-does-elon-musk-have"]
+    },
+    {
+      "keyword": "is elon musk autistic",
+      "slug": "is-elon-musk-autistic",
+      "volume": 27100,
+      "difficulty": 20,
+      "topic": "health",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk married",
+      "slug": "is-elon-musk-married",
+      "volume": 27100,
+      "difficulty": 31,
+      "topic": "relationships",
+      "tier": 2,
+      "alternates": ["who is elon musk's wife"],
+      "alternate_slugs": ["who-is-elon-musks-wife"]
+    },
+    {
+      "keyword": "where does elon musk live",
+      "slug": "where-does-elon-musk-live",
+      "volume": 22200,
+      "difficulty": 39,
+      "topic": "origin",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "who is elon musk",
+      "slug": "who-is-elon-musk",
+      "volume": 22200,
+      "difficulty": 81,
+      "topic": "general",
+      "tier": 2,
+      "alternates": ["who is elon musk dating"],
+      "alternate_slugs": ["who-is-elon-musk-dating"]
+    }
+  ]
+}

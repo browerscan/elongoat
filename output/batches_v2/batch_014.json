@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_014",
+  "batch_number": 14,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 11000,
+  "questions": [
+    {
+      "keyword": "did elon musk leave doge",
+      "slug": "did-elon-musk-leave-doge",
+      "volume": 2400,
+      "difficulty": 57,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how to sign elon musk petition",
+      "slug": "how-to-sign-elon-musk-petition",
+      "volume": 2400,
+      "difficulty": 24,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk getting paid for doge",
+      "slug": "is-elon-musk-getting-paid-for-doge",
+      "volume": 2400,
+      "difficulty": 64,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does doge stand for elon musk",
+      "slug": "what-does-doge-stand-for-elon-musk",
+      "volume": 1900,
+      "difficulty": 66,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does elon musk do for trump",
+      "slug": "what-does-elon-musk-do-for-trump",
+      "volume": 1900,
+      "difficulty": 38,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

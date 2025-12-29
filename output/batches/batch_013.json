@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_013",
+  "batch_number": 13,
+  "start_index": 60,
+  "end_index": 65,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "what does elon musk get out of helping trump",
+      "slug": "what-does-elon-musk-get-out-of-helping-trump",
+      "volume": 3600,
+      "difficulty": 76,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what companies does elon musk own",
+      "slug": "what-companies-does-elon-musk-own",
+      "volume": 3600,
+      "difficulty": 60,
+      "category": "acquisitions",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk the richest man in the world",
+      "slug": "is-elon-musk-the-richest-man-in-the-world",
+      "volume": 3600,
+      "difficulty": 30,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "does elon musk have a security clearance",
+      "slug": "does-elon-musk-have-a-security-clearance",
+      "volume": 3600,
+      "difficulty": 26,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what did elon musk invent",
+      "slug": "what-did-elon-musk-invent",
+      "volume": 2900,
+      "difficulty": 39,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

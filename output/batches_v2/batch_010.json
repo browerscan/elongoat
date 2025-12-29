@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_010",
+  "batch_number": 10,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 14500,
+  "questions": [
+    {
+      "keyword": "why does elon musk support trump",
+      "slug": "why-does-elon-musk-support-trump",
+      "volume": 2900,
+      "difficulty": 75,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how to contact elon musk",
+      "slug": "how-to-contact-elon-musk",
+      "volume": 2900,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much did elon musk donate to trump",
+      "slug": "how-much-did-elon-musk-donate-to-trump",
+      "volume": 2900,
+      "difficulty": 65,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how many kids elon musk",
+      "slug": "how-many-kids-elon-musk",
+      "volume": 2900,
+      "difficulty": 39,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk leave the trump administration",
+      "slug": "did-elon-musk-leave-the-trump-administration",
+      "volume": 2900,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["why did elon musk leave the trump administration"],
+      "alternate_slugs": ["why-did-elon-musk-leave-the-trump-administration"]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_015",
+  "batch_number": 15,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 9500,
+  "questions": [
+    {
+      "keyword": "what is elon musk doing in the government",
+      "slug": "what-is-elon-musk-doing-in-the-government",
+      "volume": 1900,
+      "difficulty": 72,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "when did elon musk move to america",
+      "slug": "when-did-elon-musk-move-to-america",
+      "volume": 1900,
+      "difficulty": 41,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "where is elon musk right now",
+      "slug": "where-is-elon-musk-right-now",
+      "volume": 1900,
+      "difficulty": 85,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "who owned twitter before elon musk",
+      "slug": "who-owned-twitter-before-elon-musk",
+      "volume": 1900,
+      "difficulty": 62,
+      "topic": "x-twitter",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk south african",
+      "slug": "is-elon-musk-south-african",
+      "volume": 1900,
+      "difficulty": 79,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

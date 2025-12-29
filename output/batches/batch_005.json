@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_005",
+  "batch_number": 5,
+  "start_index": 20,
+  "end_index": 25,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "how much does elon musk make a day",
+      "slug": "how-much-does-elon-musk-make-a-day",
+      "volume": 9900,
+      "difficulty": 18,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is doge elon musk",
+      "slug": "what-is-doge-elon-musk",
+      "volume": 8100,
+      "difficulty": 75,
+      "category": "crypto",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk's iq",
+      "slug": "what-is-elon-musks-iq",
+      "volume": 8100,
+      "difficulty": 35,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how rich is elon musk",
+      "slug": "how-rich-is-elon-musk",
+      "volume": 6600,
+      "difficulty": 52,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "can elon musk run for president",
+      "slug": "can-elon-musk-run-for-president",
+      "volume": 6600,
+      "difficulty": 57,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

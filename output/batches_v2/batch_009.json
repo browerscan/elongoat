@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_009",
+  "batch_number": 9,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 14500,
+  "questions": [
+    {
+      "keyword": "is elon musk canadian",
+      "slug": "is-elon-musk-canadian",
+      "volume": 2900,
+      "difficulty": 49,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what are elon musk's kids names",
+      "slug": "what-are-elon-musks-kids-names",
+      "volume": 2900,
+      "difficulty": 46,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what country is elon musk from",
+      "slug": "what-country-is-elon-musk-from",
+      "volume": 2900,
+      "difficulty": 55,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "when was elon musk born",
+      "slug": "when-was-elon-musk-born",
+      "volume": 2900,
+      "difficulty": 50,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "where did elon musk get his money",
+      "slug": "where-did-elon-musk-get-his-money",
+      "volume": 2900,
+      "difficulty": 55,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_011",
+  "batch_number": 11,
+  "start_index": 50,
+  "end_index": 55,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "how much money does elon musk make a second",
+      "slug": "how-much-money-does-elon-musk-make-a-second",
+      "volume": 4400,
+      "difficulty": 29,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how many wives does elon musk have",
+      "slug": "how-many-wives-does-elon-musk-have",
+      "volume": 4400,
+      "difficulty": 51,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how many times has elon musk been married",
+      "slug": "how-many-times-has-elon-musk-been-married",
+      "volume": 4400,
+      "difficulty": 48,
+      "category": "relationships",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how did elon musk get rich",
+      "slug": "how-did-elon-musk-get-rich",
+      "volume": 4400,
+      "difficulty": 60,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "does elon musk have kids",
+      "slug": "does-elon-musk-have-kids",
+      "volume": 4400,
+      "difficulty": 37,
+      "category": "family",
+      "intent": "Informational"
+    }
+  ]
+}

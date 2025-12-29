@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_019",
+  "batch_number": 19,
+  "start_index": 90,
+  "end_index": 95,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "why is elon musk supporting trump",
+      "slug": "why-is-elon-musk-supporting-trump",
+      "volume": 2400,
+      "difficulty": 67,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "where was elon musk born and raised",
+      "slug": "where-was-elon-musk-born-and-raised",
+      "volume": 2400,
+      "difficulty": 56,
+      "category": "personal",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "who is elon musk dating",
+      "slug": "who-is-elon-musk-dating",
+      "volume": 2400,
+      "difficulty": 24,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "why are elon musk and donald trump fighting",
+      "slug": "why-are-elon-musk-and-donald-trump-fighting",
+      "volume": 2400,
+      "difficulty": 73,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "why do people hate elon musk",
+      "slug": "why-do-people-hate-elon-musk",
+      "volume": 2400,
+      "difficulty": 28,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

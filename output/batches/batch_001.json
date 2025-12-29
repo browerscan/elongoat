@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_001",
+  "batch_number": 1,
+  "start_index": 0,
+  "end_index": 5,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "how many kids does elon musk have",
+      "slug": "how-many-kids-does-elon-musk-have",
+      "volume": 110000,
+      "difficulty": 43,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "where is elon musk from",
+      "slug": "where-is-elon-musk-from",
+      "volume": 74000,
+      "difficulty": 61,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how old is elon musk",
+      "slug": "how-old-is-elon-musk",
+      "volume": 74000,
+      "difficulty": 52,
+      "category": "personal",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how many children does elon musk have",
+      "slug": "how-many-children-does-elon-musk-have",
+      "volume": 60500,
+      "difficulty": 48,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk a us citizen",
+      "slug": "is-elon-musk-a-us-citizen",
+      "volume": 60500,
+      "difficulty": 38,
+      "category": "citizenship",
+      "intent": "Informational"
+    }
+  ]
+}

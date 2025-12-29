@@ -1,0 +1,94 @@
+{
+  "batch_id": "batch_003",
+  "batch_number": 3,
+  "tier": 2,
+  "word_requirement": 1300,
+  "count": 5,
+  "total_volume": 65900,
+  "questions": [
+    {
+      "keyword": "how did elon musk make his money",
+      "slug": "how-did-elon-musk-make-his-money",
+      "volume": 14800,
+      "difficulty": 51,
+      "topic": "wealth",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what nationality is elon musk",
+      "slug": "what-nationality-is-elon-musk",
+      "volume": 14800,
+      "difficulty": 68,
+      "topic": "general",
+      "tier": 2,
+      "alternates": [
+        "what is doge elon musk",
+        "what is elon musk's iq",
+        "what is elon musk iq",
+        "what is elon musk doing",
+        "what religion is elon musk",
+        "what is elon musk",
+        "what ethnicity is elon musk",
+        "what is elon musk's nationality",
+        "what is elon musks iq",
+        "what race is elon musk"
+      ],
+      "alternate_slugs": [
+        "what-is-doge-elon-musk",
+        "what-is-elon-musks-iq",
+        "what-is-elon-musk-iq",
+        "what-is-elon-musk-doing",
+        "what-religion-is-elon-musk",
+        "what-is-elon-musk",
+        "what-ethnicity-is-elon-musk",
+        "what-is-elon-musks-nationality",
+        "what-is-elon-musks-iq",
+        "what-race-is-elon-musk"
+      ]
+    },
+    {
+      "keyword": "is elon musk american",
+      "slug": "is-elon-musk-american",
+      "volume": 12100,
+      "difficulty": 53,
+      "topic": "origin",
+      "tier": 2,
+      "alternates": ["is elon musk an american"],
+      "alternate_slugs": ["is-elon-musk-an-american"]
+    },
+    {
+      "keyword": "what is elon musk net worth",
+      "slug": "what-is-elon-musk-net-worth",
+      "volume": 12100,
+      "difficulty": 64,
+      "topic": "wealth",
+      "tier": 2,
+      "alternates": [
+        "what is elon musk's net worth",
+        "what is elon musks net worth"
+      ],
+      "alternate_slugs": [
+        "what-is-elon-musks-net-worth",
+        "what-is-elon-musks-net-worth"
+      ]
+    },
+    {
+      "keyword": "does elon musk have autism",
+      "slug": "does-elon-musk-have-autism",
+      "volume": 12100,
+      "difficulty": 19,
+      "topic": "health",
+      "tier": 2,
+      "alternates": [
+        "does elon musk have aspergers",
+        "does elon musk have kids"
+      ],
+      "alternate_slugs": [
+        "does-elon-musk-have-aspergers",
+        "does-elon-musk-have-kids"
+      ]
+    }
+  ]
+}

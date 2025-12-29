@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_007",
+  "batch_number": 7,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 21200,
+  "questions": [
+    {
+      "keyword": "what happened to elon musk",
+      "slug": "what-happened-to-elon-musk",
+      "volume": 4400,
+      "difficulty": 25,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what did elon musk do",
+      "slug": "what-did-elon-musk-do",
+      "volume": 4400,
+      "difficulty": 71,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["what did elon musk invent"],
+      "alternate_slugs": ["what-did-elon-musk-invent"]
+    },
+    {
+      "keyword": "how many times has elon musk been married",
+      "slug": "how-many-times-has-elon-musk-been-married",
+      "volume": 4400,
+      "difficulty": 48,
+      "topic": "relationships",
+      "tier": 3,
+      "alternates": ["how many wives has elon musk had"],
+      "alternate_slugs": ["how-many-wives-has-elon-musk-had"]
+    },
+    {
+      "keyword": "how did elon musk get rich",
+      "slug": "how-did-elon-musk-get-rich",
+      "volume": 4400,
+      "difficulty": 60,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": ["how did elon musk get so rich"],
+      "alternate_slugs": ["how-did-elon-musk-get-so-rich"]
+    },
+    {
+      "keyword": "why is elon musk in the white house",
+      "slug": "why-is-elon-musk-in-the-white-house",
+      "volume": 3600,
+      "difficulty": 55,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

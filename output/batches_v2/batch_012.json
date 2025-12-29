@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_012",
+  "batch_number": 12,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 12000,
+  "questions": [
+    {
+      "keyword": "where was elon musk born and raised",
+      "slug": "where-was-elon-musk-born-and-raised",
+      "volume": 2400,
+      "difficulty": 56,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why are elon musk and donald trump fighting",
+      "slug": "why-are-elon-musk-and-donald-trump-fighting",
+      "volume": 2400,
+      "difficulty": 73,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why do people hate elon musk",
+      "slug": "why-do-people-hate-elon-musk",
+      "volume": 2400,
+      "difficulty": 28,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk stepping down from doge",
+      "slug": "is-elon-musk-stepping-down-from-doge",
+      "volume": 2400,
+      "difficulty": 57,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk the antichrist",
+      "slug": "is-elon-musk-the-antichrist",
+      "volume": 2400,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

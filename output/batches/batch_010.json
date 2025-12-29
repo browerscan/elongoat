@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_010",
+  "batch_number": 10,
+  "start_index": 45,
+  "end_index": 50,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "who is elon musk married to",
+      "slug": "who-is-elon-musk-married-to",
+      "volume": 4400,
+      "difficulty": 50,
+      "category": "relationships",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "where did elon musk go to college",
+      "slug": "where-did-elon-musk-go-to-college",
+      "volume": 4400,
+      "difficulty": 56,
+      "category": "citizenship",
+      "intent": "Informational, Transactional"
+    },
+    {
+      "keyword": "what happened to elon musk",
+      "slug": "what-happened-to-elon-musk",
+      "volume": 4400,
+      "difficulty": 25,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what did elon musk do",
+      "slug": "what-did-elon-musk-do",
+      "volume": 4400,
+      "difficulty": 71,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk a citizen of the united states",
+      "slug": "is-elon-musk-a-citizen-of-the-united-states",
+      "volume": 4400,
+      "difficulty": 48,
+      "category": "citizenship",
+      "intent": "Informational"
+    }
+  ]
+}

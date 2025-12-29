@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_017",
+  "batch_number": 17,
+  "start_index": 80,
+  "end_index": 85,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "how many baby mommas does elon musk have",
+      "slug": "how-many-baby-mommas-does-elon-musk-have",
+      "volume": 2900,
+      "difficulty": 54,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk leave the trump administration",
+      "slug": "did-elon-musk-leave-the-trump-administration",
+      "volume": 2900,
+      "difficulty": 76,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk buy fox news",
+      "slug": "did-elon-musk-buy-fox-news",
+      "volume": 2900,
+      "difficulty": 29,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    },
+    {
+      "keyword": "how much money has elon musk lost",
+      "slug": "how-much-money-has-elon-musk-lost",
+      "volume": 2900,
+      "difficulty": 36,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what percentage of tesla does elon musk own",
+      "slug": "what-percentage-of-tesla-does-elon-musk-own",
+      "volume": 2400,
+      "difficulty": 50,
+      "category": "tesla",
+      "intent": "Informational"
+    }
+  ]
+}

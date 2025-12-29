@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_008",
+  "batch_number": 8,
+  "start_index": 35,
+  "end_index": 40,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "is elon musk leaving doge",
+      "slug": "is-elon-musk-leaving-doge",
+      "volume": 5400,
+      "difficulty": 29,
+      "category": "crypto",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "does elon musk have aspergers",
+      "slug": "does-elon-musk-have-aspergers",
+      "volume": 5400,
+      "difficulty": 42,
+      "category": "health",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk buy tiktok",
+      "slug": "did-elon-musk-buy-tiktok",
+      "volume": 5400,
+      "difficulty": 53,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    },
+    {
+      "keyword": "did elon musk buy the view",
+      "slug": "did-elon-musk-buy-the-view",
+      "volume": 5400,
+      "difficulty": 32,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    },
+    {
+      "keyword": "did elon musk buy super bowl ads",
+      "slug": "did-elon-musk-buy-super-bowl-ads",
+      "volume": 5400,
+      "difficulty": 23,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    }
+  ]
+}

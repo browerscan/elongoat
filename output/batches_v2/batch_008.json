@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_008",
+  "batch_number": 8,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 18000,
+  "questions": [
+    {
+      "keyword": "when did elon musk buy twitter",
+      "slug": "when-did-elon-musk-buy-twitter",
+      "volume": 3600,
+      "difficulty": 85,
+      "topic": "x-twitter",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk resign from doge",
+      "slug": "did-elon-musk-resign-from-doge",
+      "volume": 3600,
+      "difficulty": 57,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does elon musk get out of helping trump",
+      "slug": "what-does-elon-musk-get-out-of-helping-trump",
+      "volume": 3600,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk the richest man in the world",
+      "slug": "is-elon-musk-the-richest-man-in-the-world",
+      "volume": 3600,
+      "difficulty": 30,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "does elon musk have a security clearance",
+      "slug": "does-elon-musk-have-a-security-clearance",
+      "volume": 3600,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_007",
+  "batch_number": 7,
+  "start_index": 30,
+  "end_index": 35,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "what does elon musk own",
+      "slug": "what-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 68,
+      "category": "acquisitions",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk on the spectrum",
+      "slug": "is-elon-musk-on-the-spectrum",
+      "volume": 5400,
+      "difficulty": 20,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much of tesla does elon musk own",
+      "slug": "how-much-of-tesla-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 57,
+      "category": "tesla",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk's net worth",
+      "slug": "what-is-elon-musks-net-worth",
+      "volume": 5400,
+      "difficulty": 43,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "where is elon musk born",
+      "slug": "where-is-elon-musk-born",
+      "volume": 5400,
+      "difficulty": 57,
+      "category": "personal",
+      "intent": "Informational"
+    }
+  ]
+}

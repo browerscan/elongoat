@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_018",
+  "batch_number": 18,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 8300,
+  "questions": [
+    {
+      "keyword": "is elon musk gay",
+      "slug": "is-elon-musk-gay",
+      "volume": 1900,
+      "difficulty": 31,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what has elon musk invented",
+      "slug": "what-has-elon-musk-invented",
+      "volume": 1600,
+      "difficulty": 44,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk a government employee",
+      "slug": "is-elon-musk-a-government-employee",
+      "volume": 1600,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk going to buy tiktok",
+      "slug": "is-elon-musk-going-to-buy-tiktok",
+      "volume": 1600,
+      "difficulty": 45,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk in trump's cabinet",
+      "slug": "is-elon-musk-in-trumps-cabinet",
+      "volume": 1600,
+      "difficulty": 70,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

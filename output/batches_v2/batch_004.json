@@ -1,0 +1,88 @@
+{
+  "batch_id": "batch_004",
+  "batch_number": 4,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 39600,
+  "questions": [
+    {
+      "keyword": "is elon musk jewish",
+      "slug": "is-elon-musk-jewish",
+      "volume": 9900,
+      "difficulty": 37,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much does elon musk make a day",
+      "slug": "how-much-does-elon-musk-make-a-day",
+      "volume": 9900,
+      "difficulty": 18,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [
+        "how much does elon musk make a second",
+        "how much money does elon musk make a second",
+        "how much does elon musk make a year",
+        "how much money does elon musk make a day"
+      ],
+      "alternate_slugs": [
+        "how-much-does-elon-musk-make-a-second",
+        "how-much-money-does-elon-musk-make-a-second",
+        "how-much-does-elon-musk-make-a-year",
+        "how-much-money-does-elon-musk-make-a-day"
+      ]
+    },
+    {
+      "keyword": "can elon musk run for president",
+      "slug": "can-elon-musk-run-for-president",
+      "volume": 6600,
+      "difficulty": 57,
+      "topic": "politics",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk buy ford",
+      "slug": "did-elon-musk-buy-ford",
+      "volume": 6600,
+      "difficulty": 22,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [
+        "did elon musk buy abc",
+        "did elon musk buy msnbc",
+        "did elon musk buy tiktok",
+        "did elon musk buy boeing",
+        "did elon musk buy cnn"
+      ],
+      "alternate_slugs": [
+        "did-elon-musk-buy-abc",
+        "did-elon-musk-buy-msnbc",
+        "did-elon-musk-buy-tiktok",
+        "did-elon-musk-buy-boeing",
+        "did-elon-musk-buy-cnn"
+      ]
+    },
+    {
+      "keyword": "is elon musk an immigrant",
+      "slug": "is-elon-musk-an-immigrant",
+      "volume": 6600,
+      "difficulty": 35,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [
+        "is elon musk an engineer",
+        "is elon musk an illegal immigrant"
+      ],
+      "alternate_slugs": [
+        "is-elon-musk-an-engineer",
+        "is-elon-musk-an-illegal-immigrant"
+      ]
+    }
+  ]
+}

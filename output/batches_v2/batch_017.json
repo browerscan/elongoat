@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_017",
+  "batch_number": 17,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 9500,
+  "questions": [
+    {
+      "keyword": "does elon musk have us citizenship",
+      "slug": "does-elon-musk-have-us-citizenship",
+      "volume": 1900,
+      "difficulty": 45,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "does elon musk believe in god",
+      "slug": "does-elon-musk-believe-in-god",
+      "volume": 1900,
+      "difficulty": 31,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk a democrat or republican",
+      "slug": "is-elon-musk-a-democrat-or-republican",
+      "volume": 1900,
+      "difficulty": 85,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk buying msnbc",
+      "slug": "is-elon-musk-buying-msnbc",
+      "volume": 1900,
+      "difficulty": 33,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk christian",
+      "slug": "is-elon-musk-christian",
+      "volume": 1900,
+      "difficulty": 28,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

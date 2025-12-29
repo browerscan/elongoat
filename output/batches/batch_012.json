@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_012",
+  "batch_number": 12,
+  "start_index": 55,
+  "end_index": 60,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "what is elon musk doing",
+      "slug": "what-is-elon-musk-doing",
+      "volume": 3600,
+      "difficulty": 67,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "why is elon musk in the white house",
+      "slug": "why-is-elon-musk-in-the-white-house",
+      "volume": 3600,
+      "difficulty": 55,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "when did elon musk buy twitter",
+      "slug": "when-did-elon-musk-buy-twitter",
+      "volume": 3600,
+      "difficulty": 85,
+      "category": "x-twitter",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk iq",
+      "slug": "what-is-elon-musk-iq",
+      "volume": 3600,
+      "difficulty": 31,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk resign from doge",
+      "slug": "did-elon-musk-resign-from-doge",
+      "volume": 3600,
+      "difficulty": 57,
+      "category": "crypto",
+      "intent": "Informational"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "batch_id": "batch_011",
+  "batch_number": 11,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 13000,
+  "questions": [
+    {
+      "keyword": "did elon musk buy fox news",
+      "slug": "did-elon-musk-buy-fox-news",
+      "volume": 2900,
+      "difficulty": 29,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much money has elon musk lost",
+      "slug": "how-much-money-has-elon-musk-lost",
+      "volume": 2900,
+      "difficulty": 36,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what did elon musk's son say to trump",
+      "slug": "what-did-elon-musks-son-say-to-trump",
+      "volume": 2400,
+      "difficulty": 34,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [
+        "what did elon musk say about trump",
+        "what did elon musk son say to trump"
+      ],
+      "alternate_slugs": [
+        "what-did-elon-musk-say-about-trump",
+        "what-did-elon-musk-son-say-to-trump"
+      ]
+    },
+    {
+      "keyword": "what is elon musk doing for trump",
+      "slug": "what-is-elon-musk-doing-for-trump",
+      "volume": 2400,
+      "difficulty": 64,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why is elon musk supporting trump",
+      "slug": "why-is-elon-musk-supporting-trump",
+      "volume": 2400,
+      "difficulty": 67,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

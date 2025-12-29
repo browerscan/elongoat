@@ -1,0 +1,72 @@
+{
+  "batch_id": "batch_005",
+  "batch_number": 5,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 27000,
+  "questions": [
+    {
+      "keyword": "what does elon musk own",
+      "slug": "what-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 68,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [
+        "what companies does elon musk own",
+        "does elon musk own paypal"
+      ],
+      "alternate_slugs": [
+        "what-companies-does-elon-musk-own",
+        "does-elon-musk-own-paypal"
+      ]
+    },
+    {
+      "keyword": "is elon musk on the spectrum",
+      "slug": "is-elon-musk-on-the-spectrum",
+      "volume": 5400,
+      "difficulty": 20,
+      "topic": "health",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much of tesla does elon musk own",
+      "slug": "how-much-of-tesla-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 57,
+      "topic": "tesla",
+      "tier": 3,
+      "alternates": [
+        "what percentage of tesla does elon musk own",
+        "how many shares of tesla does elon musk own"
+      ],
+      "alternate_slugs": [
+        "what-percentage-of-tesla-does-elon-musk-own",
+        "how-many-shares-of-tesla-does-elon-musk-own"
+      ]
+    },
+    {
+      "keyword": "is elon musk leaving doge",
+      "slug": "is-elon-musk-leaving-doge",
+      "volume": 5400,
+      "difficulty": 29,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk buy the view",
+      "slug": "did-elon-musk-buy-the-view",
+      "volume": 5400,
+      "difficulty": 32,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

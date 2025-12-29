@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ELONGOAT.IO | Neural Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #e01e26;
+        --secondary: #00f0ff;
+        --bg: #000000;
+        --panel: rgba(5, 5, 5, 0.95);
+        --border: rgba(224, 30, 38, 0.4);
+        --glow: 0 0 30px rgba(0, 240, 255, 0.4);
+      }
+
+      body {
+        background-color: var(--bg);
+        color: #ffffff;
+        font-family: "JetBrains Mono", monospace;
+        overflow-x: hidden;
+        cursor: crosshair;
+      }
+
+      .font-orbitron {
+        font-family: "Orbitron", sans-serif;
+      }
+
+      /* HUD Scanlines & Static */
+      body::before {
+        content: " ";
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.02),
+            rgba(0, 255, 0, 0.01),
+            rgba(0, 0, 255, 0.02)
+          );
+        background-size:
+          100% 4px,
+          4px 100%;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      /* Sci-fi Panel Clip Path */
+      .sci-fi-panel {
+        clip-path: polygon(
+          0 20px,
+          20px 0,
+          calc(100% - 20px) 0,
+          100% 20px,
+          100% calc(100% - 20px),
+          calc(100% - 20px) 100%,
+          20px 100%,
+          0 calc(100% - 20px)
+        );
+        border: 1px solid var(--border);
+        background: var(--panel);
+        backdrop-filter: blur(25px);
+        transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      .sci-fi-panel:hover {
+        border-color: var(--secondary);
+        box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+      }
+
+      /* 3D Moving Grid */
+      .grid-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          linear-gradient(var(--border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 80px 80px;
+        perspective: 1200px;
+        transform: rotateX(70deg) translateY(-250px);
+        opacity: 0.15;
+        z-index: -1;
+        mask-image: radial-gradient(circle at 50% 50%, black, transparent 90%);
+      }
+
+      /* Starfield Effect */
+      .stars {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        background: radial-gradient(ellipse at bottom, #111 0%, #000 100%);
+        overflow: hidden;
+      }
+
+      @keyframes pulse-secondary {
+        0% {
+          box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.5);
+        }
+        70% {
+          box-shadow: 0 0 0 20px rgba(0, 240, 255, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(0, 240, 255, 0);
+        }
+      }
+      .pulse-secondary {
+        animation: pulse-secondary 2.5s infinite;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@^19.0.0",
+          "react-dom": "https://esm.sh/react-dom@^19.0.0",
+          "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+          "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+          "framer-motion": "https://esm.sh/framer-motion@11.0.0",
+          "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+          "react/": "https://esm.sh/react@^19.2.3/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body>
+    <div class="stars"></div>
+    <div class="grid-bg"></div>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "batch_id": "batch_016",
+  "batch_number": 16,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 9500,
+  "questions": [
+    {
+      "keyword": "is elon musk german",
+      "slug": "is-elon-musk-german",
+      "volume": 1900,
+      "difficulty": 72,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "can trump deport elon musk",
+      "slug": "can-trump-deport-elon-musk",
+      "volume": 1900,
+      "difficulty": 40,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk die",
+      "slug": "did-elon-musk-die",
+      "volume": 1900,
+      "difficulty": 38,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk found tesla",
+      "slug": "did-elon-musk-found-tesla",
+      "volume": 1900,
+      "difficulty": 50,
+      "topic": "tesla",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk step down from doge",
+      "slug": "did-elon-musk-step-down-from-doge",
+      "volume": 1900,
+      "difficulty": 64,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

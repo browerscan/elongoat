@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_016",
+  "batch_number": 16,
+  "start_index": 75,
+  "end_index": 80,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "how much money does elon musk make a day",
+      "slug": "how-much-money-does-elon-musk-make-a-day",
+      "volume": 2900,
+      "difficulty": 20,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much does elon musk make a year",
+      "slug": "how-much-does-elon-musk-make-a-year",
+      "volume": 2900,
+      "difficulty": 31,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much did elon musk donate to trump",
+      "slug": "how-much-did-elon-musk-donate-to-trump",
+      "volume": 2900,
+      "difficulty": 65,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how many kids elon musk",
+      "slug": "how-many-kids-elon-musk",
+      "volume": 2900,
+      "difficulty": 39,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk buy boeing",
+      "slug": "did-elon-musk-buy-boeing",
+      "volume": 2900,
+      "difficulty": 31,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    }
+  ]
+}

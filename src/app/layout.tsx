@@ -1,0 +1,136 @@
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
+import "./globals.css";
+
+import { BackgroundFX } from "@/components/BackgroundFX";
+import { ChatWidget } from "@/components/ChatWidget";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SiteHeader } from "@/components/SiteHeader";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+  display: "swap", // Core Web Vitals optimization - prevents FOUT/FOIT
+  preload: true,
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+  display: "swap", // Core Web Vitals optimization
+  preload: true,
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io",
+  ),
+  title: {
+    default: "ElonGoat — Digital Elon (AI)",
+    template: "%s — ElonGoat",
+  },
+  description:
+    "A sci‑fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated).",
+  alternates: { canonical: "/" },
+  keywords: [
+    "Elon Musk",
+    "AI chat",
+    "knowledge base",
+    "ElonSim",
+    "Tesla",
+    "SpaceX",
+    "X/Twitter",
+    "tech questions",
+  ],
+  authors: [{ name: "ElonGoat" }],
+  creator: "ElonGoat",
+  publisher: "ElonGoat",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    siteName: "ElonGoat",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@elongoat",
+    site: "@elongoat",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    // Add your verification codes here when available
+    // google: "verification-token",
+    // yandex: "verification-token",
+  },
+  other: {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+  },
+};
+
+// Core Web Vitals optimization - viewport configuration
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+  colorScheme: "dark",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        {/* Additional security meta tags */}
+        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+        <meta httpEquiv="X-Frame-Options" content="DENY" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} min-h-dvh bg-black text-white antialiased`}
+      >
+        <BackgroundFX />
+        <SiteHeader />
+        <main className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6">
+          {children}
+        </main>
+        <footer className="mx-auto w-full max-w-6xl px-4 pb-10 text-xs text-white/50 md:px-6">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-white/70">
+              Disclaimer: This is an AI simulation built for information and
+              entertainment. Not affiliated with Elon Musk or his companies.
+            </div>
+            <div className="mt-1">
+              © ElonGoat • Built on Next.js • Streaming chat in the corner
+            </div>
+          </div>
+        </footer>
+        <ErrorBoundary>
+          <ChatWidget />
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
+}

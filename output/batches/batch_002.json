@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_002",
+  "batch_number": 2,
+  "start_index": 5,
+  "end_index": 10,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "is elon musk an american citizen",
+      "slug": "is-elon-musk-an-american-citizen",
+      "volume": 60500,
+      "difficulty": 49,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "where was elon musk born",
+      "slug": "where-was-elon-musk-born",
+      "volume": 49500,
+      "difficulty": 61,
+      "category": "personal",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much is elon musk worth",
+      "slug": "how-much-is-elon-musk-worth",
+      "volume": 33100,
+      "difficulty": 42,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how tall is elon musk",
+      "slug": "how-tall-is-elon-musk",
+      "volume": 33100,
+      "difficulty": 35,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much money does elon musk have",
+      "slug": "how-much-money-does-elon-musk-have",
+      "volume": 33100,
+      "difficulty": 81,
+      "category": "wealth",
+      "intent": "Informational"
+    }
+  ]
+}

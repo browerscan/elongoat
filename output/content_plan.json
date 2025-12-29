@@ -1,0 +1,1100 @@
+{
+  "tier_1_premium": [
+    {
+      "keyword": "how many kids does elon musk have",
+      "slug": "how-many-kids-does-elon-musk-have",
+      "volume": 110000,
+      "difficulty": 43,
+      "topic": "children",
+      "tier": 1,
+      "alternates": [
+        "how many children does elon musk have",
+        "how many baby mamas does elon musk have",
+        "how many wives does elon musk have",
+        "how many baby mommas does elon musk have"
+      ],
+      "alternate_slugs": [
+        "how-many-children-does-elon-musk-have",
+        "how-many-baby-mamas-does-elon-musk-have",
+        "how-many-wives-does-elon-musk-have",
+        "how-many-baby-mommas-does-elon-musk-have"
+      ]
+    },
+    {
+      "keyword": "where is elon musk from",
+      "slug": "where-is-elon-musk-from",
+      "volume": 74000,
+      "difficulty": 61,
+      "topic": "origin",
+      "tier": 1,
+      "alternates": [
+        "where was elon musk born",
+        "where is elon musk born",
+        "where is elon musk",
+        "where is elon musk from originally"
+      ],
+      "alternate_slugs": [
+        "where-was-elon-musk-born",
+        "where-is-elon-musk-born",
+        "where-is-elon-musk",
+        "where-is-elon-musk-from-originally"
+      ]
+    },
+    {
+      "keyword": "how old is elon musk",
+      "slug": "how-old-is-elon-musk",
+      "volume": 74000,
+      "difficulty": 52,
+      "topic": "age",
+      "tier": 1,
+      "alternates": ["how tall is elon musk", "how rich is elon musk"],
+      "alternate_slugs": ["how-tall-is-elon-musk", "how-rich-is-elon-musk"]
+    },
+    {
+      "keyword": "is elon musk a us citizen",
+      "slug": "is-elon-musk-a-us-citizen",
+      "volume": 60500,
+      "difficulty": 38,
+      "topic": "origin",
+      "tier": 1,
+      "alternates": [
+        "is elon musk an american citizen",
+        "is elon musk a citizen",
+        "is elon musk a citizen of the united states",
+        "is elon musk a citizen of the us",
+        "is elon musk a united states citizen",
+        "is elon musk american citizen",
+        "is elon musk us citizen"
+      ],
+      "alternate_slugs": [
+        "is-elon-musk-an-american-citizen",
+        "is-elon-musk-a-citizen",
+        "is-elon-musk-a-citizen-of-the-united-states",
+        "is-elon-musk-a-citizen-of-the-us",
+        "is-elon-musk-a-united-states-citizen",
+        "is-elon-musk-american-citizen",
+        "is-elon-musk-us-citizen"
+      ]
+    },
+    {
+      "keyword": "how much is elon musk worth",
+      "slug": "how-much-is-elon-musk-worth",
+      "volume": 33100,
+      "difficulty": 42,
+      "topic": "wealth",
+      "tier": 1,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much money does elon musk have",
+      "slug": "how-much-money-does-elon-musk-have",
+      "volume": 33100,
+      "difficulty": 81,
+      "topic": "wealth",
+      "tier": 1,
+      "alternates": ["how much does elon musk have"],
+      "alternate_slugs": ["how-much-does-elon-musk-have"]
+    }
+  ],
+  "tier_2_standard": [
+    {
+      "keyword": "is elon musk autistic",
+      "slug": "is-elon-musk-autistic",
+      "volume": 27100,
+      "difficulty": 20,
+      "topic": "health",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk married",
+      "slug": "is-elon-musk-married",
+      "volume": 27100,
+      "difficulty": 31,
+      "topic": "relationships",
+      "tier": 2,
+      "alternates": ["who is elon musk's wife"],
+      "alternate_slugs": ["who-is-elon-musks-wife"]
+    },
+    {
+      "keyword": "where does elon musk live",
+      "slug": "where-does-elon-musk-live",
+      "volume": 22200,
+      "difficulty": 39,
+      "topic": "origin",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "who is elon musk",
+      "slug": "who-is-elon-musk",
+      "volume": 22200,
+      "difficulty": 81,
+      "topic": "general",
+      "tier": 2,
+      "alternates": ["who is elon musk dating"],
+      "alternate_slugs": ["who-is-elon-musk-dating"]
+    },
+    {
+      "keyword": "how did elon musk make his money",
+      "slug": "how-did-elon-musk-make-his-money",
+      "volume": 14800,
+      "difficulty": 51,
+      "topic": "wealth",
+      "tier": 2,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what nationality is elon musk",
+      "slug": "what-nationality-is-elon-musk",
+      "volume": 14800,
+      "difficulty": 68,
+      "topic": "general",
+      "tier": 2,
+      "alternates": [
+        "what is doge elon musk",
+        "what is elon musk's iq",
+        "what is elon musk iq",
+        "what is elon musk doing",
+        "what religion is elon musk",
+        "what is elon musk",
+        "what ethnicity is elon musk",
+        "what is elon musk's nationality",
+        "what is elon musks iq",
+        "what race is elon musk"
+      ],
+      "alternate_slugs": [
+        "what-is-doge-elon-musk",
+        "what-is-elon-musks-iq",
+        "what-is-elon-musk-iq",
+        "what-is-elon-musk-doing",
+        "what-religion-is-elon-musk",
+        "what-is-elon-musk",
+        "what-ethnicity-is-elon-musk",
+        "what-is-elon-musks-nationality",
+        "what-is-elon-musks-iq",
+        "what-race-is-elon-musk"
+      ]
+    },
+    {
+      "keyword": "is elon musk american",
+      "slug": "is-elon-musk-american",
+      "volume": 12100,
+      "difficulty": 53,
+      "topic": "origin",
+      "tier": 2,
+      "alternates": ["is elon musk an american"],
+      "alternate_slugs": ["is-elon-musk-an-american"]
+    },
+    {
+      "keyword": "what is elon musk net worth",
+      "slug": "what-is-elon-musk-net-worth",
+      "volume": 12100,
+      "difficulty": 64,
+      "topic": "wealth",
+      "tier": 2,
+      "alternates": [
+        "what is elon musk's net worth",
+        "what is elon musks net worth"
+      ],
+      "alternate_slugs": [
+        "what-is-elon-musks-net-worth",
+        "what-is-elon-musks-net-worth"
+      ]
+    },
+    {
+      "keyword": "does elon musk have autism",
+      "slug": "does-elon-musk-have-autism",
+      "volume": 12100,
+      "difficulty": 19,
+      "topic": "health",
+      "tier": 2,
+      "alternates": [
+        "does elon musk have aspergers",
+        "does elon musk have kids"
+      ],
+      "alternate_slugs": [
+        "does-elon-musk-have-aspergers",
+        "does-elon-musk-have-kids"
+      ]
+    }
+  ],
+  "tier_3_longtail": [
+    {
+      "keyword": "is elon musk jewish",
+      "slug": "is-elon-musk-jewish",
+      "volume": 9900,
+      "difficulty": 37,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much does elon musk make a day",
+      "slug": "how-much-does-elon-musk-make-a-day",
+      "volume": 9900,
+      "difficulty": 18,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [
+        "how much does elon musk make a second",
+        "how much money does elon musk make a second",
+        "how much does elon musk make a year",
+        "how much money does elon musk make a day"
+      ],
+      "alternate_slugs": [
+        "how-much-does-elon-musk-make-a-second",
+        "how-much-money-does-elon-musk-make-a-second",
+        "how-much-does-elon-musk-make-a-year",
+        "how-much-money-does-elon-musk-make-a-day"
+      ]
+    },
+    {
+      "keyword": "can elon musk run for president",
+      "slug": "can-elon-musk-run-for-president",
+      "volume": 6600,
+      "difficulty": 57,
+      "topic": "politics",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk buy ford",
+      "slug": "did-elon-musk-buy-ford",
+      "volume": 6600,
+      "difficulty": 22,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [
+        "did elon musk buy abc",
+        "did elon musk buy msnbc",
+        "did elon musk buy tiktok",
+        "did elon musk buy boeing",
+        "did elon musk buy cnn"
+      ],
+      "alternate_slugs": [
+        "did-elon-musk-buy-abc",
+        "did-elon-musk-buy-msnbc",
+        "did-elon-musk-buy-tiktok",
+        "did-elon-musk-buy-boeing",
+        "did-elon-musk-buy-cnn"
+      ]
+    },
+    {
+      "keyword": "is elon musk an immigrant",
+      "slug": "is-elon-musk-an-immigrant",
+      "volume": 6600,
+      "difficulty": 35,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [
+        "is elon musk an engineer",
+        "is elon musk an illegal immigrant"
+      ],
+      "alternate_slugs": [
+        "is-elon-musk-an-engineer",
+        "is-elon-musk-an-illegal-immigrant"
+      ]
+    },
+    {
+      "keyword": "what does elon musk own",
+      "slug": "what-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 68,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [
+        "what companies does elon musk own",
+        "does elon musk own paypal"
+      ],
+      "alternate_slugs": [
+        "what-companies-does-elon-musk-own",
+        "does-elon-musk-own-paypal"
+      ]
+    },
+    {
+      "keyword": "is elon musk on the spectrum",
+      "slug": "is-elon-musk-on-the-spectrum",
+      "volume": 5400,
+      "difficulty": 20,
+      "topic": "health",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much of tesla does elon musk own",
+      "slug": "how-much-of-tesla-does-elon-musk-own",
+      "volume": 5400,
+      "difficulty": 57,
+      "topic": "tesla",
+      "tier": 3,
+      "alternates": [
+        "what percentage of tesla does elon musk own",
+        "how many shares of tesla does elon musk own"
+      ],
+      "alternate_slugs": [
+        "what-percentage-of-tesla-does-elon-musk-own",
+        "how-many-shares-of-tesla-does-elon-musk-own"
+      ]
+    },
+    {
+      "keyword": "is elon musk leaving doge",
+      "slug": "is-elon-musk-leaving-doge",
+      "volume": 5400,
+      "difficulty": 29,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk buy the view",
+      "slug": "did-elon-musk-buy-the-view",
+      "volume": 5400,
+      "difficulty": 32,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk buy super bowl ads",
+      "slug": "did-elon-musk-buy-super-bowl-ads",
+      "volume": 5400,
+      "difficulty": 23,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk go to college",
+      "slug": "did-elon-musk-go-to-college",
+      "volume": 5400,
+      "difficulty": 54,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [
+        "where did elon musk go to college",
+        "what college did elon musk go to"
+      ],
+      "alternate_slugs": [
+        "where-did-elon-musk-go-to-college",
+        "what-college-did-elon-musk-go-to"
+      ]
+    },
+    {
+      "keyword": "what is elon musk's son's name",
+      "slug": "what-is-elon-musks-sons-name",
+      "volume": 4400,
+      "difficulty": 65,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["what is elon musks sons name"],
+      "alternate_slugs": ["what-is-elon-musks-sons-name"]
+    },
+    {
+      "keyword": "is elon musk a nazi",
+      "slug": "is-elon-musk-a-nazi",
+      "volume": 4400,
+      "difficulty": 83,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["is elon musk a christian"],
+      "alternate_slugs": ["is-elon-musk-a-christian"]
+    },
+    {
+      "keyword": "who is elon musk married to",
+      "slug": "who-is-elon-musk-married-to",
+      "volume": 4400,
+      "difficulty": 50,
+      "topic": "relationships",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what happened to elon musk",
+      "slug": "what-happened-to-elon-musk",
+      "volume": 4400,
+      "difficulty": 25,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what did elon musk do",
+      "slug": "what-did-elon-musk-do",
+      "volume": 4400,
+      "difficulty": 71,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["what did elon musk invent"],
+      "alternate_slugs": ["what-did-elon-musk-invent"]
+    },
+    {
+      "keyword": "how many times has elon musk been married",
+      "slug": "how-many-times-has-elon-musk-been-married",
+      "volume": 4400,
+      "difficulty": 48,
+      "topic": "relationships",
+      "tier": 3,
+      "alternates": ["how many wives has elon musk had"],
+      "alternate_slugs": ["how-many-wives-has-elon-musk-had"]
+    },
+    {
+      "keyword": "how did elon musk get rich",
+      "slug": "how-did-elon-musk-get-rich",
+      "volume": 4400,
+      "difficulty": 60,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": ["how did elon musk get so rich"],
+      "alternate_slugs": ["how-did-elon-musk-get-so-rich"]
+    },
+    {
+      "keyword": "why is elon musk in the white house",
+      "slug": "why-is-elon-musk-in-the-white-house",
+      "volume": 3600,
+      "difficulty": 55,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "when did elon musk buy twitter",
+      "slug": "when-did-elon-musk-buy-twitter",
+      "volume": 3600,
+      "difficulty": 85,
+      "topic": "x-twitter",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk resign from doge",
+      "slug": "did-elon-musk-resign-from-doge",
+      "volume": 3600,
+      "difficulty": 57,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does elon musk get out of helping trump",
+      "slug": "what-does-elon-musk-get-out-of-helping-trump",
+      "volume": 3600,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk the richest man in the world",
+      "slug": "is-elon-musk-the-richest-man-in-the-world",
+      "volume": 3600,
+      "difficulty": 30,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "does elon musk have a security clearance",
+      "slug": "does-elon-musk-have-a-security-clearance",
+      "volume": 3600,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk canadian",
+      "slug": "is-elon-musk-canadian",
+      "volume": 2900,
+      "difficulty": 49,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what are elon musk's kids names",
+      "slug": "what-are-elon-musks-kids-names",
+      "volume": 2900,
+      "difficulty": 46,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what country is elon musk from",
+      "slug": "what-country-is-elon-musk-from",
+      "volume": 2900,
+      "difficulty": 55,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "when was elon musk born",
+      "slug": "when-was-elon-musk-born",
+      "volume": 2900,
+      "difficulty": 50,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "where did elon musk get his money",
+      "slug": "where-did-elon-musk-get-his-money",
+      "volume": 2900,
+      "difficulty": 55,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why does elon musk support trump",
+      "slug": "why-does-elon-musk-support-trump",
+      "volume": 2900,
+      "difficulty": 75,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how to contact elon musk",
+      "slug": "how-to-contact-elon-musk",
+      "volume": 2900,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much did elon musk donate to trump",
+      "slug": "how-much-did-elon-musk-donate-to-trump",
+      "volume": 2900,
+      "difficulty": 65,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how many kids elon musk",
+      "slug": "how-many-kids-elon-musk",
+      "volume": 2900,
+      "difficulty": 39,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk leave the trump administration",
+      "slug": "did-elon-musk-leave-the-trump-administration",
+      "volume": 2900,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["why did elon musk leave the trump administration"],
+      "alternate_slugs": ["why-did-elon-musk-leave-the-trump-administration"]
+    },
+    {
+      "keyword": "did elon musk buy fox news",
+      "slug": "did-elon-musk-buy-fox-news",
+      "volume": 2900,
+      "difficulty": 29,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how much money has elon musk lost",
+      "slug": "how-much-money-has-elon-musk-lost",
+      "volume": 2900,
+      "difficulty": 36,
+      "topic": "wealth",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what did elon musk's son say to trump",
+      "slug": "what-did-elon-musks-son-say-to-trump",
+      "volume": 2400,
+      "difficulty": 34,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [
+        "what did elon musk say about trump",
+        "what did elon musk son say to trump"
+      ],
+      "alternate_slugs": [
+        "what-did-elon-musk-say-about-trump",
+        "what-did-elon-musk-son-say-to-trump"
+      ]
+    },
+    {
+      "keyword": "what is elon musk doing for trump",
+      "slug": "what-is-elon-musk-doing-for-trump",
+      "volume": 2400,
+      "difficulty": 64,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why is elon musk supporting trump",
+      "slug": "why-is-elon-musk-supporting-trump",
+      "volume": 2400,
+      "difficulty": 67,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "where was elon musk born and raised",
+      "slug": "where-was-elon-musk-born-and-raised",
+      "volume": 2400,
+      "difficulty": 56,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why are elon musk and donald trump fighting",
+      "slug": "why-are-elon-musk-and-donald-trump-fighting",
+      "volume": 2400,
+      "difficulty": 73,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "why do people hate elon musk",
+      "slug": "why-do-people-hate-elon-musk",
+      "volume": 2400,
+      "difficulty": 28,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk stepping down from doge",
+      "slug": "is-elon-musk-stepping-down-from-doge",
+      "volume": 2400,
+      "difficulty": 57,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk the antichrist",
+      "slug": "is-elon-musk-the-antichrist",
+      "volume": 2400,
+      "difficulty": 26,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk racist",
+      "slug": "is-elon-musk-racist",
+      "volume": 2400,
+      "difficulty": 70,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk paying for kirk's kids",
+      "slug": "is-elon-musk-paying-for-kirks-kids",
+      "volume": 2400,
+      "difficulty": 32,
+      "topic": "children",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk do a nazi salute",
+      "slug": "did-elon-musk-do-a-nazi-salute",
+      "volume": 2400,
+      "difficulty": 80,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk have a heart attack",
+      "slug": "did-elon-musk-have-a-heart-attack",
+      "volume": 2400,
+      "difficulty": 23,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk sell x",
+      "slug": "did-elon-musk-sell-x",
+      "volume": 2400,
+      "difficulty": 50,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk leave doge",
+      "slug": "did-elon-musk-leave-doge",
+      "volume": 2400,
+      "difficulty": 57,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "how to sign elon musk petition",
+      "slug": "how-to-sign-elon-musk-petition",
+      "volume": 2400,
+      "difficulty": 24,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk getting paid for doge",
+      "slug": "is-elon-musk-getting-paid-for-doge",
+      "volume": 2400,
+      "difficulty": 64,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does doge stand for elon musk",
+      "slug": "what-does-doge-stand-for-elon-musk",
+      "volume": 1900,
+      "difficulty": 66,
+      "topic": "crypto",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what does elon musk do for trump",
+      "slug": "what-does-elon-musk-do-for-trump",
+      "volume": 1900,
+      "difficulty": 38,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what is elon musk doing in the government",
+      "slug": "what-is-elon-musk-doing-in-the-government",
+      "volume": 1900,
+      "difficulty": 72,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "when did elon musk move to america",
+      "slug": "when-did-elon-musk-move-to-america",
+      "volume": 1900,
+      "difficulty": 41,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "where is elon musk right now",
+      "slug": "where-is-elon-musk-right-now",
+      "volume": 1900,
+      "difficulty": 85,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "who owned twitter before elon musk",
+      "slug": "who-owned-twitter-before-elon-musk",
+      "volume": 1900,
+      "difficulty": 62,
+      "topic": "x-twitter",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk south african",
+      "slug": "is-elon-musk-south-african",
+      "volume": 1900,
+      "difficulty": 79,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk german",
+      "slug": "is-elon-musk-german",
+      "volume": 1900,
+      "difficulty": 72,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "can trump deport elon musk",
+      "slug": "can-trump-deport-elon-musk",
+      "volume": 1900,
+      "difficulty": 40,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk die",
+      "slug": "did-elon-musk-die",
+      "volume": 1900,
+      "difficulty": 38,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk found tesla",
+      "slug": "did-elon-musk-found-tesla",
+      "volume": 1900,
+      "difficulty": 50,
+      "topic": "tesla",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk step down from doge",
+      "slug": "did-elon-musk-step-down-from-doge",
+      "volume": 1900,
+      "difficulty": 64,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "does elon musk have us citizenship",
+      "slug": "does-elon-musk-have-us-citizenship",
+      "volume": 1900,
+      "difficulty": 45,
+      "topic": "origin",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "does elon musk believe in god",
+      "slug": "does-elon-musk-believe-in-god",
+      "volume": 1900,
+      "difficulty": 31,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk a democrat or republican",
+      "slug": "is-elon-musk-a-democrat-or-republican",
+      "volume": 1900,
+      "difficulty": 85,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk buying msnbc",
+      "slug": "is-elon-musk-buying-msnbc",
+      "volume": 1900,
+      "difficulty": 33,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk christian",
+      "slug": "is-elon-musk-christian",
+      "volume": 1900,
+      "difficulty": 28,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk gay",
+      "slug": "is-elon-musk-gay",
+      "volume": 1900,
+      "difficulty": 31,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "what has elon musk invented",
+      "slug": "what-has-elon-musk-invented",
+      "volume": 1600,
+      "difficulty": 44,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk a government employee",
+      "slug": "is-elon-musk-a-government-employee",
+      "volume": 1600,
+      "difficulty": 76,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk going to buy tiktok",
+      "slug": "is-elon-musk-going-to-buy-tiktok",
+      "volume": 1600,
+      "difficulty": 45,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "is elon musk in trump's cabinet",
+      "slug": "is-elon-musk-in-trumps-cabinet",
+      "volume": 1600,
+      "difficulty": 70,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ],
+  "duplicate_map": {
+    "how-many-children-does-elon-musk-have": "how-many-kids-does-elon-musk-have",
+    "how-many-baby-mamas-does-elon-musk-have": "how-many-kids-does-elon-musk-have",
+    "how-many-wives-does-elon-musk-have": "how-many-kids-does-elon-musk-have",
+    "how-many-baby-mommas-does-elon-musk-have": "how-many-kids-does-elon-musk-have",
+    "where-was-elon-musk-born": "where-is-elon-musk-from",
+    "where-is-elon-musk-born": "where-is-elon-musk-from",
+    "where-is-elon-musk": "where-is-elon-musk-from",
+    "where-is-elon-musk-from-originally": "where-is-elon-musk-from",
+    "how-tall-is-elon-musk": "how-old-is-elon-musk",
+    "how-rich-is-elon-musk": "how-old-is-elon-musk",
+    "is-elon-musk-an-american-citizen": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-a-citizen": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-a-citizen-of-the-united-states": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-a-citizen-of-the-us": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-a-united-states-citizen": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-american-citizen": "is-elon-musk-a-us-citizen",
+    "is-elon-musk-us-citizen": "is-elon-musk-a-us-citizen",
+    "how-much-does-elon-musk-have": "how-much-money-does-elon-musk-have",
+    "who-is-elon-musks-wife": "is-elon-musk-married",
+    "who-is-elon-musk-dating": "who-is-elon-musk",
+    "what-is-doge-elon-musk": "what-nationality-is-elon-musk",
+    "what-is-elon-musks-iq": "what-nationality-is-elon-musk",
+    "what-is-elon-musk-iq": "what-nationality-is-elon-musk",
+    "what-is-elon-musk-doing": "what-nationality-is-elon-musk",
+    "what-religion-is-elon-musk": "what-nationality-is-elon-musk",
+    "what-is-elon-musk": "what-nationality-is-elon-musk",
+    "what-ethnicity-is-elon-musk": "what-nationality-is-elon-musk",
+    "what-is-elon-musks-nationality": "what-nationality-is-elon-musk",
+    "what-race-is-elon-musk": "what-nationality-is-elon-musk",
+    "is-elon-musk-an-american": "is-elon-musk-american",
+    "what-is-elon-musks-net-worth": "what-is-elon-musk-net-worth",
+    "does-elon-musk-have-aspergers": "does-elon-musk-have-autism",
+    "does-elon-musk-have-kids": "does-elon-musk-have-autism",
+    "how-much-does-elon-musk-make-a-second": "how-much-does-elon-musk-make-a-day",
+    "how-much-money-does-elon-musk-make-a-second": "how-much-does-elon-musk-make-a-day",
+    "how-much-does-elon-musk-make-a-year": "how-much-does-elon-musk-make-a-day",
+    "how-much-money-does-elon-musk-make-a-day": "how-much-does-elon-musk-make-a-day",
+    "did-elon-musk-buy-abc": "did-elon-musk-buy-ford",
+    "did-elon-musk-buy-msnbc": "did-elon-musk-buy-ford",
+    "did-elon-musk-buy-tiktok": "did-elon-musk-buy-ford",
+    "did-elon-musk-buy-boeing": "did-elon-musk-buy-ford",
+    "did-elon-musk-buy-cnn": "did-elon-musk-buy-ford",
+    "is-elon-musk-an-engineer": "is-elon-musk-an-immigrant",
+    "is-elon-musk-an-illegal-immigrant": "is-elon-musk-an-immigrant",
+    "what-companies-does-elon-musk-own": "what-does-elon-musk-own",
+    "does-elon-musk-own-paypal": "what-does-elon-musk-own",
+    "what-percentage-of-tesla-does-elon-musk-own": "how-much-of-tesla-does-elon-musk-own",
+    "how-many-shares-of-tesla-does-elon-musk-own": "how-much-of-tesla-does-elon-musk-own",
+    "where-did-elon-musk-go-to-college": "did-elon-musk-go-to-college",
+    "what-college-did-elon-musk-go-to": "did-elon-musk-go-to-college",
+    "what-is-elon-musks-sons-name": "what-is-elon-musks-sons-name",
+    "is-elon-musk-a-christian": "is-elon-musk-a-nazi",
+    "what-did-elon-musk-invent": "what-did-elon-musk-do",
+    "how-many-wives-has-elon-musk-had": "how-many-times-has-elon-musk-been-married",
+    "how-did-elon-musk-get-so-rich": "how-did-elon-musk-get-rich",
+    "why-did-elon-musk-leave-the-trump-administration": "did-elon-musk-leave-the-trump-administration",
+    "what-did-elon-musk-say-about-trump": "what-did-elon-musks-son-say-to-trump",
+    "what-did-elon-musk-son-say-to-trump": "what-did-elon-musks-son-say-to-trump"
+  },
+  "stats": {
+    "total_unique": 90,
+    "tier_1_count": 6,
+    "tier_2_count": 9,
+    "tier_3_count": 75,
+    "duplicates_merged": 60,
+    "tier_1_volume": 384700,
+    "tier_2_volume": 164500,
+    "tier_3_volume": 243600
+  }
+}

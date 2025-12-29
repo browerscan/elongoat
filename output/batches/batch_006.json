@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_006",
+  "batch_number": 6,
+  "start_index": 25,
+  "end_index": 30,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "did elon musk buy ford",
+      "slug": "did-elon-musk-buy-ford",
+      "volume": 6600,
+      "difficulty": 22,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    },
+    {
+      "keyword": "how many baby mamas does elon musk have",
+      "slug": "how-many-baby-mamas-does-elon-musk-have",
+      "volume": 6600,
+      "difficulty": 60,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how much does elon musk make a second",
+      "slug": "how-much-does-elon-musk-make-a-second",
+      "volume": 6600,
+      "difficulty": 17,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk a citizen",
+      "slug": "is-elon-musk-a-citizen",
+      "volume": 6600,
+      "difficulty": 38,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk an immigrant",
+      "slug": "is-elon-musk-an-immigrant",
+      "volume": 6600,
+      "difficulty": 35,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

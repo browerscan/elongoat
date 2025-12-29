@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_020",
+  "batch_number": 20,
+  "start_index": 95,
+  "end_index": 100,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "is elon musk stepping down from doge",
+      "slug": "is-elon-musk-stepping-down-from-doge",
+      "volume": 2400,
+      "difficulty": 57,
+      "category": "acquisitions",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk the antichrist",
+      "slug": "is-elon-musk-the-antichrist",
+      "volume": 2400,
+      "difficulty": 26,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk",
+      "slug": "what-is-elon-musk",
+      "volume": 2400,
+      "difficulty": 82,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk racist",
+      "slug": "is-elon-musk-racist",
+      "volume": 2400,
+      "difficulty": 70,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "does elon musk own paypal",
+      "slug": "does-elon-musk-own-paypal",
+      "volume": 2400,
+      "difficulty": 61,
+      "category": "acquisitions",
+      "intent": "Informational"
+    }
+  ]
+}

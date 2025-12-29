@@ -1,0 +1,66 @@
+{
+  "batch_id": "batch_006",
+  "batch_number": 6,
+  "tier": 3,
+  "word_requirement": 1000,
+  "count": 5,
+  "total_volume": 24000,
+  "questions": [
+    {
+      "keyword": "did elon musk buy super bowl ads",
+      "slug": "did-elon-musk-buy-super-bowl-ads",
+      "volume": 5400,
+      "difficulty": 23,
+      "topic": "acquisitions",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    },
+    {
+      "keyword": "did elon musk go to college",
+      "slug": "did-elon-musk-go-to-college",
+      "volume": 5400,
+      "difficulty": 54,
+      "topic": "general",
+      "tier": 3,
+      "alternates": [
+        "where did elon musk go to college",
+        "what college did elon musk go to"
+      ],
+      "alternate_slugs": [
+        "where-did-elon-musk-go-to-college",
+        "what-college-did-elon-musk-go-to"
+      ]
+    },
+    {
+      "keyword": "what is elon musk's son's name",
+      "slug": "what-is-elon-musks-sons-name",
+      "volume": 4400,
+      "difficulty": 65,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["what is elon musks sons name"],
+      "alternate_slugs": ["what-is-elon-musks-sons-name"]
+    },
+    {
+      "keyword": "is elon musk a nazi",
+      "slug": "is-elon-musk-a-nazi",
+      "volume": 4400,
+      "difficulty": 83,
+      "topic": "general",
+      "tier": 3,
+      "alternates": ["is elon musk a christian"],
+      "alternate_slugs": ["is-elon-musk-a-christian"]
+    },
+    {
+      "keyword": "who is elon musk married to",
+      "slug": "who-is-elon-musk-married-to",
+      "volume": 4400,
+      "difficulty": 50,
+      "topic": "relationships",
+      "tier": 3,
+      "alternates": [],
+      "alternate_slugs": []
+    }
+  ]
+}

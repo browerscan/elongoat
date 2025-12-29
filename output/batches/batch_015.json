@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_015",
+  "batch_number": 15,
+  "start_index": 70,
+  "end_index": 75,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "where did elon musk get his money",
+      "slug": "where-did-elon-musk-get-his-money",
+      "volume": 2900,
+      "difficulty": 55,
+      "category": "wealth",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "why does elon musk support trump",
+      "slug": "why-does-elon-musk-support-trump",
+      "volume": 2900,
+      "difficulty": 75,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk a united states citizen",
+      "slug": "is-elon-musk-a-united-states-citizen",
+      "volume": 2900,
+      "difficulty": 46,
+      "category": "citizenship",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what religion is elon musk",
+      "slug": "what-religion-is-elon-musk",
+      "volume": 2900,
+      "difficulty": 39,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "how to contact elon musk",
+      "slug": "how-to-contact-elon-musk",
+      "volume": 2900,
+      "difficulty": 26,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

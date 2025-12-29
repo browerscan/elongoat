@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_018",
+  "batch_number": 18,
+  "start_index": 85,
+  "end_index": 90,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "what did elon musk's son say to trump",
+      "slug": "what-did-elon-musks-son-say-to-trump",
+      "volume": 2400,
+      "difficulty": 34,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what ethnicity is elon musk",
+      "slug": "what-ethnicity-is-elon-musk",
+      "volume": 2400,
+      "difficulty": 39,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk doing for trump",
+      "slug": "what-is-elon-musk-doing-for-trump",
+      "volume": 2400,
+      "difficulty": 64,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musk's nationality",
+      "slug": "what-is-elon-musks-nationality",
+      "volume": 2400,
+      "difficulty": 58,
+      "category": "general",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "what is elon musks sons name",
+      "slug": "what-is-elon-musks-sons-name",
+      "volume": 2400,
+      "difficulty": 61,
+      "category": "family",
+      "intent": "Informational"
+    }
+  ]
+}

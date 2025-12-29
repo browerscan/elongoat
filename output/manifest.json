@@ -1,0 +1,44 @@
+{
+  "total_questions": 100,
+  "total_batches": 20,
+  "volume_range": {
+    "min": 2400,
+    "max": 110000,
+    "total": 1086800
+  },
+  "categories": {
+    "general": 38,
+    "wealth": 12,
+    "acquisitions": 12,
+    "citizenship": 11,
+    "family": 10,
+    "personal": 5,
+    "health": 3,
+    "relationships": 3,
+    "crypto": 3,
+    "tesla": 2,
+    "x-twitter": 1
+  },
+  "batches": [
+    "batch_001.json",
+    "batch_002.json",
+    "batch_003.json",
+    "batch_004.json",
+    "batch_005.json",
+    "batch_006.json",
+    "batch_007.json",
+    "batch_008.json",
+    "batch_009.json",
+    "batch_010.json",
+    "batch_011.json",
+    "batch_012.json",
+    "batch_013.json",
+    "batch_014.json",
+    "batch_015.json",
+    "batch_016.json",
+    "batch_017.json",
+    "batch_018.json",
+    "batch_019.json",
+    "batch_020.json"
+  ]
+}

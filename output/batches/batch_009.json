@@ -1,0 +1,49 @@
+{
+  "batch_id": "batch_009",
+  "batch_number": 9,
+  "start_index": 40,
+  "end_index": 45,
+  "count": 5,
+  "questions": [
+    {
+      "keyword": "did elon musk buy msnbc",
+      "slug": "did-elon-musk-buy-msnbc",
+      "volume": 5400,
+      "difficulty": 40,
+      "category": "acquisitions",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "did elon musk go to college",
+      "slug": "did-elon-musk-go-to-college",
+      "volume": 5400,
+      "difficulty": 54,
+      "category": "general",
+      "intent": "Informational, Transactional"
+    },
+    {
+      "keyword": "did elon musk buy abc",
+      "slug": "did-elon-musk-buy-abc",
+      "volume": 5400,
+      "difficulty": 27,
+      "category": "acquisitions",
+      "intent": "Transactional"
+    },
+    {
+      "keyword": "what is elon musk's son's name",
+      "slug": "what-is-elon-musks-sons-name",
+      "volume": 4400,
+      "difficulty": 65,
+      "category": "family",
+      "intent": "Informational"
+    },
+    {
+      "keyword": "is elon musk a nazi",
+      "slug": "is-elon-musk-a-nazi",
+      "volume": 4400,
+      "difficulty": 83,
+      "category": "general",
+      "intent": "Informational"
+    }
+  ]
+}

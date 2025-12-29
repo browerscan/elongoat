@@ -1,0 +1,56 @@
+services:
+  elongoat:
+    build: .
+    container_name: standalone-elongoat
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Nginx-proxy auto-discovery
+      - VIRTUAL_HOST=${DOMAIN:-elongoat.io}
+      - LETSENCRYPT_HOST=${DOMAIN:-elongoat.io}
+      - VIRTUAL_PORT=3000
+      - NEXT_PUBLIC_SITE_URL=https://${DOMAIN:-elongoat.io}
+
+      # VectorEngine (server-only)
+      - VECTORENGINE_API_KEY=${VECTORENGINE_API_KEY}
+      - VECTORENGINE_BASE_URL=${VECTORENGINE_BASE_URL:-https://api.vectorengine.ai}
+      - VECTORENGINE_MODEL=${VECTORENGINE_MODEL:-grok-4-fast-non-reasoning}
+      - VECTORENGINE_CONTENT_MODEL=${VECTORENGINE_CONTENT_MODEL:-claude-sonnet-4-5-20250929}
+
+      # Database / cache
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+
+      # Dynamic variables
+      - ELON_DOB=${ELON_DOB:-1971-06-28}
+      - ELON_CHILDREN_COUNT=${ELON_CHILDREN_COUNT:-14}
+      - ELON_NET_WORTH=${ELON_NET_WORTH:-Varies with markets (estimate; may be outdated).}
+
+      # Chat config
+      - CHAT_MOOD=${CHAT_MOOD:-confident}
+      - CHAT_TYPING_QUIRK=${CHAT_TYPING_QUIRK:-1}
+      - CHAT_ANALYTICS_ENABLED=${CHAT_ANALYTICS_ENABLED:-0}
+
+      # Admin (optional; required for /api/admin/*)
+      - ELONGOAT_ADMIN_TOKEN=${ELONGOAT_ADMIN_TOKEN:-}
+
+      # X monitor (optional; determines primary handle displayed on /x)
+      - X_HANDLES=${X_HANDLES:-elonmusk}
+
+    volumes:
+      - ./data:/app/data:ro
+    networks:
+      - proxy-tier
+      - supabase-tier
+      - redis-tier
+
+networks:
+  proxy-tier:
+    external: true
+    name: nginx-proxy_default
+  supabase-tier:
+    external: true
+    name: supabase_default
+  redis-tier:
+    external: true
+    name: redis_default

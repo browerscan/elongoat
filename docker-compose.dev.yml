@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: elongoat-dev-postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "54321:5432"
+    volumes:
+      - elongoat_dev_pg:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: elongoat-dev-redis
+    ports:
+      - "63790:6379"
+
+volumes:
+  elongoat_dev_pg:
