@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy Backend to VPS
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-backend:
     runs-on: ubuntu-latest
     environment: production
 
@@ -21,6 +21,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Prepare backend config
+        run: |
+          # Use backend config for VPS deployment
+          cp next.config.backend.mjs next.config.mjs
+
       - name: Sync code to VPS
         run: |
           rsync -avz --delete \
@@ -30,6 +35,7 @@ jobs:
             --exclude '.env' \
             --exclude '.env.local' \
             --exclude 'data/generated' \
+            --exclude 'out' \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}/
 
       - name: Deploy on VPS
