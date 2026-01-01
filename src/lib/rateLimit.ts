@@ -1,4 +1,4 @@
-import "server-only";
+// Server-only module (import removed for backend compatibility)
 
 import { getRedis, type Redis } from "@/lib/redis";
 
@@ -459,6 +459,56 @@ export function getClientIdentifier(request: Request): string {
   return `ua:${uaHash}`;
 }
 
+// ============================================================================
+// IP Hashing Secret Validation
+// ============================================================================//
+
+let IP_HASH_SECRET: string | null = null;
+
+/**
+ * Validate and initialize the IP hash secret
+ * In production, a secret must be explicitly set
+ */
+function getIpHashSecret(): string {
+  if (IP_HASH_SECRET) {
+    return IP_HASH_SECRET;
+  }
+
+  const envSecret = process.env.RATE_LIMIT_IP_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (isProduction) {
+    if (!envSecret || envSecret === "change_me_to_random_string") {
+      throw new Error(
+        "RATE_LIMIT_IP_SECRET must be set to a secure random value in production",
+      );
+    }
+    if (envSecret.length < 16) {
+      throw new Error(
+        "RATE_LIMIT_IP_SECRET must be at least 16 characters long",
+      );
+    }
+    IP_HASH_SECRET = envSecret;
+  } else {
+    // In development, generate a random secret if not set
+    IP_HASH_SECRET = envSecret || generateDevSecret();
+    console.warn(
+      "[RateLimit] Using auto-generated IP hash secret for development. Set RATE_LIMIT_IP_SECRET for consistency.",
+    );
+  }
+
+  return IP_HASH_SECRET;
+}
+
+/**
+ * Generate a random secret for development use only
+ */
+function generateDevSecret(): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { randomBytes } = require("node:crypto");
+  return randomBytes(32).toString("hex");
+}
+
 /**
  * Hash IP address for privacy (GDPR compliance)
  * Stores only a hash, not the actual IP
@@ -466,7 +516,7 @@ export function getClientIdentifier(request: Request): string {
 function hashIp(ip: string): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createHmac } = require("node:crypto");
-  const secret = process.env.RATE_LIMIT_IP_SECRET ?? "default-secret-change-me";
+  const secret = getIpHashSecret();
   return createHmac("sha256", secret).update(ip).digest("hex").slice(0, 16);
 }
 

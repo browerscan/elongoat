@@ -20,6 +20,7 @@ const FACTS = new Map<
     title: string;
     value: string;
     description: string;
+    longDescription: string;
   }
 >([
   [
@@ -28,6 +29,7 @@ const FACTS = new Map<
       title: "Elon Musk age",
       value: `${vars.age}`,
       description: "Calculated from DOB (1971-06-28). Updates automatically.",
+      longDescription: `Elon Musk is currently ${vars.age} years old (born June 28, 1971). His age is calculated automatically from his date of birth and updates daily. Get the current age of Elon Musk, Tesla and SpaceX CEO, with live calculations.`,
     }),
   ],
   [
@@ -36,6 +38,7 @@ const FACTS = new Map<
       title: "Elon Musk children count",
       value: `${vars.children_count}`,
       description: "A variable that can be updated over time.",
+      longDescription: `Elon Musk has ${vars.children_count} children. This count tracks his known children and can be updated as new information becomes available. Learn about Elon Musk's family and children count.`,
     }),
   ],
   [
@@ -44,6 +47,7 @@ const FACTS = new Map<
       title: "Elon Musk date of birth",
       value: vars.dob,
       description: "Stored as an ISO date and used to compute age.",
+      longDescription: `Elon Musk's date of birth is ${vars.dob} (June 28, 1971). The entrepreneur, CEO of Tesla and SpaceX, was born in Pretoria, South Africa. This fact is used to calculate his current age automatically.`,
     }),
   ],
   [
@@ -53,9 +57,19 @@ const FACTS = new Map<
       value: vars.net_worth,
       description:
         "An estimate that fluctuates with markets; treat as potentially outdated.",
+      longDescription: `Elon Musk's net worth: ${vars.net_worth}. This estimate fluctuates with Tesla stock and other holdings. Net worth values vary by source and timing - always verify with current financial data for accurate figures.`,
     }),
   ],
 ]);
+
+export function generateStaticParams() {
+  return [
+    { fact: "age" },
+    { fact: "children" },
+    { fact: "dob" },
+    { fact: "net-worth" },
+  ];
+}
 
 export async function generateMetadata({
   params,
@@ -73,7 +87,7 @@ export async function generateMetadata({
   return generateFactMetadata({
     title: info.title,
     value: info.value,
-    description: info.description,
+    description: info.longDescription,
     fact: params.fact,
   });
 }
@@ -92,7 +106,7 @@ export default async function FactPage({
   const jsonLd = [
     generateWebPageSchema({
       title: info.title,
-      description: `${info.description} Current value: ${info.value}. Quick facts about Elon Musk with live variables and AI chat.`,
+      description: info.longDescription,
       url: `/facts/${params.fact}`,
       breadcrumbs: [
         { name: "Home", url: "/" },

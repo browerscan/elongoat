@@ -1,4 +1,4 @@
-import "server-only";
+// Server-only module (import removed for backend compatibility)
 
 import { getRedis, getRedisFromPool } from "@/lib/redis";
 

@@ -6,12 +6,15 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
+import { RelatedContent } from "@/components/RelatedContent";
+import { SeeAlso } from "@/components/SeeAlso";
 import { getPaaAnswerContent } from "@/lib/contentGen";
 import { getCustomQa } from "@/lib/customQa";
 import {
   getPaaIndex,
   getTopQuestionSlugs,
   findPaaQuestion,
+  getClusterIndex,
 } from "@/lib/indexes";
 import { generateQaMetadata } from "@/lib/seo";
 import {
@@ -59,14 +62,19 @@ export default async function QuestionPage({
 }: {
   params: { slug: string };
 }) {
-  const [q, custom, vars, paa] = await Promise.all([
+  const [q, custom, vars, paa, cluster] = await Promise.all([
     findPaaQuestion(params.slug),
     getCustomQa(params.slug),
     getDynamicVariables(),
     getPaaIndex(),
+    getClusterIndex(),
   ]);
 
   if (!q && !custom) return notFound();
+
+  const questionText = q?.question ?? custom?.question ?? "";
+  const keywords = extractKeywords(questionText);
+  const relevantTopics = findRelevantTopics(keywords, cluster.topics);
 
   if (!q && custom) {
     // JSON-LD for custom Q&A
@@ -138,22 +146,13 @@ export default async function QuestionPage({
             </div>
           </section>
 
-          <section className="glass rounded-3xl p-6">
-            <h2 className="text-lg font-semibold text-white">More Q&A</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {paa.questions.slice(0, 8).map((s) => (
-                <Link
-                  key={s.slug}
-                  href={`/q/${s.slug}`}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <div className="text-sm font-semibold text-white">
-                    {s.question}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
+          <RelatedContent
+            type="qa"
+            questionText={questionText}
+            currentSlug={params.slug}
+          />
+
+          <SeeAlso type="qa" keywords={keywords} currentSlug={params.slug} />
         </article>
       </>
     );
@@ -300,6 +299,40 @@ export default async function QuestionPage({
             </div>
           </section>
         ) : null}
+
+        {/* Explore more section - links to relevant topics */}
+        {relevantTopics.length > 0 && (
+          <section className="glass rounded-3xl p-6">
+            <h2 className="text-lg font-semibold text-white">
+              Explore more about
+            </h2>
+            <p className="mt-2 text-sm text-white/60">
+              Browse topic hubs related to this question
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {relevantTopics.map((topic) => (
+                <Link
+                  key={topic.slug}
+                  href={`/${topic.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                >
+                  {topic.topic}
+                  <span className="text-xs text-white/50">
+                    ({topic.pageCount})
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <RelatedContent
+          type="qa"
+          questionText={questionText}
+          currentSlug={params.slug}
+        />
+
+        <SeeAlso type="qa" keywords={keywords} currentSlug={params.slug} />
       </article>
     </>
   );
@@ -314,4 +347,78 @@ function normalizeSourceUrl(url?: string | null): string | null {
   if (trimmed.startsWith("/search?")) return `https://www.google.com${trimmed}`;
   if (trimmed.startsWith("/")) return null;
   return null;
+}
+
+/**
+ * Extract keywords from question text
+ */
+function extractKeywords(text: string): string {
+  const stopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "can",
+    "need",
+    "what",
+    "when",
+    "where",
+    "who",
+    "why",
+    "how",
+    "much",
+    "many",
+    "this",
+    "that",
+  ]);
+
+  return text
+    .toLowerCase()
+    .replace(/[?'"]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !stopWords.has(w))
+    .join(" ");
+}
+
+/**
+ * Find relevant topics based on keywords
+ */
+function findRelevantTopics(
+  keywords: string,
+  topics: Array<{ slug: string; topic: string; pageCount: number }>,
+): Array<{ slug: string; topic: string; pageCount: number }> {
+  const keywordSet = new Set(keywords.split(/\s+/));
+
+  return topics
+    .map((topic) => {
+      const topicLower = topic.topic.toLowerCase();
+      const matchCount = [...keywordSet].filter((k) =>
+        topicLower.includes(k),
+      ).length;
+      return { topic, matchCount };
+    })
+    .filter((x) => x.matchCount > 0)
+    .sort((a, b) => b.matchCount - a.matchCount)
+    .slice(0, 6)
+    .map((x) => x.topic);
 }

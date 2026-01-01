@@ -1,0 +1,59 @@
+# robots.txt - Static fallback for ElonGoat
+# Site: https://elongoat.io
+# Updated: 2025-01-01
+
+# Allow all crawlers by default
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Polite crawl delay for all crawlers
+Crawl-delay: 1
+
+# Block OpenAI crawlers (content protection)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# Allow Anthropic crawlers selectively (research/citation benefits)
+User-agent: anthropic-ai
+Allow: /topics
+Allow: /q
+Allow: /facts
+Disallow: /admin
+Disallow: /api/
+Disallow: /x
+Disallow: /videos
+
+User-agent: Claude-Web
+Allow: /topics
+Allow: /q
+Allow: /facts
+Disallow: /admin
+Disallow: /api/
+Disallow: /x
+Disallow: /videos
+
+User-agent: Claude-Search
+Allow: /topics
+Allow: /q
+Allow: /facts
+Disallow: /admin
+Disallow: /api/
+Disallow: /x
+Disallow: /videos
+
+# Google AI crawler
+User-agent: Google-Extended
+Disallow: /
+
+# Sitemap reference
+Sitemap: https://elongoat.io/sitemap.xml

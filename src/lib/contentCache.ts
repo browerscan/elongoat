@@ -1,11 +1,27 @@
-import "server-only";
-
-import { getDbPool } from "@/lib/db";
 import {
-  get as tieredGet,
-  set as tieredSet,
-  buildKey,
-} from "@/lib/tieredCache";
+  calculateFreshness,
+  getFreshnessLabel,
+  getFreshnessColor,
+} from "@/lib/contentFreshness";
+
+// Lazy imports for backend-only dependencies
+let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
+let tieredGet: typeof import("@/lib/tieredCache").get | undefined;
+let tieredSet: typeof import("@/lib/tieredCache").set | undefined;
+let buildKey: typeof import("@/lib/tieredCache").buildKey | undefined;
+
+async function getBackendModules() {
+  try {
+    const dbModule = await import("@/lib/db");
+    const cacheModule = await import("@/lib/tieredCache");
+    getDbPool = dbModule.getDbPool;
+    tieredGet = cacheModule.get;
+    tieredSet = cacheModule.set;
+    buildKey = cacheModule.buildKey;
+  } catch {
+    // Modules not available in static export
+  }
+}
 
 // ============================================================================
 // Types
@@ -18,6 +34,12 @@ export type CachedContent = {
   contentMd: string;
   updatedAt: string;
   expiresAt: string | null;
+  freshness?: {
+    isStale: boolean;
+    status: "fresh" | "aging" | "stale";
+    label: string;
+    color: string;
+  };
 };
 
 export interface ContentCacheResult {
@@ -44,6 +66,7 @@ const L2_TTL_MS = Number.parseInt(
 // ============================================================================
 
 function buildContentCacheKey(kind: string, slug: string): string {
+  if (!buildKey) return `cc:content:${kind}:${slug}`;
   return buildKey(["content", kind, slug], "cc");
 }
 
@@ -55,7 +78,7 @@ async function fetchContentFromDatabase(
   kind: string,
   slug: string,
 ): Promise<CachedContent | null> {
-  const db = getDbPool();
+  const db = getDbPool?.();
   if (!db) return null;
 
   try {
@@ -105,14 +128,21 @@ async function fetchContentFromDatabase(
  * - Database: Persistent storage
  *
  * Returns the content along with metadata about where it was found.
+ * Includes freshness information if content is found.
  */
 export async function getCachedContent(params: {
   kind: string;
   slug: string;
+  includeFreshness?: boolean;
 }): Promise<CachedContent | null> {
+  await getBackendModules();
   const cacheKey = buildContentCacheKey(params.kind, params.slug);
 
   try {
+    if (!tieredGet) {
+      // Static export fallback - no cache
+      return null;
+    }
     const result = await tieredGet(
       cacheKey,
       () => fetchContentFromDatabase(params.kind, params.slug),
@@ -132,10 +162,39 @@ export async function getCachedContent(params: {
       );
     }
 
-    return result.data as CachedContent | null;
+    const content = result.data as CachedContent | null;
+
+    // Add freshness information if requested
+    if (content && params.includeFreshness !== false) {
+      const freshness = calculateFreshness(
+        content.updatedAt,
+        content.expiresAt,
+      );
+      content.freshness = {
+        isStale: freshness.isStale,
+        status: freshness.status,
+        label: getFreshnessLabel(freshness),
+        color: getFreshnessColor(freshness),
+      };
+    }
+
+    return content;
   } catch {
     // Fallback to direct database query on cache errors
-    return fetchContentFromDatabase(params.kind, params.slug);
+    const content = await fetchContentFromDatabase(params.kind, params.slug);
+    if (content && params.includeFreshness !== false) {
+      const freshness = calculateFreshness(
+        content.updatedAt,
+        content.expiresAt,
+      );
+      content.freshness = {
+        isStale: freshness.isStale,
+        status: freshness.status,
+        label: getFreshnessLabel(freshness),
+        color: getFreshnessColor(freshness),
+      };
+    }
+    return content;
   }
 }
 
@@ -146,10 +205,19 @@ export async function getCachedContentWithMetadata(params: {
   kind: string;
   slug: string;
 }): Promise<ContentCacheResult> {
+  await getBackendModules();
   const cacheKey = buildContentCacheKey(params.kind, params.slug);
   const startTime = performance.now();
 
   try {
+    if (!tieredGet) {
+      const content = await fetchContentFromDatabase(params.kind, params.slug);
+      return {
+        content,
+        source: "fallback",
+        latency: Math.round(performance.now() - startTime),
+      };
+    }
     const result = await tieredGet(
       cacheKey,
       () => fetchContentFromDatabase(params.kind, params.slug),
@@ -191,6 +259,7 @@ export async function setCachedContent(params: {
   ttlSeconds: number;
   sources?: unknown;
 }): Promise<void> {
+  await getBackendModules();
   const cacheKey = buildContentCacheKey(params.kind, params.slug);
   const expiresAt =
     params.ttlSeconds > 0
@@ -207,13 +276,15 @@ export async function setCachedContent(params: {
   };
 
   // Store in tiered cache
-  await tieredSet(cacheKey, payload, {
-    l1Ttl: Math.min(L1_TTL_MS, params.ttlSeconds * 1000),
-    l2Ttl: params.ttlSeconds * 1000,
-  });
+  if (tieredSet) {
+    await tieredSet(cacheKey, payload, {
+      l1Ttl: Math.min(L1_TTL_MS, params.ttlSeconds * 1000),
+      l2Ttl: params.ttlSeconds * 1000,
+    });
+  }
 
   // Store in database for persistence
-  const db = getDbPool();
+  const db = getDbPool?.();
   if (!db) return;
 
   try {

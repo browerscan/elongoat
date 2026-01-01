@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
-import { getTranscript, getVideo, listVideos } from "@/lib/videos";
+import { getTranscript, getVideo } from "@/lib/videos";
 import { generateVideoMetadata } from "@/lib/seo";
 import {
   generateBreadcrumbSchema,
@@ -16,10 +16,10 @@ import {
 
 export const revalidate = 3600;
 
+// Static params for export - return placeholder for ISR
+// Real video IDs are handled at runtime via ISR
 export async function generateStaticParams() {
-  // Only pre-render a small subset. Others are on-demand (ISR).
-  const videos = await listVideos(30);
-  return videos.map((v) => ({ videoId: v.videoId }));
+  return [{ videoId: "placeholder" }];
 }
 
 export async function generateMetadata({

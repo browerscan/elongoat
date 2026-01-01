@@ -39,6 +39,17 @@ export interface OptimizedImageProps extends Omit<ImageProps, "blurDataURL"> {
    * Whether to use a skeleton loader.
    */
   skeleton?: boolean;
+
+  /**
+   * Whether to use lazy loading (default: true for non-priority images).
+   */
+  lazy?: boolean;
+
+  /**
+   * Alt text is required for accessibility.
+   * Use empty string for purely decorative images.
+   */
+  alt: string;
 }
 
 // ============================================================================
@@ -94,7 +105,8 @@ function ImageSkeleton({
 /**
  * Production-optimized Next.js Image component with:
  * - Blur placeholders
- * - Lazy loading
+ * - Lazy loading (default for non-priority images)
+ * - Async decoding for non-blocking rendering
  * - Fade-in animation
  * - Skeleton loader option
  * - Proper srcsets (handled by Next.js)
@@ -107,7 +119,10 @@ export function OptimizedImage({
   fadeInDuration = 300,
   placeholderColor,
   skeleton = false,
+  lazy = true,
   className = "",
+  priority,
+  alt,
   ...props
 }: OptimizedImageProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +134,9 @@ export function OptimizedImage({
 
   // Determine if we should use blur placeholder
   const useBlur = blur && !skeleton;
+
+  // Determine loading strategy: priority images eager load, others lazy
+  const loadingStrategy = priority ? undefined : lazy ? "lazy" : undefined;
 
   // Handle image load
   const handleLoad = (): void => {
@@ -159,12 +177,15 @@ export function OptimizedImage({
             className
           }
           style={{ width: props.width, height: props.height }}
+          role="img"
+          aria-label={alt || "Error loading image"}
         >
           <svg
             className="h-8 w-8 text-gray-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -179,9 +200,12 @@ export function OptimizedImage({
       {!error && (
         <Image
           {...props}
+          alt={alt}
           placeholder={useBlur ? "blur" : "empty"}
           blurDataURL={useBlur ? defaultBlurDataURL : undefined}
           className={imageClassName}
+          loading={loadingStrategy as "lazy" | undefined}
+          decoding="async"
           onLoad={handleLoad}
           onError={handleError}
         />

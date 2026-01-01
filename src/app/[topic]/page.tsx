@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 
 import { FilterList, type FilterListItem } from "@/components/FilterList";
 import { JsonLd } from "@/components/JsonLd";
+import { RelatedContent } from "@/components/RelatedContent";
+import { SeeAlso } from "@/components/SeeAlso";
 import { findTopic, getClusterIndex, listTopicPages } from "@/lib/indexes";
 import { generateTopicMetadata } from "@/lib/seo";
 import {
@@ -114,14 +116,24 @@ export default async function TopicHubPage({
               >
                 Q&A
               </Link>
+              <Link
+                href="/facts"
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+              >
+                Facts
+              </Link>
             </div>
           </div>
         </div>
 
         <FilterList
           items={items}
-          placeholder={`Search inside “${topic.topic}”…`}
+          placeholder={`Search inside "${topic.topic}"…`}
         />
+
+        <RelatedContent type="topic" topicSlug={topic.slug} />
+
+        <SeeAlso type="page" keywords={topic.topic} topicSlug={topic.slug} />
       </div>
     </>
   );

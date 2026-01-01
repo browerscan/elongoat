@@ -7,6 +7,8 @@ import { CopyPromptButton } from "@/components/CopyPromptButton";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
+import { RelatedContent } from "@/components/RelatedContent";
+import { SeeAlso } from "@/components/SeeAlso";
 import { getClusterPageContent } from "@/lib/contentGen";
 import {
   findPage,
@@ -74,6 +76,11 @@ export default async function ClusterPage({
   const related = (await listTopicPages(page.topicSlug))
     .filter((p) => p.pageSlug !== page.pageSlug)
     .slice(0, 8);
+
+  const keywords = `${page.page} ${page.topic} ${page.topKeywords
+    .map((k) => k.keyword)
+    .slice(0, 5)
+    .join(" ")}`;
 
   // JSON-LD structured data
   const jsonLd = [
@@ -279,6 +286,19 @@ export default async function ClusterPage({
             ))}
           </div>
         </section>
+
+        <RelatedContent
+          type="page"
+          topicSlug={page.topicSlug}
+          currentSlug={page.slug}
+        />
+
+        <SeeAlso
+          type="page"
+          keywords={keywords}
+          topicSlug={page.topicSlug}
+          currentSlug={page.slug}
+        />
       </article>
     </>
   );

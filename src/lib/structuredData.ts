@@ -45,6 +45,8 @@ export function generateWebSiteSchema() {
  * Generate Organization schema
  */
 export function generateOrganizationSchema() {
+  const socialUrls = ["https://twitter.com/elongoat", "https://x.com/elongoat"];
+
   return {
     "@context": BASE_CONTEXT,
     "@type": "Organization",
@@ -54,12 +56,12 @@ export function generateOrganizationSchema() {
     description: getSiteConfig().description,
     logo: {
       "@type": "ImageObject",
-      url: `${SITE_URL}/logo.png`,
-      width: 512,
-      height: 512,
+      url: `${SITE_URL}/og-image.svg`,
+      width: 1200,
+      height: 630,
       caption: getSiteConfig().name,
     },
-    sameAs: [],
+    sameAs: socialUrls,
   };
 }
 
@@ -131,7 +133,7 @@ export function generateArticleSchema(params: {
       name: getSiteConfig().name,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/logo.png`,
+        url: `${SITE_URL}/logo.svg`,
       },
     },
     author: {

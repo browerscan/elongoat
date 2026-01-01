@@ -39,7 +39,7 @@ const SITE_CONFIG = {
     /\/$/,
     "",
   ),
-  ogImage: "/og-image.png",
+  ogImage: "/og-image.svg",
   twitterHandle: "@elongoat",
   twitterCard: "summary_large_image" as const,
   author: "ElonGoat",

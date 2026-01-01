@@ -1,9 +1,22 @@
-import "server-only";
-
-import { getDbPool } from "@/lib/db";
 import { getDynamicVariables } from "@/lib/variables";
 import { slugify } from "@/lib/slugify";
-import { vectorEngineChatComplete } from "@/lib/vectorengine";
+
+// Lazy imports for backend-only dependencies
+let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
+let vectorEngineChatComplete:
+  | typeof import("@/lib/vectorengine").vectorEngineChatComplete
+  | undefined;
+
+async function getBackendModules() {
+  try {
+    const dbModule = await import("@/lib/db");
+    const veModule = await import("@/lib/vectorengine");
+    getDbPool = dbModule.getDbPool;
+    vectorEngineChatComplete = veModule.vectorEngineChatComplete;
+  } catch {
+    // Modules not available in static export
+  }
+}
 
 const DEFAULT_CONTENT_MODEL = "claude-sonnet-4-5-20250929";
 
@@ -23,7 +36,8 @@ export type CustomQaRow = {
 };
 
 export async function getCustomQa(slug: string): Promise<CustomQaRow | null> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return null;
 
   try {
@@ -63,7 +77,8 @@ export async function getCustomQa(slug: string): Promise<CustomQaRow | null> {
 export async function listCustomQaSlugs(
   limit: number = 5000,
 ): Promise<string[]> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return [];
 
   const safeLimit = Math.max(1, Math.min(5000, limit));
@@ -91,7 +106,8 @@ export async function listLatestCustomQas(
     Pick<CustomQaRow, "slug" | "question" | "model" | "createdAt" | "updatedAt">
   >
 > {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return [];
 
   const safeLimit = Math.max(1, Math.min(50, limit));
@@ -132,7 +148,8 @@ export async function upsertCustomQa(params: {
   model: string | null;
   sources?: unknown;
 }): Promise<void> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) throw new Error("DATABASE_URL not configured");
 
   await db.query(
@@ -160,6 +177,7 @@ export async function generateCustomQa(params: {
   question: string;
   slug?: string;
 }): Promise<{ slug: string; answerMd: string; model: string }> {
+  await getBackendModules();
   const model = getContentModel();
   if (!model) throw new Error("VectorEngine content model not configured");
 
@@ -186,7 +204,7 @@ export async function generateCustomQa(params: {
     `Important: do not pretend you are the real Elon. If unsure, say what you'd verify.`,
   ].join("\n");
 
-  const completion = await vectorEngineChatComplete({
+  const completion = (await vectorEngineChatComplete?.({
     model,
     messages: [
       { role: "system", content: system },
@@ -194,7 +212,7 @@ export async function generateCustomQa(params: {
     ],
     temperature: 0.4,
     maxTokens: 950,
-  });
+  })) ?? { text: "" };
 
   const answerMd =
     completion.text.trim() || `## ElonSim answer\n\n(Empty response)\n`;

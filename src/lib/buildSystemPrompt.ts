@@ -1,4 +1,4 @@
-import "server-only";
+// Server-only module (import removed for backend compatibility)
 
 import type { DynamicVariables } from "@/lib/variables";
 
@@ -17,7 +17,10 @@ type IntentTag =
   | "tesla"
   | "ai"
   | "x"
+  | "doge"
+  | "politics"
   | "controversy"
+  | "climate"
   | "default";
 
 function uniq<T>(items: T[]): T[] {
@@ -28,25 +31,39 @@ export function classifyIntent(text: string): IntentTag[] {
   const t = text.toLowerCase();
   const tags: IntentTag[] = [];
 
-  if (/\b(mars|starship|red planet)\b/.test(t)) tags.push("mars");
+  if (/\b(mars|starship|red planet|coloniz|moon|lunar)\b/.test(t))
+    tags.push("mars");
   if (/\bspacex\b/.test(t)) tags.push("spacex");
   if (/\btesla\b/.test(t)) tags.push("tesla");
   if (
-    /\b(net worth|worth|stock|market|valuation|finance|money|shares)\b/.test(t)
+    /\b(net worth|worth|stock|market|valuation|finance|money|shares|billion|trillion)\b/.test(
+      t,
+    )
   )
     tags.push("finance");
   if (
-    /\b(kids|children|child|family|wife|husband|girlfriend|boyfriend|grimes)\b/.test(
+    /\b(kids|children|child|family|wife|husband|girlfriend|boyfriend|grimes|shivon|justine)\b/.test(
       t,
     )
   )
     tags.push("family");
-  if (/\b(ai|xai|grok|neuralink|alignment|safety|agi)\b/.test(t))
+  if (/\b(ai|xai|grok|neuralink|alignment|safety|agi|chatgpt|openai)\b/.test(t))
     tags.push("ai");
-  if (/\b(x\.com|twitter|tweet|posts|timeline|elonmusk)\b/.test(t))
+  if (/\b(x\.com|twitter|tweet|posts|timeline|elonmusk|blue bird)\b/.test(t))
     tags.push("x");
-  if (/\b(hitler|nazi|antisemit|lawsuit|fraud|scam)\b/.test(t))
+  if (/\b(doge|dogecoin|crypto|bitcoin|memecoin)\b/.test(t)) tags.push("doge");
+  if (
+    /\b(trump|biden|election|politic|government|regulation|fed|sec)\b/.test(t)
+  )
+    tags.push("politics");
+  if (/\b(hitler|nazi|antisemit|lawsuit|fraud|scam|controvers)\b/.test(t))
     tags.push("controversy");
+  if (
+    /\b(climate|carbon|emission|ev|electric vehicle|solar|energy|sustainab)\b/.test(
+      t,
+    )
+  )
+    tags.push("climate");
 
   return uniq(tags.length ? tags : ["default"]);
 }
@@ -81,6 +98,7 @@ function factsForTags(vars: DynamicVariables, tags: IntentTag[]): string[] {
   const lines: string[] = [];
   lines.push(`Identity: "ElonSim" (AI simulation), not the real Elon Musk.`);
   lines.push(`DOB: ${vars.dob} (age: ${vars.age}).`);
+  lines.push(`Date context: ${new Date().toISOString().split("T")[0]}.`);
 
   if (tags.includes("family"))
     lines.push(`Children (public reporting): ${vars.children_count}.`);
@@ -107,6 +125,16 @@ function safetyForTags(tags: IntentTag[]): string[] {
   if (tags.includes("controversy")) {
     lines.push(
       `Controversy: avoid defamatory claims; use neutral language and suggest verification.`,
+    );
+  }
+  if (tags.includes("politics")) {
+    lines.push(
+      `Politics: remain neutral. Don't take sides. Focus on public statements and actions.`,
+    );
+  }
+  if (tags.includes("doge")) {
+    lines.push(
+      `Crypto: highly volatile. Not financial advice. Mention risks clearly.`,
     );
   }
   return lines;

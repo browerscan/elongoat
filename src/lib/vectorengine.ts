@@ -1,4 +1,6 @@
-import "server-only";
+// Server-only module (import removed for backend compatibility)
+
+import { getCircuitBreaker } from "./circuitBreaker";
 
 export type LlmMessage = {
   role: "system" | "user" | "assistant";
@@ -17,6 +19,8 @@ type ChatCompletionResponse = {
   };
 };
 
+const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
+
 export function getVectorEngineChatUrl(): string | null {
   if (!process.env.VECTORENGINE_API_KEY) return null;
   const baseUrl =
@@ -27,11 +31,40 @@ export function getVectorEngineChatUrl(): string | null {
   return url;
 }
 
+/**
+ * Fetch with timeout using AbortController
+ */
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit & { timeout?: number },
+): Promise<Response> {
+  const { timeout = DEFAULT_TIMEOUT_MS, ...fetchInit } = init ?? {};
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(input, {
+      ...fetchInit,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
 export async function vectorEngineChatComplete(params: {
   model: string;
   messages: LlmMessage[];
   temperature?: number;
   maxTokens?: number;
+  timeout?: number;
 }): Promise<{ text: string; usage?: { totalTokens?: number } }> {
   const key = process.env.VECTORENGINE_API_KEY;
   const url = getVectorEngineChatUrl();
@@ -41,19 +74,29 @@ export async function vectorEngineChatComplete(params: {
     );
   }
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: params.model,
-      messages: params.messages,
-      stream: false,
-      temperature: params.temperature ?? 0.4,
-      max_tokens: params.maxTokens ?? 900,
-    }),
+  // Use circuit breaker for fault tolerance
+  const circuitBreaker = getCircuitBreaker("vectorengine", {
+    threshold: 5,
+    timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+    resetTimeout: 60000,
+  });
+
+  const res = await circuitBreaker.execute(async () => {
+    return fetchWithTimeout(url, {
+      method: "POST",
+      timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: params.model,
+        messages: params.messages,
+        stream: false,
+        temperature: params.temperature ?? 0.4,
+        max_tokens: params.maxTokens ?? 900,
+      }),
+    });
   });
 
   if (!res.ok) {
@@ -68,4 +111,59 @@ export async function vectorEngineChatComplete(params: {
     text: typeof content === "string" ? content : "",
     usage: { totalTokens: json.usage?.total_tokens },
   };
+}
+
+/**
+ * Stream chat completion with timeout
+ */
+export async function vectorEngineChatStream(params: {
+  model: string;
+  messages: LlmMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  timeout?: number;
+}): Promise<ReadableStream<Uint8Array>> {
+  const key = process.env.VECTORENGINE_API_KEY;
+  const url = getVectorEngineChatUrl();
+  if (!key || !url) {
+    throw new Error(
+      "VectorEngine not configured (missing VECTORENGINE_API_KEY)",
+    );
+  }
+
+  // Use circuit breaker for streaming too
+  const circuitBreaker = getCircuitBreaker("vectorengine-stream", {
+    threshold: 5,
+    timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+    resetTimeout: 60000,
+  });
+
+  const res = await circuitBreaker.execute(async () => {
+    return fetchWithTimeout(url, {
+      method: "POST",
+      timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: params.model,
+        messages: params.messages,
+        stream: true,
+        temperature: params.temperature ?? 0.7,
+        max_tokens: params.maxTokens ?? 900,
+      }),
+    });
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`VectorEngine error ${res.status}: ${text.slice(0, 300)}`);
+  }
+
+  if (!res.body) {
+    throw new Error("No response body from VectorEngine");
+  }
+
+  return res.body;
 }

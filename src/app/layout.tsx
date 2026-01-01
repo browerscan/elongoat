@@ -6,6 +6,8 @@ import { BackgroundFX } from "@/components/BackgroundFX";
 import { ChatWidget } from "@/components/ChatWidget";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SearchProvider } from "@/components/SearchProvider";
+import { SearchModal } from "@/components/SearchModal";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -55,6 +57,14 @@ export const metadata: Metadata = {
     siteName: "ElonGoat",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "ElonGoat — Digital Elon (AI)",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -111,25 +121,28 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-dvh bg-black text-white antialiased`}
       >
-        <BackgroundFX />
-        <SiteHeader />
-        <main className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6">
-          {children}
-        </main>
-        <footer className="mx-auto w-full max-w-6xl px-4 pb-10 text-xs text-white/50 md:px-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="text-white/70">
-              Disclaimer: This is an AI simulation built for information and
-              entertainment. Not affiliated with Elon Musk or his companies.
+        <SearchProvider>
+          <BackgroundFX />
+          <SiteHeader />
+          <main className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6">
+            {children}
+          </main>
+          <footer className="mx-auto w-full max-w-6xl px-4 pb-10 text-xs text-white/50 md:px-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-white/70">
+                Disclaimer: This is an AI simulation built for information and
+                entertainment. Not affiliated with Elon Musk or his companies.
+              </div>
+              <div className="mt-1">
+                © ElonGoat • Built on Next.js • Streaming chat in the corner
+              </div>
             </div>
-            <div className="mt-1">
-              © ElonGoat • Built on Next.js • Streaming chat in the corner
-            </div>
-          </div>
-        </footer>
-        <ErrorBoundary>
-          <ChatWidget />
-        </ErrorBoundary>
+          </footer>
+          <ErrorBoundary>
+            <ChatWidget />
+          </ErrorBoundary>
+          <SearchModal />
+        </SearchProvider>
       </body>
     </html>
   );

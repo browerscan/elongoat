@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 
 import { FilterList, type FilterListItem } from "@/components/FilterList";
 import { JsonLd } from "@/components/JsonLd";
@@ -118,12 +118,35 @@ export default async function Home() {
             </div>
 
             <dl className="mt-8 grid gap-3 sm:grid-cols-3">
-              <Stat label="Elon age (auto)" value={`${vars.age}`} />
-              <Stat
-                label="Children (variable)"
-                value={`${vars.children_count}`}
-              />
-              <Stat label="Net worth (variable)" value={vars.net_worth} />
+              <Link
+                href="/facts/age"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <div className="text-xs text-white/55">Elon age (auto)</div>
+                <div className="mt-1 text-xl font-semibold text-white">
+                  {vars.age}
+                </div>
+              </Link>
+              <Link
+                href="/facts/children"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <div className="text-xs text-white/55">Children (variable)</div>
+                <div className="mt-1 text-xl font-semibold text-white">
+                  {vars.children_count}
+                </div>
+              </Link>
+              <Link
+                href="/facts/net-worth"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <div className="text-xs text-white/55">
+                  Net worth (variable)
+                </div>
+                <div className="mt-1 text-xl font-semibold text-white">
+                  {vars.net_worth}
+                </div>
+              </Link>
             </dl>
           </div>
         </section>
@@ -144,6 +167,134 @@ export default async function Home() {
             value={`${paa.questions.length.toLocaleString()} questions`}
             subtitle="People Also Ask"
           />
+        </section>
+
+        {/* All topic hubs section */}
+        <section className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white">
+              Browse all topic hubs
+            </h2>
+            <Link
+              href="/topics"
+              className="text-sm text-white/60 transition hover:text-white"
+            >
+              View full list
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-white/60">
+            Explore {cluster.topics.length} topic hubs covering Tesla, SpaceX,
+            X/Twitter, and more.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {cluster.topics.map((topic) => (
+              <Link
+                key={topic.slug}
+                href={`/${topic.slug}`}
+                className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <span className="text-sm font-medium text-white group-hover:text-accent transition-colors">
+                  {topic.topic}
+                </span>
+                <span className="text-xs text-white/50">{topic.pageCount}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Quick facts section */}
+        <section className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-accent2" />
+              Quick facts
+            </h2>
+            <Link
+              href="/facts"
+              className="text-sm text-white/60 transition hover:text-white"
+            >
+              View all facts
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-white/60">
+            Dynamic variables that update automatically for fresh content.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <Link
+              href="/facts/age"
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+            >
+              <div className="text-xs text-white/55">Age</div>
+              <div className="mt-2 text-xl font-semibold text-white">
+                {vars.age}
+              </div>
+              <div className="mt-1 text-sm text-white/60">View details</div>
+            </Link>
+            <Link
+              href="/facts/children"
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+            >
+              <div className="text-xs text-white/55">Children</div>
+              <div className="mt-2 text-xl font-semibold text-white">
+                {vars.children_count}
+              </div>
+              <div className="mt-1 text-sm text-white/60">View details</div>
+            </Link>
+            <Link
+              href="/facts/dob"
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+            >
+              <div className="text-xs text-white/55">Date of Birth</div>
+              <div className="mt-2 text-xl font-semibold text-white">
+                {vars.dob}
+              </div>
+              <div className="mt-1 text-sm text-white/60">View details</div>
+            </Link>
+            <Link
+              href="/facts/net-worth"
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+            >
+              <div className="text-xs text-white/55">Net Worth</div>
+              <div className="mt-2 text-xl font-semibold text-white">
+                {vars.net_worth}
+              </div>
+              <div className="mt-1 text-sm text-white/60">View details</div>
+            </Link>
+          </div>
+        </section>
+
+        {/* Featured Q&A section */}
+        <section className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-white">
+              Featured questions
+            </h2>
+            <Link
+              href="/q"
+              className="text-sm text-white/60 transition hover:text-white"
+            >
+              Browse all Q&A
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-white/60">
+            Popular questions from the People Also Ask dataset.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {trendingQuestions.slice(0, 6).map((q) => (
+              <Link
+                key={q.id}
+                href={q.href}
+                className="block rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <div className="text-sm font-semibold text-white">
+                  {q.title}
+                </div>
+                {q.meta ? (
+                  <div className="mt-2 text-[11px] text-white/45">{q.meta}</div>
+                ) : null}
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-2">
@@ -251,15 +402,6 @@ export default async function Home() {
         </section>
       </div>
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="text-xs text-white/55">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-white">{value}</div>
-    </div>
   );
 }
 

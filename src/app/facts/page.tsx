@@ -2,44 +2,85 @@ import type { Metadata } from "next";
 
 import Link from "next/link";
 
+import { JsonLd } from "@/components/JsonLd";
 import { getDynamicVariables } from "@/lib/variables";
+import {
+  generateBreadcrumbSchema,
+  generateWebPageSchema,
+} from "@/lib/structuredData";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Facts",
-  description:
-    "Dynamic facts used across ElonGoat pages (age, net worth, children count).",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const vars = await getDynamicVariables();
+
+  return {
+    title: "Facts — Quick Elon Musk Information",
+    description: `Quick facts about Elon Musk: age (${vars.age}), children (${vars.children_count}), date of birth (${vars.dob}), and net worth estimate (${vars.net_worth}). Live variables that update automatically.`,
+    keywords: [
+      "Elon Musk age",
+      "Elon Musk net worth",
+      "Elon Musk children",
+      "Elon Musk date of birth",
+      "quick facts",
+    ],
+    openGraph: {
+      title: `Facts — Age: ${vars.age} • Net Worth: ${vars.net_worth}`,
+      description: `Quick facts about Elon Musk with live variables. Age: ${vars.age}, Children: ${vars.children_count}, DOB: ${vars.dob}.`,
+    },
+  };
+}
 
 export default async function FactsIndexPage() {
   const vars = await getDynamicVariables();
 
-  return (
-    <div className="space-y-6">
-      <div className="glass rounded-3xl p-6">
-        <h1 className="text-2xl font-semibold text-white">Facts</h1>
-        <p className="mt-2 max-w-2xl text-sm text-white/60">
-          These values are variables (env/db later) and are used to keep pSEO
-          pages fresh without regenerating content manually.
-        </p>
-      </div>
+  // JSON-LD structured data
+  const now = new Date().toISOString();
+  const jsonLd = [
+    generateWebPageSchema({
+      title: "Facts — Quick Elon Musk Information",
+      description: `Quick facts about Elon Musk: age (${vars.age}), children (${vars.children_count}), date of birth (${vars.dob}), and net worth estimate (${vars.net_worth}).`,
+      url: "/facts",
+      dateModified: now,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Facts", url: "/facts" },
+      ],
+    }),
+    generateBreadcrumbSchema([
+      { name: "Home", url: "/" },
+      { name: "Facts", url: "/facts" },
+    ]),
+  ];
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <FactCard title="Age" value={`${vars.age}`} href="/facts/age" />
-        <FactCard
-          title="Children count"
-          value={`${vars.children_count}`}
-          href="/facts/children"
-        />
-        <FactCard title="Date of birth" value={vars.dob} href="/facts/dob" />
-        <FactCard
-          title="Net worth (estimate)"
-          value={vars.net_worth}
-          href="/facts/net-worth"
-        />
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+      <div className="space-y-6">
+        <div className="glass rounded-3xl p-6">
+          <h1 className="text-2xl font-semibold text-white">Facts</h1>
+          <p className="mt-2 max-w-2xl text-sm text-white/60">
+            These values are variables (env/db later) and are used to keep pSEO
+            pages fresh without regenerating content manually.
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <FactCard title="Age" value={`${vars.age}`} href="/facts/age" />
+          <FactCard
+            title="Children count"
+            value={`${vars.children_count}`}
+            href="/facts/children"
+          />
+          <FactCard title="Date of birth" value={vars.dob} href="/facts/dob" />
+          <FactCard
+            title="Net worth (estimate)"
+            value={vars.net_worth}
+            href="/facts/net-worth"
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

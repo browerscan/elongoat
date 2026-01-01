@@ -1,4 +1,4 @@
-import "server-only";
+// Server-only module (import removed for backend compatibility)
 
 import Redis from "ioredis";
 export type { Redis } from "ioredis";
@@ -85,14 +85,29 @@ function createRedisInstance(): Redis {
 }
 
 /**
+ * Ensures the Redis client is connected before use.
+ * Idempotent - safe to call multiple times.
+ */
+async function ensureRedisConnected(redis: Redis): Promise<void> {
+  if (redis.status === "ready" || redis.status === "connecting") {
+    return;
+  }
+  if (redis.status === "end") {
+    // Client was closed, recreate it
+    if (redis === redisClient) {
+      redisClient = null;
+    }
+    throw new Error("Redis client was closed, cannot reconnect");
+  }
+  // For "connect" status, wait for ready
+  await redis.connect();
+}
+
+/**
  * Gets or creates the primary Redis client instance.
  */
 export function getRedis(): Redis | null {
   if (!REDIS_ENABLED) return null;
-
-  if (redisClient && redisClient.status === "ready") {
-    return redisClient;
-  }
 
   if (!redisClient) {
     redisClient = createRedisInstance();
@@ -104,6 +119,7 @@ export function getRedis(): Redis | null {
 /**
  * Gets a Redis client from the connection pool for load distribution.
  * Uses round-robin distribution across the pool.
+ * Connection is established lazily on first use.
  */
 export function getRedisFromPool(): Redis | null {
   if (!REDIS_ENABLED) return null;
@@ -111,16 +127,11 @@ export function getRedisFromPool(): Redis | null {
   const primary = getRedis();
   if (!primary) return null;
 
-  // Initialize pool if needed
+  // Initialize pool if needed (lazy initialization)
   if (!redisPool) {
     redisPool = [primary];
     for (let i = 1; i < MAX_POOL_SIZE; i++) {
-      const client = createRedisInstance();
-      // Pre-connect pool members
-      client.connect().catch(() => {
-        // Connection will be established on first use
-      });
-      redisPool.push(client);
+      redisPool.push(createRedisInstance());
     }
   }
 
@@ -129,6 +140,17 @@ export function getRedisFromPool(): Redis | null {
   poolIndex = (poolIndex + 1) % redisPool.length;
 
   return client;
+}
+
+/**
+ * Gets a Redis client from the pool and ensures it's connected.
+ * Use this when you need a connected client for operations.
+ */
+export async function getConnectedRedisFromPool(): Promise<Redis | null> {
+  const redis = getRedisFromPool();
+  if (!redis) return null;
+  await ensureRedisConnected(redis);
+  return redis;
 }
 
 /**
@@ -145,6 +167,7 @@ export function getRedisPrimary(): Redis | null {
 /**
  * Creates a Redis pipeline for batched operations.
  * Pipelines reduce network round-trips by queuing multiple commands.
+ * The client will be connected automatically when the pipeline is executed.
  */
 export function createPipeline(): ReturnType<Redis["pipeline"]> | null {
   const redis = getRedisFromPool();
@@ -158,7 +181,7 @@ export function createPipeline(): ReturnType<Redis["pipeline"]> | null {
 }
 
 /**
- * Executes a pipeline with error handling.
+ * Executes a pipeline with error handling and ensures connection.
  */
 export async function executePipeline(
   pipeline: { exec: () => Promise<unknown[]> } | null,
@@ -184,23 +207,12 @@ export async function executePipeline(
  */
 export async function mget(keys: string[]): Promise<(string | null)[] | null> {
   if (keys.length === 0) return [];
-  if (keys.length === 1) {
-    const redis = getRedis();
-    if (!redis) return null;
-    try {
-      await redis.connect();
-      const val = await redis.get(keys[0]);
-      return [val];
-    } catch {
-      return null;
-    }
-  }
 
   const redis = getRedis();
   if (!redis) return null;
 
   try {
-    await redis.connect();
+    await ensureRedisConnected(redis);
     return await redis.mget(...keys);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
@@ -220,7 +232,7 @@ export async function mset(
   if (!redis) return false;
 
   try {
-    await redis.connect();
+    await ensureRedisConnected(redis);
     await redis.mset(keyValuePairs);
     return true;
   } catch (error) {
@@ -236,22 +248,12 @@ export async function mset(
  */
 export async function mdel(keys: string[]): Promise<number> {
   if (keys.length === 0) return 0;
-  if (keys.length === 1) {
-    const redis = getRedis();
-    if (!redis) return 0;
-    try {
-      await redis.connect();
-      return (await redis.del(keys[0])) ?? 0;
-    } catch {
-      return 0;
-    }
-  }
 
   const redis = getRedis();
   if (!redis) return 0;
 
   try {
-    await redis.connect();
+    await ensureRedisConnected(redis);
     return await redis.del(...keys);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
@@ -283,7 +285,7 @@ export async function checkRedisHealth(): Promise<RedisHealthStatus> {
   }
 
   try {
-    await redis.connect();
+    await ensureRedisConnected(redis);
     const result = await redis.ping();
     const latency = Math.round(performance.now() - startTime);
 

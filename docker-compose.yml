@@ -5,11 +5,12 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      # Nginx-proxy auto-discovery
-      - VIRTUAL_HOST=${DOMAIN:-elongoat.io}
-      - LETSENCRYPT_HOST=${DOMAIN:-elongoat.io}
+      # Nginx-proxy auto-discovery for backend API
+      - VIRTUAL_HOST=${API_DOMAIN:-api.elongoat.io}
+      - LETSENCRYPT_HOST=${API_DOMAIN:-api.elongoat.io}
       - VIRTUAL_PORT=3000
-      - NEXT_PUBLIC_SITE_URL=https://${DOMAIN:-elongoat.io}
+      - NEXT_PUBLIC_SITE_URL=https://${SITE_DOMAIN:-elongoat.io}
+      - NEXT_PUBLIC_API_URL=https://${API_DOMAIN:-api.elongoat.io}
 
       # VectorEngine (server-only)
       - VECTORENGINE_API_KEY=${VECTORENGINE_API_KEY}
@@ -31,14 +32,16 @@ services:
       - CHAT_TYPING_QUIRK=${CHAT_TYPING_QUIRK:-1}
       - CHAT_ANALYTICS_ENABLED=${CHAT_ANALYTICS_ENABLED:-0}
 
-      # Admin (optional; required for /api/admin/*)
-      - ELONGOAT_ADMIN_TOKEN=${ELONGOAT_ADMIN_TOKEN:-}
+      # Admin (required for /api/admin/* - must be explicitly set)
+      - ELONGOAT_ADMIN_TOKEN=${ELONGOAT_ADMIN_TOKEN}
 
       # X monitor (optional; determines primary handle displayed on /x)
       - X_HANDLES=${X_HANDLES:-elonmusk}
 
     volumes:
       - ./data:/app/data:ro
+    ports:
+      - "3000:3000" # Expose port for direct health checks
     networks:
       - proxy-tier
       - supabase-tier

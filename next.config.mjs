@@ -8,6 +8,13 @@ const nextConfig = {
 
   // Standalone output for VPS Docker deployment
   output: "standalone",
+
+  // API routes enabled for backend
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["elongoat.io", "api.elongoat.io"],
+    },
+  },
 };
 
 export default nextConfig;

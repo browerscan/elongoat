@@ -3,6 +3,18 @@ name: Deploy Backend to VPS
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "data/**"
+      - "backend/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.backend.mjs"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
 jobs:
@@ -36,13 +48,15 @@ jobs:
             --exclude '.env.local' \
             --exclude 'data/generated' \
             --exclude 'out' \
+            --exclude 'next.config.mjs' \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}/
 
       - name: Deploy on VPS
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && make deploy"
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && cp next.config.backend.mjs next.config.mjs && make deploy"
 
       - name: Health check
         run: |
-          sleep 10
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && make health || echo 'Health check pending...'"
+          echo "Waiting for container to start..."
+          sleep 30
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "curl -sf http://localhost:3000/api/healthz || echo 'Health check failed'"

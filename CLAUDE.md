@@ -34,6 +34,11 @@ npm run db:apply-schema      # Apply PostgreSQL schema
 npm run db:import:all        # Import all data (clusters + PAA + metrics)
 npm run db:seed:variables    # Seed dynamic variables
 
+# Content Generation (requires DATABASE_URL + /codex skill)
+npm run generate:all-clusters  # Generate ALL 73,550 cluster pages (6 parallel threads, 1200+ words each)
+npm run generate:questions     # Generate PAA questions (default: top 1000 by volume, 800+ words each)
+npm run generate:questions -- --min-volume 100 --limit 5000  # Custom filters
+
 # Workers (run separately with env vars)
 DATABASE_URL=... npm run worker:x        # X/Twitter ingest
 SOAX_API_SECRET=... DATABASE_URL=... npm run worker:videos  # Video ingest
@@ -123,6 +128,45 @@ data/
 - Rate limiting via Redis (20 chat messages/hour/IP default)
 - Dynamic variables (age, children_count, net_worth) can be hot-updated via DB
 - Content generation uses VectorEngine with configurable models
+
+## RAG Content Generation System
+
+ElonGoat uses a hybrid RAG (Retrieval-Augmented Generation) system for high-quality content:
+
+**Architecture:**
+
+- RAG query engine: `src/lib/rag.ts`
+- Content generation: `src/lib/contentGenEnhanced.ts`
+- Codex integration: `backend/lib/codex.ts`
+- Batch processing: 6 parallel threads via `/codex` skill
+
+**Data Sources & Weights:**
+
+1. **Content Cache** (weight 1.0): Previously generated high-quality content
+2. **PAA Tree** (weight 0.6): Google "People Also Ask" data with answers
+3. **Cluster Pages** (weight 0.3): Site architecture and keyword mapping
+
+**Generation Pipeline:**
+
+1. Query builds RAG context from all sources using PostgreSQL full-text search
+2. Prompt combines: page metadata + top keywords + RAG contexts + dynamic variables
+3. `/codex` skill generates 1200+ word articles (clusters) or 800+ word answers (PAA)
+4. Word count validation (warnings only, no retries)
+5. Results cached to `content_cache` table with 30-day TTL
+
+**Progress Tracking:**
+
+- Cluster generation: `data/generated/cluster_generation_progress.json`
+- Question generation: `data/generated/question_generation_progress.json`
+- Both support resume on interruption (checks DB for existing content)
+
+**Quality Targets:**
+
+- Cluster pages: 1200+ words minimum
+- PAA answers: 800+ words minimum
+- Structured markdown with proper headings
+- Timeframes cited for all facts
+- SEO-optimized with natural keyword integration
 
 ## Deployment
 

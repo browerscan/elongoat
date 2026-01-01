@@ -10,7 +10,9 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: ["/admin", "/api/", "/_next/", "/static/"],
+        crawlDelay: 1,
       },
+      // Block aggressive AI scrapers (content protection)
       {
         userAgent: "GPTBot",
         disallow: ["/"],
@@ -23,12 +25,21 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "CCBot",
         disallow: ["/"],
       },
+      // Allow research-focused AI crawlers selectively
+      // These may provide citation/attribution benefits
       {
-        userAgent: "anthropic-ai",
-        disallow: ["/"],
+        userAgent: ["anthropic-ai", "Claude-Web", "Claude-Search"],
+        allow: ["/topics", "/q", "/facts"],
+        disallow: ["/admin", "/api/", "/x", "/videos"],
+      },
+      // Google-specific directives
+      {
+        userAgent: "Googlebot",
+        allow: "/",
+        disallow: ["/admin", "/api/"],
       },
       {
-        userAgent: "Claude-Web",
+        userAgent: "Google-Extended",
         disallow: ["/"],
       },
     ],

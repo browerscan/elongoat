@@ -26,11 +26,30 @@ jobs:
       - name: Generate indexes
         run: npm run generate:indexes
 
+      - name: Prepare frontend build
+        run: |
+          # Use export config for Cloudflare Pages static build
+          cp next.config.export.mjs next.config.mjs
+          # Temporarily move API routes out so they don't interfere with static export
+          mkdir -p .api-backup
+          mv src/app/api .api-backup/ || true
+          mv src/app/search .api-backup/ || true
+          mv src/app/x .api-backup/ || true
+          mv src/app/admin .api-backup/ || true
+
       - name: Build static export
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://elongoat.io
           NEXT_PUBLIC_API_URL: https://api.elongoat.io
+
+      - name: Restore API routes
+        run: |
+          mv .api-backup/api src/app/ || true
+          mv .api-backup/search src/app/ || true
+          mv .api-backup/x src/app/ || true
+          mv .api-backup/admin src/app/ || true
+          rm -rf .api-backup || true
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1

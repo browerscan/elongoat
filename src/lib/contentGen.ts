@@ -1,5 +1,3 @@
-import "server-only";
-
 import { findPage, findPaaQuestion } from "@/lib/indexes";
 import { getCachedContent, setCachedContent } from "@/lib/contentCache";
 import { getDynamicVariables } from "@/lib/variables";
@@ -68,11 +66,13 @@ export async function generateClusterPageContent(params: {
     .join("\n");
 
   const system = [
-    `You are a senior SEO editor + technical writer.`,
+    `You are a senior SEO editor + technical writer with expertise in Elon Musk and his ventures.`,
     `Goal: write a high-quality, fact-safe, non-clickbait Markdown brief for a page in an "Elon Musk knowledge base" site.`,
-    `Important: You are NOT writing as Elon. You are an analyst.`,
-    `Never invent private details or claim insider access.`,
-    `If you are unsure, say you are unsure and suggest how to verify.`,
+    `Important: You are NOT writing as Elon. You are an objective analyst.`,
+    `Never invent private details or claim insider access. Only use public information.`,
+    `If you are unsure, explicitly say so and suggest how to verify.`,
+    `Always cite approximate timeframes for facts (e.g., "as of 2025", "in 2021").`,
+    `Include current date context: ${new Date().toISOString().split("T")[0]}.`,
     `Output: Markdown only.`,
   ].join("\n");
 
@@ -85,15 +85,18 @@ export async function generateClusterPageContent(params: {
     `TOP QUERIES (from keyword data):`,
     keywordLines || "- (none)",
     ``,
-    `Write a page with the following structure:`,
-    `1) ## TL;DR (2–4 bullets)`,
-    `2) ## What people usually mean by "${page.page}"`,
-    `3) ## Key angles / sub-questions (5–8 bullets)`,
-    `4) ## Practical answer framework (step-by-step)`,
+    `Write a comprehensive page with the following structure:`,
+    `1) ## TL;DR (2–4 bullets summarizing key points)`,
+    `2) ## What people usually mean by "${page.page}" (context)`,
+    `3) ## Key angles / sub-questions (5–8 bullets covering different aspects)`,
+    `4) ## Practical answer framework (step-by-step explanation)`,
     `5) ## FAQ (5 questions + short answers)`,
     `6) ## Sources & verification (list reputable sources to check)`,
+    `7) ## Freshness note (mention when this information might become outdated)`,
     ``,
-    `Tone: crisp, high signal, mildly techy.`,
+    `Tone: crisp, high signal, mildly techy, SEO-optimized.`,
+    `Include relevant keywords naturally from the queries list.`,
+    `Add timestamps/timeframes for any time-sensitive information.`,
   ].join("\n");
 
   const completion = await vectorEngineChatComplete({
@@ -169,26 +172,32 @@ export async function generatePaaAnswer(params: {
   if (!model) throw new Error("VectorEngine content model not configured");
 
   const system = [
-    `You are a senior research writer.`,
+    `You are a senior research writer specializing in Elon Musk and his companies.`,
     `You must be factual and cautious; do not invent private information.`,
-    `You are NOT Elon Musk.`,
+    `You are NOT Elon Musk. You are an objective analyst.`,
+    `Always include timeframes for facts (e.g., "as of late 2025", "in 2021").`,
+    `Current date: ${new Date().toISOString().split("T")[0]}.`,
     `Output: Markdown only.`,
   ].join("\n");
 
   const user = [
     `QUESTION: ${q.question}`,
-    q.answer ? `SNIPPET (may be outdated): ${q.answer}` : `SNIPPET: (none)`,
+    q.answer
+      ? `EXISTING SNIPPET (may be outdated): ${q.answer}`
+      : `EXISTING SNIPPET: (none)`,
     q.sourceUrl ? `SOURCE URL (may be partial): ${q.sourceUrl}` : "",
     ``,
     `VARIABLES: age=${vars.age}, children_count=${vars.children_count}, net_worth="${vars.net_worth}", dob=${vars.dob}`,
     ``,
-    `Write:`,
-    `1) ## Short answer (3–6 sentences)`,
-    `2) ## Longer answer (2–4 short paragraphs)`,
+    `Write a comprehensive answer with the following structure:`,
+    `1) ## Short answer (3–6 sentences with timeframe)`,
+    `2) ## Detailed explanation (2–4 short paragraphs with context)`,
     `3) ## What to verify / common misconceptions (bullets)`,
-    `4) ## Sources to check (bullets)`,
+    `4) ## Freshness indicator (when this info might change)`,
+    `5) ## Sources to check (specific, reputable sources)`,
     ``,
     `Avoid sensationalism. If topic is uncertain or controversial, emphasize verification.`,
+    `For financial info, always note volatility and suggest checking real-time sources.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -231,6 +240,7 @@ function staticClusterMarkdown(
     intent?: string;
   }[],
 ) {
+  const currentDate = new Date().toISOString().split("T")[0];
   const kw = topKeywords
     .slice(0, 12)
     .map(
@@ -243,9 +253,10 @@ function staticClusterMarkdown(
     `## TL;DR`,
     `- This page is part of the **${topic}** hub.`,
     `- Use the chat (bottom-right) to get a tailored answer; this site is an AI simulation, not Elon Musk.`,
+    `- Information current as of ${currentDate}.`,
     ``,
     `## What people usually mean`,
-    `Searchers using “${title}” are typically looking for quick context + the latest credible sources.`,
+    `Searchers using "${title}" are typically looking for quick context + the latest credible sources.`,
     ``,
     `## Top queries`,
     kw || "- (none)",
@@ -253,10 +264,17 @@ function staticClusterMarkdown(
     `## Notes`,
     `- Variables: Elon age is currently **${age}** (auto-calculated).`,
     `- Live finance/news can change quickly — verify with primary sources.`,
+    ``,
+    `## Freshness indicators`,
+    `- **Financial data**: Check real-time sources (stock prices, funding rounds)`,
+    `- **Company news**: Verify recent announcements from official channels`,
+    `- **Biographical info**: Relatively stable but check for recent updates`,
   ].join("\n");
 }
 
 function staticPaaMarkdown(question: string, snippet: string | null) {
+  const currentDate = new Date().toISOString().split("T")[0];
+
   return [
     `## Short answer`,
     snippet
@@ -264,11 +282,18 @@ function staticPaaMarkdown(question: string, snippet: string | null) {
       : `No snippet was captured for this question. Use chat for a generated answer.`,
     ``,
     `## What to verify`,
-    `- Dates/timeframes`,
+    `- Dates/timeframes (information may have changed since ${currentDate})`,
     `- Primary sources (SEC filings, official press releases, reputable outlets)`,
+    `- Recent news articles for the most up-to-date information`,
+    ``,
+    `## Freshness indicator`,
+    `- Financial information: changes daily, check real-time sources`,
+    `- Family/biographical info: relatively stable but verify recent updates`,
+    `- Company news: can change rapidly, check official announcements`,
     ``,
     `## Sources`,
     `- Try searching reputable sources and cross-check claims.`,
+    `- Official company accounts: @SpaceX, @Tesla, @x.ai`,
     ``,
     `> Note: This site includes an AI simulation ("ElonSim"), not the real person.`,
   ].join("\n");

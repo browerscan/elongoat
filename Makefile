@@ -37,7 +37,7 @@ clean:
 # Health check
 health:
 	@echo "🏥 Checking health..."
-	@curl -sf http://localhost:3000/api/health || echo "❌ Health check failed"
+	@curl -sf http://localhost:3000/api/health || (echo "❌ Local health check failed" && curl -sf https://$${API_DOMAIN:-api.elongoat.io}/api/health || echo "❌ External health check failed")
 
 # Apply database schema
 db-schema:
@@ -45,3 +45,10 @@ db-schema:
 	@test -f .env && export $$(grep -v '^#' .env | xargs) && \
 		psql "$$DATABASE_URL" -f backend/supabase/schema.sql
 	@echo "✅ Schema applied"
+
+# Seed content (PAA answers, sample videos/tweets)
+db-seed-content:
+	@echo "🌱 Seeding content..."
+	@test -f .env && export $$(cat .env | xargs) && \
+		npx tsx backend/scripts/seed_content.ts
+	@echo "✅ Content seeding complete"

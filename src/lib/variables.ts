@@ -1,9 +1,19 @@
-import "server-only";
-
 import { z } from "zod";
 
-import { getDbPool } from "@/lib/db";
-import { getRedis } from "@/lib/redis";
+// Lazy imports for backend-only dependencies
+let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
+let getRedis: typeof import("@/lib/redis").getRedis | undefined;
+
+async function getBackendModules() {
+  try {
+    const dbModule = await import("@/lib/db");
+    const redisModule = await import("@/lib/redis");
+    getDbPool = dbModule.getDbPool;
+    getRedis = redisModule.getRedis;
+  } catch {
+    // Modules not available in static export
+  }
+}
 
 const IsoDateSchema = z
   .string()
@@ -30,7 +40,10 @@ export function calculateAge(dobIso: string, now: Date = new Date()): number {
 }
 
 export async function getDynamicVariables(): Promise<DynamicVariables> {
-  const redis = getRedis();
+  // Load backend modules lazily (works in static export)
+  await getBackendModules();
+
+  const redis = getRedis?.();
   if (redis) {
     try {
       await redis.connect();
@@ -57,7 +70,7 @@ export async function getDynamicVariables(): Promise<DynamicVariables> {
   let net_worth = envNetWorth;
   let updatedAt = new Date().toISOString();
 
-  const db = getDbPool();
+  const db = getDbPool?.();
   if (db) {
     try {
       const res = await db.query<{

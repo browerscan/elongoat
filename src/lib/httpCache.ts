@@ -1,5 +1,3 @@
-import "server-only";
-
 import { NextResponse } from "next/server";
 
 // ============================================================================

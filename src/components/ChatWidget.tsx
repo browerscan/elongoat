@@ -15,6 +15,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 
 import { deriveChatUx, shouldGlitchText } from "@/lib/chatUi";
 
@@ -273,7 +276,10 @@ export function ChatWidget() {
       }
 
       try {
-        const res = await fetch("/api/chat", {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/chat`
+          : "/api/chat";
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -749,22 +755,57 @@ export function ChatWidget() {
   );
 }
 
+/**
+ * Safely render markdown content with XSS protection.
+ * Uses react-markdown with rehype-sanitize to prevent injection attacks.
+ */
 function renderMessage(content: string): React.ReactNode {
-  // Minimal markdown-ish bold support for the opening disclaimer.
-  const parts = content.split("**");
-  if (parts.length === 1) return content;
   return (
-    <>
-      {parts.map((p, idx) =>
-        idx % 2 === 1 ? (
-          <strong key={idx} className="font-semibold text-white">
-            {p}
-          </strong>
-        ) : (
-          <span key={idx}>{p}</span>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeSanitize]}
+      components={{
+        // Customize styling for markdown elements
+        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+        strong: ({ children }) => (
+          <strong className="font-semibold text-white">{children}</strong>
         ),
-      )}
-    </>
+        em: ({ children }) => (
+          <em className="italic text-white/90">{children}</em>
+        ),
+        ul: ({ children }) => (
+          <ul className="ml-4 list-disc space-y-1">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="ml-4 list-decimal space-y-1">{children}</ol>
+        ),
+        li: ({ children }) => <li className="text-white/80">{children}</li>,
+        code: ({ className, children }) => {
+          const isInline = !className;
+          return isInline ? (
+            <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/90">
+              {children}
+            </code>
+          ) : (
+            <code className="block rounded bg-white/10 p-2 text-xs text-white/90">
+              {children}
+            </code>
+          );
+        },
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            className="text-white/70 underline underline-offset-2 hover:text-white"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+          >
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   );
 }
 

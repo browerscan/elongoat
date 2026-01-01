@@ -1,6 +1,14 @@
-import "server-only";
+// Lazy imports for backend-only dependencies
+let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
 
-import { getDbPool } from "@/lib/db";
+async function getBackendModules() {
+  try {
+    const dbModule = await import("@/lib/db");
+    getDbPool = dbModule.getDbPool;
+  } catch {
+    // Modules not available in static export
+  }
+}
 
 export type VideoRow = {
   videoId: string;
@@ -22,7 +30,8 @@ export type TranscriptRow = {
 };
 
 export async function listVideos(limit: number = 50): Promise<VideoRow[]> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return [];
 
   try {
@@ -69,7 +78,8 @@ export async function listVideos(limit: number = 50): Promise<VideoRow[]> {
 export async function getTranscript(
   videoId: string,
 ): Promise<TranscriptRow | null> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return null;
 
   try {
@@ -99,7 +109,8 @@ export async function getTranscript(
 }
 
 export async function getVideo(videoId: string): Promise<VideoRow | null> {
-  const db = getDbPool();
+  await getBackendModules();
+  const db = getDbPool?.();
   if (!db) return null;
 
   try {
