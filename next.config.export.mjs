@@ -16,28 +16,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-
-  // Exclude API routes from static export
-  // This regex matches all API routes
-  exportPathMap: async function (
-    defaultPathMap,
-    { dev, dir, outDir, distDir, buildId },
-  ) {
-    // Only export non-API routes
-    const exportMap = {};
-    for (const [path, page] of Object.entries(defaultPathMap)) {
-      // Skip API routes entirely
-      if (path.startsWith("/api/")) {
-        continue;
-      }
-      // Skip dynamic pages that require runtime data
-      if (path === "/search" || path.startsWith("/x/")) {
-        continue;
-      }
-      exportMap[path] = page;
-    }
-    return exportMap;
-  },
 };
 
 export default nextConfig;
