@@ -41,6 +41,8 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: https://elongoat.io
           NEXT_PUBLIC_API_URL: https://api.elongoat.io
+          VALIDATE_ENV_ON_STARTUP: "0"
+          NODE_ENV: production
 
       - name: Restore API routes
         run: |
