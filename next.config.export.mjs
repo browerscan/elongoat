@@ -24,7 +24,7 @@ const nextConfig = {
     { dev, dir, outDir, distDir, buildId },
   ) {
     // Only export non-API routes
-    const exportMap: Record<string, { page: string }> = {};
+    const exportMap = {};
     for (const [path, page] of Object.entries(defaultPathMap)) {
       // Skip API routes entirely
       if (path.startsWith("/api/")) {
