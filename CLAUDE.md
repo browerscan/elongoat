@@ -67,6 +67,8 @@ BACKEND (VPS Docker - api.elongoat.io)
 │   ├── /api/data/*      # Data APIs (cluster, topic, page, qa)
 │   ├── /api/chat        # Streaming SSE chat (VectorEngine)
 │   ├── /api/variables   # Dynamic variables
+│   ├── /api/metrics     # Prometheus-compatible metrics
+│   ├── /api/health      # Health check with component status
 │   └── /api/admin/*     # Admin endpoints
 ├── Database (PostgreSQL via Supabase)
 ├── Cache (Redis)
@@ -206,14 +208,105 @@ Uses `nginx-proxy_default`, `supabase_default`, and `redis_default` external net
 
 ## Key Routes
 
-| Route           | Description                   |
-| --------------- | ----------------------------- |
-| `/topics`       | All topic hubs                |
-| `/:topic`       | Topic hub page                |
-| `/:topic/:page` | Keyword page                  |
-| `/q`            | Q&A index                     |
-| `/q/:slug`      | Q&A detail                    |
-| `/videos`       | Video index                   |
-| `/x`            | X timeline mirror             |
-| `/admin`        | Admin panel (token-protected) |
-| `/api/chat`     | Streaming chat endpoint       |
+| Route           | Description                        |
+| --------------- | ---------------------------------- |
+| `/topics`       | All topic hubs                     |
+| `/:topic`       | Topic hub page                     |
+| `/:topic/:page` | Keyword page                       |
+| `/q`            | Q&A index                          |
+| `/q/:slug`      | Q&A detail                         |
+| `/videos`       | Video index                        |
+| `/x`            | X timeline mirror                  |
+| `/admin`        | Admin panel (token-protected)      |
+| `/api/chat`     | Streaming chat endpoint            |
+| `/api/metrics`  | Prometheus metrics (optional auth) |
+| `/api/health`   | Health check with latency          |
+
+## Monitoring & Metrics
+
+The backend exposes Prometheus-compatible metrics at `/api/metrics`:
+
+```bash
+# Without auth (if METRICS_TOKEN is not set)
+curl https://api.elongoat.io/api/metrics
+
+# With auth (if METRICS_TOKEN is set)
+curl -H "Authorization: Bearer $METRICS_TOKEN" https://api.elongoat.io/api/metrics
+```
+
+**Available Metrics:**
+
+| Metric                         | Type  | Description                     |
+| ------------------------------ | ----- | ------------------------------- |
+| `nodejs_heap_used_bytes`       | gauge | Process heap memory used        |
+| `db_pool_utilization_percent`  | gauge | Database pool utilization       |
+| `redis_latency_ms`             | gauge | Redis ping latency              |
+| `cache_hit_rate`               | gauge | Overall cache hit rate (0-1)    |
+| `http_request_duration_p95_ms` | gauge | 95th percentile request latency |
+| `http_error_rate`              | gauge | HTTP error rate (0-1)           |
+
+**Cache Warmup:**
+
+On container startup, the entrypoint script automatically warms critical caches:
+
+```bash
+# Environment variables
+WARMUP_DELAY_MS=10    # Delay before warmup (seconds)
+SKIP_WARMUP=0         # Set to 1 to disable warmup
+```
+
+**Docker Resource Limits:**
+
+```yaml
+# docker-compose.yml
+mem_limit: 1024m
+memswap_limit: 1536m
+cpus: 2.0
+```
+
+## RAG API
+
+Production-ready RAG search API with authentication, rate limiting, and caching.
+
+**Authentication:** `X-API-Key` header with `ELONGOAT_RAG_API_KEY`
+
+| Endpoint                 | Method | Description                                   |
+| ------------------------ | ------ | --------------------------------------------- |
+| `/api/rag/search`        | POST   | Full-text search across all sources           |
+| `/api/rag/hybrid`        | POST   | Hybrid search (full-text + vector similarity) |
+| `/api/rag/article/:slug` | GET    | Get full article by slug                      |
+| `/api/rag/stats`         | GET    | Knowledge base statistics                     |
+| `/api/rag/topics`        | GET    | List all topics with counts                   |
+| `/api/rag/health`        | GET    | Health check (no auth required)               |
+| `/api/rag/cache`         | GET    | Cache statistics                              |
+| `/api/rag/cache`         | DELETE | Clear all cache                               |
+
+**Search Request:**
+
+```json
+{
+  "query": "elon musk net worth",
+  "sources": ["content_cache", "paa", "cluster"],
+  "limit": 10,
+  "min_score": 0.01,
+  "full_text_weight": 0.5, // hybrid only
+  "semantic_weight": 0.5 // hybrid only
+}
+```
+
+**Rate Limits:**
+
+- Search: 100 req/min
+- Article: 200 req/min
+- Stats/Topics: 60 req/min
+
+**Vector Search Setup:**
+
+```bash
+# Apply pgvector migration
+npm run db:apply-vectors
+
+# Generate embeddings (requires OPENAI_API_KEY)
+npm run generate:embeddings
+npm run generate:embeddings -- --table content_cache --skip-existing
+```

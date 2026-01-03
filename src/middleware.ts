@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSecurityHeaders } from "@/lib/securityHeaders";
 
 /**
- * Middleware for applying security headers and CORS to all responses
- * Run on every request to ensure consistent security posture
+ * Middleware for applying security headers, CORS, request tracing, and compression
+ * Run on every request to ensure consistent security posture and performance
  */
+
+/**
+ * Generate a UUID v4 for request tracing
+ */
+function generateRequestId(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 const ALLOWED_ORIGINS = new Set([
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io",
@@ -14,7 +25,25 @@ const ALLOWED_ORIGINS = new Set([
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.elongoat.io";
 
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+  // Generate or retrieve request ID for distributed tracing
+  let requestId = request.headers.get("x-request-id");
+  if (!requestId) {
+    requestId = generateRequestId();
+  }
+
+  // Clone headers and add request ID
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  // Create response with request ID header
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Add X-Request-ID to response for tracing
+  response.headers.set("X-Request-ID", requestId);
 
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
@@ -29,10 +58,13 @@ export function middleware(request: NextRequest) {
       );
       preflightResponse.headers.set(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-Requested-With",
+        "Content-Type, Authorization, X-Requested-With, X-Request-ID",
       );
       preflightResponse.headers.set("Access-Control-Max-Age", "86400");
     }
+
+    // Add request ID to preflight response
+    preflightResponse.headers.set("X-Request-ID", requestId);
 
     return preflightResponse;
   }
@@ -44,7 +76,7 @@ export function middleware(request: NextRequest) {
     response.headers.set("Access-Control-Allow-Credentials", "false");
     response.headers.set(
       "Access-Control-Expose-Headers",
-      "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After",
+      "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After, X-Request-ID",
     );
   }
 
@@ -75,6 +107,10 @@ export function middleware(request: NextRequest) {
 
   // Remove X-Powered-By header to reduce information disclosure
   response.headers.delete("x-powered-by");
+
+  // Add Vary header for proper caching with compression
+  // nginx-proxy handles actual compression, but we need to signal it
+  response.headers.set("Vary", "Accept-Encoding");
 
   return response;
 }

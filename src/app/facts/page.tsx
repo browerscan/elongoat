@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
-
 import Link from "next/link";
 
 import { JsonLd } from "@/components/JsonLd";
+import { generateFactsIndexMetadata } from "@/lib/seo";
 import { getDynamicVariables } from "@/lib/variables";
 import {
   generateBreadcrumbSchema,
@@ -11,24 +10,15 @@ import {
 
 export const revalidate = 3600;
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata() {
   const vars = await getDynamicVariables();
 
-  return {
-    title: "Facts — Quick Elon Musk Information",
-    description: `Quick facts about Elon Musk: age (${vars.age}), children (${vars.children_count}), date of birth (${vars.dob}), and net worth estimate (${vars.net_worth}). Live variables that update automatically.`,
-    keywords: [
-      "Elon Musk age",
-      "Elon Musk net worth",
-      "Elon Musk children",
-      "Elon Musk date of birth",
-      "quick facts",
-    ],
-    openGraph: {
-      title: `Facts — Age: ${vars.age} • Net Worth: ${vars.net_worth}`,
-      description: `Quick facts about Elon Musk with live variables. Age: ${vars.age}, Children: ${vars.children_count}, DOB: ${vars.dob}.`,
-    },
-  };
+  return generateFactsIndexMetadata({
+    age: vars.age,
+    childrenCount: vars.children_count,
+    dob: vars.dob,
+    netWorth: vars.net_worth,
+  });
 }
 
 export default async function FactsIndexPage() {

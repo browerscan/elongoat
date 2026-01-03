@@ -46,6 +46,13 @@ export function SearchInput({
       clearTimeout(debounceRef.current);
     }
 
+    if (debounceMs <= 0) {
+      startTransition(() => {
+        onChange(newValue);
+      });
+      return;
+    }
+
     debounceRef.current = setTimeout(() => {
       startTransition(() => {
         onChange(newValue);
@@ -68,6 +75,14 @@ export function SearchInput({
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       className={`glass glow-ring flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
@@ -84,6 +99,7 @@ export function SearchInput({
         onBlur={() => setIsFocused(false)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        aria-label={placeholder}
         className="w-full bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
         autoComplete="off"
       />

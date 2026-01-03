@@ -1,37 +1,25 @@
-import type { Metadata } from "next";
-
 import Link from "next/link";
 
 import { FilterList, type FilterListItem } from "@/components/FilterList";
 import { JsonLd } from "@/components/JsonLd";
+import { LastModified } from "@/components/LastModified";
 import { listLatestCustomQas } from "@/lib/customQa";
 import { getPaaIndex } from "@/lib/indexes";
+import { generateQaIndexMetadata } from "@/lib/seo";
 import {
   generateBreadcrumbSchema,
+  generateFaqPageSchema,
+  generateItemListSchema,
   generateWebPageSchema,
 } from "@/lib/structuredData";
 
 export const revalidate = 3600;
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata() {
   const paa = await getPaaIndex();
   const qaCount = paa.questions.length;
 
-  return {
-    title: "Q&A — Elon Musk Questions and Answers",
-    description: `Get answers to ${qaCount.toLocaleString()} frequently asked questions about Elon Musk. From Google People Also Ask data with AI-generated explanations and sources.`,
-    keywords: [
-      "Elon Musk Q&A",
-      "People Also Ask",
-      "FAQ",
-      "questions and answers",
-      "Elon Musk facts",
-    ],
-    openGraph: {
-      title: `Q&A — ${qaCount.toLocaleString()} Questions`,
-      description: `Browse ${qaCount.toLocaleString()} questions about Elon Musk with AI-generated answers and sources.`,
-    },
-  };
+  return generateQaIndexMetadata({ qaCount });
 }
 
 export default async function QuestionsIndexPage() {
@@ -40,13 +28,21 @@ export default async function QuestionsIndexPage() {
     listLatestCustomQas(8),
   ]);
 
+  const paaUpdated = new Date(paa.generatedAt);
+
+  // Top questions with answers for FAQ schema
+  const topQuestionsWithAnswers = paa.questions
+    .filter((q) => q.answer && q.answer.length > 20)
+    .sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))
+    .slice(0, 10);
+
   // JSON-LD structured data
   const jsonLd = [
     generateWebPageSchema({
       title: "Q&A — Elon Musk Questions and Answers",
       description: `Get answers to ${paa.questions.length.toLocaleString()} frequently asked questions about Elon Musk.`,
       url: "/q",
-      dateModified: new Date(paa.generatedAt).toISOString(),
+      dateModified: paaUpdated.toISOString(),
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Q&A", url: "/q" },
@@ -56,6 +52,25 @@ export default async function QuestionsIndexPage() {
       { name: "Home", url: "/" },
       { name: "Q&A", url: "/q" },
     ]),
+    // ItemList schema for Q&A index
+    generateItemListSchema({
+      name: "Elon Musk Questions and Answers",
+      description: `Browse ${paa.questions.length.toLocaleString()} frequently asked questions about Elon Musk`,
+      url: "/q",
+      items: paa.questions.slice(0, 50).map((q) => ({
+        name: q.question,
+        url: `/q/${q.slug}`,
+        description: q.answer?.slice(0, 100),
+      })),
+      itemListOrder: "Descending",
+    }),
+    // FAQ schema for top questions
+    generateFaqPageSchema(
+      topQuestionsWithAnswers.map((q) => ({
+        question: q.question,
+        answer: q.answer!,
+      })),
+    ),
   ];
 
   const items: FilterListItem[] = paa.questions.map((q) => ({
@@ -76,6 +91,7 @@ export default async function QuestionsIndexPage() {
             These come from a Google People Also Ask scrape. We show the
             original snippet when available and let the AI expand the answer.
           </p>
+          <LastModified date={paaUpdated} className="mt-3" />
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href="/"
@@ -126,7 +142,9 @@ export default async function QuestionsIndexPage() {
 
         <FilterList
           items={items}
-          placeholder="Search questions (age, net worth, companies…)…"
+          placeholder="Search questions (age, net worth, companies...)..."
+          enablePagination={true}
+          itemsPerPage={50}
         />
       </div>
     </>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { ClusterTopic, PaaQuestion } from "@/lib/indexes";
+import { SemanticRelatedContent } from "@/components/SemanticRelatedContent";
 
 export interface RelatedContentProps {
   /**
@@ -20,9 +21,21 @@ export interface RelatedContentProps {
    */
   questionText?: string;
   /**
+   * Page title for semantic search
+   */
+  pageTitle?: string;
+  /**
+   * Top keywords for semantic search
+   */
+  keywords?: string[];
+  /**
    * Maximum items to show per section
    */
   limit?: number;
+  /**
+   * Use semantic (embedding-based) search when available
+   */
+  useSemantic?: boolean;
   /**
    * Additional className
    */
@@ -34,15 +47,65 @@ export interface RelatedContentProps {
  * - For topic pages: shows related keyword pages
  * - For Q&A pages: shows related questions and topics
  * - For video pages: shows related videos and topics
+ *
+ * When useSemantic=true and embeddings are configured, uses embedding-based
+ * similarity matching instead of keyword overlap.
  */
 export async function RelatedContent({
   type,
   topicSlug,
   currentSlug,
   questionText,
+  pageTitle,
+  keywords,
   limit = 6,
+  useSemantic = true,
   className = "",
 }: RelatedContentProps) {
+  // Try semantic search first when enabled
+  if (useSemantic) {
+    try {
+      const { getSemanticRelatedContent, buildSemanticQuery } =
+        await import("@/lib/semanticRelated");
+      const { isEmbeddingEnabled } = await import("@/lib/embeddings");
+
+      if (isEmbeddingEnabled()) {
+        const query = buildSemanticQuery({
+          title: pageTitle ?? "",
+          topic: topicSlug?.replace(/-/g, " ") ?? "",
+          keywords: keywords,
+          questionText: questionText,
+        });
+
+        if (query.length >= 10) {
+          const semanticResults = await getSemanticRelatedContent({
+            query,
+            currentSlug,
+            limit,
+            sources:
+              type === "qa"
+                ? ["paa", "content_cache"]
+                : ["content_cache", "cluster", "paa"],
+            minScore: 0.15,
+          });
+
+          if (semanticResults.length >= 3) {
+            return (
+              <SemanticRelatedContent
+                items={semanticResults}
+                title="Semantically related"
+                className={className}
+              />
+            );
+          }
+        }
+      }
+    } catch {
+      // Fall through to keyword-based matching
+    }
+  }
+
+  // Fall back to keyword-based matching
   const { getClusterIndex, getPaaIndex, listTopicPages } =
     await import("@/lib/indexes");
 

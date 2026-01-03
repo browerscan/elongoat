@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
 import { SearchResults } from "@/components/SearchResults";
@@ -21,6 +21,8 @@ function SearchInner() {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [, startTransition] = useTransition();
+  const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     const q = searchParams.get("q")?.trim() ?? "";
@@ -34,22 +36,42 @@ function SearchInner() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   async function performSearch(searchQuery: string) {
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setIsLoading(true);
     try {
       const res = await fetch(
         `/api/search?q=${encodeURIComponent(searchQuery)}`,
+        { signal: controller.signal },
       );
+      if (requestId !== requestIdRef.current) return;
       if (res.ok) {
         const data: SearchResponse = await res.json();
         setResults(data.results);
         setTotalCount(data.totalCount);
       }
-    } catch {
+    } catch (error) {
+      if ((error as Error).name === "AbortError") return;
+      if (requestId !== requestIdRef.current) return;
       setResults({ topics: [], pages: [], qa: [], videos: [] });
       setTotalCount(0);
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }
 

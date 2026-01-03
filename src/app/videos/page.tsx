@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
-
 import Link from "next/link";
 
 import { JsonLd } from "@/components/JsonLd";
+import { generateVideosIndexMetadata } from "@/lib/seo";
 import { listVideos } from "@/lib/videos";
 import {
   generateBreadcrumbSchema,
@@ -11,29 +10,11 @@ import {
 
 export const revalidate = 3600;
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata() {
   const videos = await listVideos(1); // Just to check if any exist
   const hasVideos = videos.length > 0;
 
-  return {
-    title: "Videos — Elon Musk Video Index",
-    description: hasVideos
-      ? `Browse Elon Musk related videos from Google Videos search results. Includes video details, transcripts, and AI chat integration for video content.`
-      : `Elon Musk video index. Videos are ingested via Google Videos search (SOAX) with optional YouTube transcripts.`,
-    keywords: [
-      "Elon Musk videos",
-      "YouTube",
-      "video transcripts",
-      "Tesla videos",
-      "SpaceX videos",
-    ],
-    openGraph: {
-      title: "Videos — Elon Musk Video Index",
-      description: hasVideos
-        ? `Browse Elon Musk videos with details and transcripts for AI chat grounding.`
-        : `Video index for Elon Musk content.`,
-    },
-  };
+  return generateVideosIndexMetadata({ hasVideos });
 }
 
 export default async function VideosIndexPage() {

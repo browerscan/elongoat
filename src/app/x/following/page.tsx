@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "X Following",
   description:
     "Best-effort capture of accounts followed by @elonmusk (may be incomplete due to X restrictions).",
+  robots: { index: false, follow: true },
   alternates: { canonical: "/x/following" },
 };
 

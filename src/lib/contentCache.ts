@@ -4,6 +4,9 @@ import {
   getFreshnessColor,
 } from "@/lib/contentFreshness";
 
+// Compression utilities for large payloads
+import { compressForStorage, decompressFromStorage } from "@/lib/compression";
+
 // Lazy imports for backend-only dependencies
 let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
 let tieredGet: typeof import("@/lib/tieredCache").get | undefined;
@@ -61,6 +64,9 @@ const L2_TTL_MS = Number.parseInt(
   10,
 ); // 1 hour
 
+// Compression threshold: compress payloads larger than 1KB
+const COMPRESSION_THRESHOLD_BYTES = 1024;
+
 // ============================================================================
 // Cache Key Builders
 // ============================================================================
@@ -89,9 +95,13 @@ async function fetchContentFromDatabase(
       content_md: string;
       updated_at: string;
       expires_at: string | null;
+      compressed: boolean | null;
+      compression_method: string | null;
     }>(
       `
-      select kind, slug, model, content_md, updated_at, expires_at
+      select kind, slug, model, content_md, updated_at, expires_at,
+             coalesce(compressed, false) as compressed,
+             compression_method
       from elongoat.content_cache
       where kind = $1 and slug = $2
         and (expires_at is null or expires_at > now())
@@ -103,15 +113,43 @@ async function fetchContentFromDatabase(
     const row = res.rows[0];
     if (!row) return null;
 
+    // Decompress content if needed
+    let contentMd = row.content_md;
+    if (row.compressed && row.content_md) {
+      try {
+        contentMd = await decompressFromStorage(
+          row.content_md,
+          (row.compression_method as "gzip" | "deflate") ?? "gzip",
+        );
+      } catch (decompressError) {
+        console.warn(
+          "[ContentCache] Decompression failed, using raw content:",
+          {
+            kind,
+            slug,
+            error:
+              decompressError instanceof Error
+                ? decompressError.message
+                : String(decompressError),
+          },
+        );
+      }
+    }
+
     return {
       kind: row.kind,
       slug: row.slug,
       model: row.model,
-      contentMd: row.content_md,
+      contentMd,
       updatedAt: new Date(row.updated_at).toISOString(),
       expiresAt: row.expires_at ? new Date(row.expires_at).toISOString() : null,
     };
-  } catch {
+  } catch (error) {
+    console.error("[ContentCache] Database fetch error:", {
+      kind,
+      slug,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -179,7 +217,14 @@ export async function getCachedContent(params: {
     }
 
     return content;
-  } catch {
+  } catch (error) {
+    // Log error with context for debugging
+    console.error("[ContentCache] Cache error, falling back to database:", {
+      kind: params.kind,
+      slug: params.slug,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     // Fallback to direct database query on cache errors
     const content = await fetchContentFromDatabase(params.kind, params.slug);
     if (content && params.includeFreshness !== false) {
@@ -238,7 +283,17 @@ export async function getCachedContentWithMetadata(params: {
       source: result.hit ? sourceMap[result.level] : "database",
       latency: result.latency,
     };
-  } catch {
+  } catch (error) {
+    // Log error with context for debugging
+    console.error(
+      "[ContentCache] Cache error in getCachedContentWithMetadata:",
+      {
+        kind: params.kind,
+        slug: params.slug,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+
     const content = await fetchContentFromDatabase(params.kind, params.slug);
     return {
       content,
@@ -275,7 +330,7 @@ export async function setCachedContent(params: {
     expiresAt: expiresAt ? expiresAt.toISOString() : null,
   };
 
-  // Store in tiered cache
+  // Store in tiered cache (always store uncompressed for fast access)
   if (tieredSet) {
     await tieredSet(cacheKey, payload, {
       l1Ttl: Math.min(L1_TTL_MS, params.ttlSeconds * 1000),
@@ -288,10 +343,42 @@ export async function setCachedContent(params: {
   if (!db) return;
 
   try {
+    // Compress content if larger than threshold
+    const contentSize = Buffer.byteLength(params.contentMd, "utf-8");
+    let contentToStore = params.contentMd;
+    let compressed = false;
+    let compressionMethod: "gzip" | "deflate" | null = null;
+
+    if (contentSize > COMPRESSION_THRESHOLD_BYTES) {
+      const compressionResult = await compressForStorage(params.contentMd, {
+        minSize: COMPRESSION_THRESHOLD_BYTES,
+        method: "gzip",
+        level: 6,
+      });
+      if (compressionResult.compressed) {
+        contentToStore = compressionResult.data;
+        compressed = true;
+        compressionMethod = compressionResult.method;
+        if (process.env.NODE_ENV === "development") {
+          console.log("[ContentCache] Compressed content:", {
+            kind: params.kind,
+            slug: params.slug,
+            originalSize: contentSize,
+            compressedSize: Buffer.byteLength(contentToStore, "utf-8"),
+            ratio:
+              (
+                (Buffer.byteLength(contentToStore, "utf-8") / contentSize) *
+                100
+              ).toFixed(1) + "%",
+          });
+        }
+      }
+    }
+
     await db.query(
       `
-      insert into elongoat.content_cache (cache_key, kind, slug, model, content_md, sources, generated_at, expires_at)
-      values ($1,$2,$3,$4,$5,$6,now(),$7)
+      insert into elongoat.content_cache (cache_key, kind, slug, model, content_md, sources, generated_at, expires_at, compressed, compression_method)
+      values ($1,$2,$3,$4,$5,$6,now(),$7,$8,$9)
       on conflict (cache_key) do update set
         kind = excluded.kind,
         slug = excluded.slug,
@@ -300,23 +387,29 @@ export async function setCachedContent(params: {
         sources = excluded.sources,
         generated_at = excluded.generated_at,
         expires_at = excluded.expires_at,
-        updated_at = now()
+        updated_at = now(),
+        compressed = excluded.compressed,
+        compression_method = excluded.compression_method
       `,
       [
         cacheKey,
         params.kind,
         params.slug,
         params.model,
-        params.contentMd,
+        contentToStore,
         params.sources ? JSON.stringify(params.sources) : null,
         expiresAt ? expiresAt.toISOString() : null,
+        compressed,
+        compressionMethod,
       ],
     );
-  } catch {
+  } catch (error) {
     // Log error but don't throw - cache is best-effort
-    if (process.env.NODE_ENV === "development") {
-      console.error("[ContentCache] Failed to store content in database");
-    }
+    console.error("[ContentCache] Database store error:", {
+      kind: params.kind,
+      slug: params.slug,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

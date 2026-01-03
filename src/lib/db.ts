@@ -1,6 +1,9 @@
 // Server-only module (import removed for backend compatibility)
 
-import { Pool, PoolConfig } from "pg";
+import { Pool, PoolConfig, PoolClient } from "pg";
+
+// P0 Security: Validate secrets on import (auto-validates in production)
+import "./validateEnv";
 
 // ============================================================================
 // Types
@@ -24,6 +27,7 @@ interface DbPoolWithMetrics extends Pool {
 
 let pool: DbPoolWithMetrics | null = null;
 let isShuttingDown = false;
+let poolInitialized = false;
 
 const DEFAULT_POOL_CONFIG: PoolConfig = {
   max: 10,
@@ -58,6 +62,77 @@ function getPoolConfig(): PoolConfig {
 // ============================================================================
 // Pool Metrics
 // ============================================================================
+
+/**
+ * Initialize the database pool explicitly
+ * Must be called before any database operations
+ */
+export async function initDbPool(): Promise<Pool> {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+
+  if (isShuttingDown) {
+    throw new Error("Cannot initialize pool during shutdown");
+  }
+
+  if (poolInitialized && pool) {
+    return pool;
+  }
+
+  const config = getPoolConfig();
+  pool = new Pool({
+    ...config,
+    connectionString,
+  }) as DbPoolWithMetrics;
+
+  // Set up error handler
+  pool.on("error", (err) => {
+    console.error("[DB] Unexpected pool error", err);
+  });
+
+  // Set up connection timeout handler
+  pool.on("connect", (client) => {
+    client
+      .query("SET statement_timeout = " + config.statement_timeout)
+      .catch((e) => console.error("[DB] Failed to set statement_timeout", e));
+  });
+
+  // Verify connection
+  try {
+    const client = await pool.connect();
+    await client.query("SELECT 1");
+    client.release();
+    poolInitialized = true;
+    console.log(
+      "[DB] Pool initialized and verified with max connections:",
+      config.max,
+    );
+  } catch (error) {
+    pool = null;
+    poolInitialized = false;
+    throw new Error(
+      `Failed to initialize database pool: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  // Log pool status periodically (only in development)
+  if (process.env.NODE_ENV === "development") {
+    const metricsInterval = setInterval(() => {
+      if (pool && poolInitialized && !isShuttingDown) {
+        logPoolMetrics();
+      } else {
+        clearInterval(metricsInterval);
+      }
+    }, 60000); // Every minute
+
+    // Don't keep the process alive for this interval
+    metricsInterval.unref();
+  }
+
+  return pool;
+}
 
 /**
  * Get current pool metrics for monitoring
@@ -97,9 +172,44 @@ export function logPoolMetrics(): void {
 // ============================================================================
 
 /**
- * Get or create the database connection pool
+ * Get the database connection pool
+ * - Returns null if DATABASE_URL is not set (static generation)
+ * - Returns null if pool not yet initialized (caller should handle gracefully)
+ * - Returns Pool if ready for use
  */
 export function getDbPool(): Pool | null {
+  // Static generation or no DATABASE_URL: return null
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+
+  // Pool not initialized yet - return null for graceful degradation
+  if (!poolInitialized || !pool) {
+    // Log warning for runtime (not during build)
+    if (
+      pool &&
+      poolInitialized === false &&
+      process.env.NODE_ENV === "production"
+    ) {
+      console.warn("[DB] Pool accessed before initDbPool() completed");
+    }
+    return null;
+  }
+
+  if (isShuttingDown) {
+    return null;
+  }
+
+  // Update metrics
+  pool._metrics = getPoolMetrics();
+  return pool;
+}
+
+/**
+ * Get or create the database connection pool (legacy compatibility)
+ * @deprecated Use initDbPool() + getDbPool() instead
+ */
+export function getDbPoolLegacy(): Pool | null {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) return null;
 
@@ -132,21 +242,8 @@ export function getDbPool(): Pool | null {
       .catch((e) => console.error("[DB] Failed to set statement_timeout", e));
   });
 
-  // Log pool status periodically (only in development)
-  if (process.env.NODE_ENV === "development") {
-    const metricsInterval = setInterval(() => {
-      if (pool && !isShuttingDown) {
-        logPoolMetrics();
-      } else {
-        clearInterval(metricsInterval);
-      }
-    }, 60000); // Every minute
-
-    // Don't keep the process alive for this interval
-    metricsInterval.unref();
-  }
-
   console.log("[DB] Pool created with max connections:", config.max);
+  poolInitialized = true;
   return pool;
 }
 
@@ -157,6 +254,7 @@ export async function closeDbPool(): Promise<void> {
   if (!pool || isShuttingDown) return;
 
   isShuttingDown = true;
+  poolInitialized = false;
   console.log("[DB] Closing pool...");
 
   try {
@@ -186,7 +284,7 @@ export async function checkDbHealth(): Promise<{
   error?: string;
 }> {
   try {
-    const dbPool = getDbPool();
+    const dbPool = poolInitialized ? pool : null;
     if (!dbPool) {
       return {
         healthy: false,
@@ -236,4 +334,36 @@ export function setupDbShutdownHandlers(): void {
 // Auto-setup shutdown handlers in production
 if (process.env.NODE_ENV === "production") {
   setupDbShutdownHandlers();
+}
+
+// ============================================================================
+// Transaction Support
+// ============================================================================
+
+/**
+ * Executes a function within a database transaction.
+ * Returns null if no database pool is available.
+ *
+ * @param fn - Function to execute within the transaction
+ * @returns The result of the function, or null if no database
+ */
+export async function withTransaction<T>(
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T | null> {
+  const db = getDbPool();
+  if (!db) return null;
+
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }

@@ -82,25 +82,30 @@ export function getContentSecurityPolicy(nonce?: string): string {
 
   // Script sources
   if (nonce) {
-    // Production with nonce - no unsafe-inline or unsafe-eval
-    directives.push(`script-src 'self' 'nonce-${nonce}'`);
+    // Production with nonce - most secure approach
+    // 'strict-dynamic' allows scripts loaded by trusted scripts (nonce-validated)
+    directives.push(`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`);
   } else if (isDev) {
     // More permissive in development for Next.js hot reload
     directives.push(
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' localhost:3000 ws://localhost:3000",
     );
   } else {
-    // Production without nonce still requires unsafe-inline for Next.js inline scripts
-    // Use strict-dynamic as a migration path
-    directives.push("script-src 'self' 'unsafe-inline' 'unsafe-dynamic'");
+    // Production without nonce - use strict-dynamic for CSP Level 3 browsers
+    // strict-dynamic ignores unsafe-inline in modern browsers but allows it as fallback
+    // This is the recommended migration path per OWASP
+    directives.push("script-src 'self' 'unsafe-inline' 'strict-dynamic'");
   }
 
-  // Style sources - use nonce-hashed styles in production, unsafe-inline only in dev
-  if (isDev) {
+  // Style sources
+  if (nonce) {
+    // Production with nonce - use nonce for inline styles
+    directives.push(`style-src 'self' 'nonce-${nonce}'`);
+  } else if (isDev) {
     directives.push("style-src 'self' 'unsafe-inline'");
   } else {
-    // In production, Next.js handles style hashing, but we keep unsafe-inline for compatibility
-    // Most inline styles are actually data: or hashed by Next.js
+    // Production without nonce - Next.js requires unsafe-inline for styled-jsx
+    // TODO: Consider migrating to CSS-in-JS library with proper CSP support
     directives.push("style-src 'self' 'unsafe-inline'");
   }
 
@@ -170,11 +175,22 @@ export function getContentSecurityPolicyReportOnly(): string {
 /**
  * Strict-Transport-Security header
  * Forces HTTPS connections for the specified duration
+ *
+ * HSTS PRELOAD REQUIREMENTS:
+ * - max-age must be at least 31536000 (1 year) - SATISFIED
+ * - includeSubDomains must be present - AUTO-ENABLED IN PRODUCTION
+ * - preload directive must be present - AUTO-ENABLED IN PRODUCTION
+ *
+ * To submit to HSTS preload list: https://hstspreload.org/
+ *
+ * DEV NOTE: Set HSTS_PRELOAD=0 to disable preload in staging/development
  */
 export function getStrictTransportSecurity(): string {
-  const maxAge = 60 * 60 * 24 * 365; // 1 year
-  const includeSubDomains = process.env.NODE_ENV === "production";
-  const preload = process.env.HSTS_PRELOAD === "true";
+  const maxAge = 60 * 60 * 24 * 365; // 1 year (31536000 seconds) - meets preload requirement
+  const isProduction = process.env.NODE_ENV === "production";
+  // Default to preload in production, allow opt-out with HSTS_PRELOAD=0
+  const preload = isProduction && process.env.HSTS_PRELOAD !== "0";
+  const includeSubDomains = isProduction;
 
   const parts = [`max-age=${maxAge}`];
   if (includeSubDomains) parts.push("includeSubDomains");
@@ -413,22 +429,23 @@ export function getStaticAssetHeaders(): Record<string, string> {
 
 /**
  * Get headers for Next.js response
- * NOTE: nonce parameter available for future CSP nonce support
+ * @param nonce - Optional nonce for CSP script-src/style-src directives
  */
 export function getNextJsHeaders(nonce?: string): Record<string, string> {
-  const { headers } = getSecurityHeaders();
+  // If nonce is provided, regenerate CSP with nonce included
+  const csp = nonce
+    ? getContentSecurityPolicy(nonce)
+    : getContentSecurityPolicy();
+
+  const { headers } = getSecurityHeaders({
+    customCsp: csp,
+  });
 
   const result: Record<string, string> = {
     ...headers,
     "X-DNS-Prefetch-Control": "off",
     "X-Download-Options": "noopen",
   };
-
-  // Add nonce to CSP headers if provided (for future use)
-  if (nonce && headers["Content-Security-Policy"]) {
-    // nonce parameter reserved for future CSP nonce implementation
-    void nonce;
-  }
 
   return result;
 }

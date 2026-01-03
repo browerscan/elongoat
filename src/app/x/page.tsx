@@ -11,7 +11,8 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "X Monitor",
   description:
-    "A cached, best-effort mirror of @elonmusk’s public timeline (may be incomplete or stale).",
+    "A cached, best-effort mirror of @elonmusk's public timeline (may be incomplete or stale).",
+  robots: { index: false, follow: true },
   alternates: { canonical: "/x" },
 };
 

@@ -1,6 +1,7 @@
 // Server-only module (import removed for backend compatibility)
 
 import { getCircuitBreaker } from "./circuitBreaker";
+import { withRetry } from "./retry";
 
 export type LlmMessage = {
   role: "system" | "user" | "assistant";
@@ -20,6 +21,28 @@ type ChatCompletionResponse = {
 };
 
 const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
+
+// Error types that should trigger retry
+const RETRYABLE_ERROR_PATTERNS = [
+  /ECONNRESET/i,
+  /ETIMEDOUT/i,
+  /ECONNREFUSED/i,
+  /timeout/i,
+  /fetch failed/i,
+  /network/i,
+  /502/,
+  /503/,
+  /504/,
+];
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return RETRYABLE_ERROR_PATTERNS.some((pattern) =>
+      pattern.test(error.message),
+    );
+  }
+  return false;
+}
 
 export function getVectorEngineChatUrl(): string | null {
   if (!process.env.VECTORENGINE_API_KEY) return null;
@@ -74,43 +97,57 @@ export async function vectorEngineChatComplete(params: {
     );
   }
 
-  // Use circuit breaker for fault tolerance
+  // Use circuit breaker with P0 config: threshold=3, timeout=30000, resetTimeout=60000
   const circuitBreaker = getCircuitBreaker("vectorengine", {
-    threshold: 5,
-    timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+    threshold: 3,
+    timeout: params.timeout ?? 30000,
     resetTimeout: 60000,
   });
 
-  const res = await circuitBreaker.execute(async () => {
-    return fetchWithTimeout(url, {
-      method: "POST",
-      timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: params.model,
-        messages: params.messages,
-        stream: false,
-        temperature: params.temperature ?? 0.4,
-        max_tokens: params.maxTokens ?? 900,
-      }),
-    });
-  });
+  // Wrap with retry logic for transient failures
+  return withRetry(
+    async () => {
+      const res = await circuitBreaker.execute(async () => {
+        return fetchWithTimeout(url, {
+          method: "POST",
+          timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: params.model,
+            messages: params.messages,
+            stream: false,
+            temperature: params.temperature ?? 0.4,
+            max_tokens: params.maxTokens ?? 900,
+          }),
+        });
+      });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`VectorEngine error ${res.status}: ${text.slice(0, 300)}`);
-  }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(
+          `VectorEngine error ${res.status}: ${text.slice(0, 300)}`,
+        );
+      }
 
-  const json = (await res.json()) as ChatCompletionResponse;
-  const content =
-    json.choices?.[0]?.message?.content ?? json.choices?.[0]?.text ?? "";
-  return {
-    text: typeof content === "string" ? content : "",
-    usage: { totalTokens: json.usage?.total_tokens },
-  };
+      const json = (await res.json()) as ChatCompletionResponse;
+      const content =
+        json.choices?.[0]?.message?.content ?? json.choices?.[0]?.text ?? "";
+      return {
+        text: typeof content === "string" ? content : "",
+        usage: { totalTokens: json.usage?.total_tokens },
+      };
+    },
+    {
+      maxAttempts: 3,
+      initialDelayMs: 100,
+      maxDelayMs: 10000,
+      backoffMultiplier: 2,
+      retryableErrors: isRetryableError,
+    },
+  );
 }
 
 /**
@@ -131,39 +168,53 @@ export async function vectorEngineChatStream(params: {
     );
   }
 
-  // Use circuit breaker for streaming too
+  // Use circuit breaker with P0 config for streaming
   const circuitBreaker = getCircuitBreaker("vectorengine-stream", {
-    threshold: 5,
-    timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+    threshold: 3,
+    timeout: params.timeout ?? 30000,
     resetTimeout: 60000,
   });
 
-  const res = await circuitBreaker.execute(async () => {
-    return fetchWithTimeout(url, {
-      method: "POST",
-      timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: params.model,
-        messages: params.messages,
-        stream: true,
-        temperature: params.temperature ?? 0.7,
-        max_tokens: params.maxTokens ?? 900,
-      }),
-    });
-  });
+  // Wrap with retry logic for streaming
+  return withRetry(
+    async () => {
+      const res = await circuitBreaker.execute(async () => {
+        return fetchWithTimeout(url, {
+          method: "POST",
+          timeout: params.timeout ?? DEFAULT_TIMEOUT_MS,
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: params.model,
+            messages: params.messages,
+            stream: true,
+            temperature: params.temperature ?? 0.7,
+            max_tokens: params.maxTokens ?? 900,
+          }),
+        });
+      });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`VectorEngine error ${res.status}: ${text.slice(0, 300)}`);
-  }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(
+          `VectorEngine error ${res.status}: ${text.slice(0, 300)}`,
+        );
+      }
 
-  if (!res.body) {
-    throw new Error("No response body from VectorEngine");
-  }
+      if (!res.body) {
+        throw new Error("No response body from VectorEngine");
+      }
 
-  return res.body;
+      return res.body;
+    },
+    {
+      maxAttempts: 3,
+      initialDelayMs: 100,
+      maxDelayMs: 10000,
+      backoffMultiplier: 2,
+      retryableErrors: isRetryableError,
+    },
+  );
 }

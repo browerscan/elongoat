@@ -34,7 +34,7 @@ const SITE_CONFIG = {
   name: "ElonGoat",
   title: "ElonGoat — Digital Elon (AI)",
   description:
-    "A sci-fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated). Browse 13 topic hubs and 569 keyword pages built from real search demand.",
+    "A sci-fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated). Browse topic hubs and keyword pages built from real search demand.",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
     /\/$/,
     "",
@@ -158,7 +158,6 @@ export function generateMetadata(params: SeoMetadata): Metadata {
   return {
     title: fullTitle,
     description: seoDescription,
-    keywords: (keywords ?? SITE_CONFIG.keywords) as string[],
     authors: [{ name: SITE_CONFIG.author }],
     robots: {
       index: !noindex,
@@ -187,19 +186,28 @@ export function generateMetadata(params: SeoMetadata): Metadata {
 /**
  * Generate homepage metadata
  */
-export function generateHomeMetadata(): Metadata {
+export async function generateHomeMetadata(): Promise<Metadata> {
+  // Dynamically get counts from cluster index
+  const getClusterIndex = (await import("@/lib/indexes")).getClusterIndex;
+  let topicCount = 0;
+  let pageCount = 0;
+  try {
+    const cluster = await getClusterIndex();
+    topicCount = cluster.topics.length;
+    pageCount = cluster.pages.length;
+  } catch {
+    // Fallback to generic description if index unavailable
+  }
+
+  const dynamicDescription =
+    topicCount && pageCount
+      ? `A sci-fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated). Browse ${topicCount} topic hubs and ${pageCount.toLocaleString()} keyword pages built from real search demand.`
+      : SITE_CONFIG.description;
+
   return generateMetadata({
     title: SITE_CONFIG.title,
-    description: SITE_CONFIG.description,
+    description: dynamicDescription,
     path: "/",
-    keywords: [
-      "Elon Musk",
-      "AI chat",
-      "ElonGoat",
-      "knowledge base",
-      "Q&A",
-      "Elon simulation",
-    ],
   });
 }
 
@@ -208,19 +216,127 @@ export function generateHomeMetadata(): Metadata {
  */
 export function generateTopicMetadata(params: {
   topic: string;
+  topicSlug: string;
   pageCount: number;
   totalVolume: number;
 }): Metadata {
-  const { topic, pageCount, totalVolume } = params;
+  const { topic, topicSlug, pageCount, totalVolume } = params;
   const title = `${topic} — Topic Hub`;
   const description = `Browse ${pageCount.toLocaleString()} pages in the "${topic}" topic hub. Total search volume: ${totalVolume.toLocaleString()}. Explore keyword clusters and AI-generated answers.`;
 
   return generateMetadata({
     title,
     description,
-    path: `/${slugify(topic)}`,
+    path: `/${topicSlug}`,
+    ogImage: `/og/topic/${topicSlug}`,
     keywords: [topic, "topic hub", "Elon Musk", "keyword research"],
     section: "Topics",
+  });
+}
+
+/**
+ * Generate topics index metadata
+ */
+export function generateTopicsIndexMetadata(params: {
+  topicCount: number;
+  totalPages: number;
+  totalVolume: number;
+}): Metadata {
+  const { topicCount, totalPages, totalVolume } = params;
+  const title = "Topics — Browse Elon Musk Knowledge Hubs";
+  const description = `Explore ${topicCount} topic hubs with ${totalPages.toLocaleString()} keyword pages about Elon Musk. Total search volume: ${totalVolume.toLocaleString()}. Covering Tesla, SpaceX, X/Twitter, and more.`;
+
+  return generateMetadata({
+    title,
+    description,
+    path: "/topics",
+    keywords: [
+      "Elon Musk topics",
+      "Tesla",
+      "SpaceX",
+      "topic hubs",
+      "keyword research",
+      "knowledge base",
+    ],
+    section: "Topics",
+  });
+}
+
+/**
+ * Generate Q&A index metadata
+ */
+export function generateQaIndexMetadata(params: { qaCount: number }): Metadata {
+  const { qaCount } = params;
+  const title = "Q&A — Elon Musk Questions and Answers";
+  const description = `Get answers to ${qaCount.toLocaleString()} frequently asked questions about Elon Musk. From Google People Also Ask data with AI-generated explanations and sources.`;
+
+  return generateMetadata({
+    title,
+    description,
+    path: "/q",
+    keywords: [
+      "Elon Musk Q&A",
+      "People Also Ask",
+      "FAQ",
+      "questions and answers",
+      "Elon Musk facts",
+    ],
+    section: "Q&A",
+  });
+}
+
+/**
+ * Generate facts index metadata
+ */
+export function generateFactsIndexMetadata(params: {
+  age: number;
+  childrenCount: number;
+  dob: string;
+  netWorth: string;
+}): Metadata {
+  const { age, childrenCount, dob, netWorth } = params;
+  const title = "Facts — Quick Elon Musk Information";
+  const description = `Quick facts about Elon Musk: age (${age}), children (${childrenCount}), date of birth (${dob}), and net worth estimate (${netWorth}). Live variables that update automatically.`;
+
+  return generateMetadata({
+    title,
+    description,
+    path: "/facts",
+    keywords: [
+      "Elon Musk age",
+      "Elon Musk net worth",
+      "Elon Musk children",
+      "Elon Musk date of birth",
+      "quick facts",
+    ],
+    section: "Facts",
+  });
+}
+
+/**
+ * Generate videos index metadata
+ */
+export function generateVideosIndexMetadata(params: {
+  hasVideos: boolean;
+}): Metadata {
+  const { hasVideos } = params;
+  const title = "Videos — Elon Musk Video Index";
+  const description = hasVideos
+    ? `Browse Elon Musk related videos from Google Videos search results. Includes video details, transcripts, and AI chat integration for video content.`
+    : `Elon Musk video index. Videos are ingested via Google Videos search (SOAX) with optional YouTube transcripts.`;
+
+  return generateMetadata({
+    title,
+    description,
+    path: "/videos",
+    keywords: [
+      "Elon Musk videos",
+      "YouTube",
+      "video transcripts",
+      "Tesla videos",
+      "SpaceX videos",
+    ],
+    section: "Videos",
   });
 }
 
@@ -352,18 +468,6 @@ export function generateErrorMetadata(title: string): Metadata {
  */
 export function getSiteConfig() {
   return SITE_CONFIG;
-}
-
-/**
- * Simple slugify for URL generation
- */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
 }
 
 /**

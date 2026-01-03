@@ -1,39 +1,29 @@
-import type { Metadata } from "next";
-
 import Link from "next/link";
 
 import { FilterList, type FilterListItem } from "@/components/FilterList";
 import { JsonLd } from "@/components/JsonLd";
+import { LastModified } from "@/components/LastModified";
 import { getClusterIndex } from "@/lib/indexes";
+import { generateTopicsIndexMetadata } from "@/lib/seo";
 import {
   generateBreadcrumbSchema,
+  generateItemListSchema,
   generateWebPageSchema,
 } from "@/lib/structuredData";
 
 export const revalidate = 3600;
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata() {
   const cluster = await getClusterIndex();
   const topicCount = cluster.topics.length;
   const totalPages = cluster.pages.length;
   const totalVolume = cluster.topics.reduce((sum, t) => sum + t.totalVolume, 0);
 
-  return {
-    title: "Topics — Browse Elon Musk Knowledge Hubs",
-    description: `Explore ${topicCount} topic hubs with ${totalPages.toLocaleString()} keyword pages about Elon Musk. Total search volume: ${totalVolume.toLocaleString()}. Covering Tesla, SpaceX, X/Twitter, and more.`,
-    keywords: [
-      "Elon Musk topics",
-      "Tesla",
-      "SpaceX",
-      "topic hubs",
-      "keyword research",
-      "knowledge base",
-    ],
-    openGraph: {
-      title: `Topics — ${topicCount} Hubs • ${totalPages.toLocaleString()} Pages`,
-      description: `Browse ${topicCount} topic hubs about Elon Musk with ${totalPages.toLocaleString()} keyword pages. Total search volume: ${totalVolume.toLocaleString()}.`,
-    },
-  };
+  return generateTopicsIndexMetadata({
+    topicCount,
+    totalPages,
+    totalVolume,
+  });
 }
 
 export default async function TopicsIndexPage() {
@@ -55,7 +45,21 @@ export default async function TopicsIndexPage() {
       { name: "Home", url: "/" },
       { name: "Topics", url: "/topics" },
     ]),
+    // ItemList schema for better search appearance
+    generateItemListSchema({
+      name: "Elon Musk Topic Hubs",
+      description: `Browse ${cluster.topics.length} topic hubs covering Tesla, SpaceX, X/Twitter, and more.`,
+      url: "/topics",
+      items: cluster.topics.slice(0, 50).map((t) => ({
+        name: t.topic,
+        url: `/${t.slug}`,
+        description: `${t.pageCount} pages about ${t.topic}`,
+      })),
+      itemListOrder: "Descending",
+    }),
   ];
+
+  const clusterUpdated = new Date(cluster.generatedAt);
 
   const items: FilterListItem[] = cluster.topics.map((t) => ({
     id: t.slug,
@@ -79,6 +83,7 @@ export default async function TopicsIndexPage() {
             </code>
             .
           </p>
+          <LastModified date={clusterUpdated} className="mt-3" />
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href="/"

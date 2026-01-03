@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   CornerDownLeft,
+  Download,
   Loader2,
   MessageSquareText,
   RefreshCw,
@@ -13,8 +13,8 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
@@ -24,6 +24,116 @@ import { deriveChatUx, shouldGlitchText } from "@/lib/chatUi";
 const MAX_INPUT_CHARS = 2000;
 const SEND_DEBOUNCE_MS = 300;
 const TYPING_INDICATOR_DELAY = 600;
+const CHAT_STORAGE_KEY = "elongoat_chat_history";
+const CHAT_STORAGE_VERSION = 1;
+const MAX_STORED_MESSAGES = 50;
+
+/**
+ * Contextual follow-up questions based on conversation topics
+ */
+type TopicCategory =
+  | "spacex"
+  | "tesla"
+  | "mars"
+  | "ai"
+  | "x"
+  | "finance"
+  | "family"
+  | "doge"
+  | "general";
+
+const FOLLOW_UPS: Record<TopicCategory, string[]> = {
+  spacex: [
+    "When will Starship launch next?",
+    "What's the Mars timeline?",
+    "How many Starlink satellites?",
+    "Is Starship reusable?",
+  ],
+  tesla: [
+    "What's Tesla's FSD status?",
+    "New Tesla model plans?",
+    "Tesla stock outlook?",
+    "How many Giga factories?",
+  ],
+  mars: [
+    "When will humans land on Mars?",
+    "How will Mars be terraformed?",
+    "Starship fuel production on Mars?",
+    "Why Mars instead of the Moon?",
+  ],
+  ai: [
+    "What's xAI's Grok capable of?",
+    "When will AGI happen?",
+    "Tesla's role in AI?",
+    "AI safety concerns?",
+  ],
+  x: [
+    "X's subscription revenue?",
+    "What happened to Twitter?",
+    "X's future plans?",
+    "How's X doing financially?",
+  ],
+  finance: [
+    "Elon's current net worth?",
+    "Biggest holdings breakdown?",
+    "PayPal vs today's wealth?",
+    "Compensation package explained?",
+  ],
+  family: [
+    "How many kids does Elon have?",
+    "Who is Elon's current partner?",
+    "Family relationship with work?",
+    "Kids' education approach?",
+  ],
+  doge: [
+    "Why does Elon support Doge?",
+    "Doge to the moon?",
+    "Elon's crypto holdings?",
+    "Payment plans for Doge?",
+  ],
+  general: [
+    "What's Elon's daily routine?",
+    "How does Elon manage time?",
+    "Elon's reading recommendations?",
+    "Best Elon interview?",
+  ],
+};
+
+function detectTopic(text: string): TopicCategory {
+  const lower = text.toLowerCase();
+  if (/\b(starship|starlink|falcon|rocket|launch|spacex)\b/.test(lower))
+    return "spacex";
+  if (/\b(mars|red planet|coloniz|terraform)\b/.test(lower)) return "mars";
+  if (/\b(tesla|cybertruck|model [sy3x]|giga|ev|fsd|autopilot)\b/.test(lower))
+    return "tesla";
+  if (/\b(xai|grok|ai|neuralink|agi|intelligence)\b/.test(lower)) return "ai";
+  if (/\b(x\.com|twitter|tweet|posts|blue bird)\b/.test(lower)) return "x";
+  if (
+    /\b(worth|billion|stock|shares|wealth|money|fortune|paypal)\b/.test(lower)
+  )
+    return "finance";
+  if (
+    /\b(kids?|children|child|family|wife|partner|grimes|shivon|justine)\b/.test(
+      lower,
+    )
+  )
+    return "family";
+  if (/\b(doge|dogecoin|crypto|bitcoin|memecoin)\b/.test(lower)) return "doge";
+  return "general";
+}
+
+function getFollowUpQuestions(lastUserMessage: string): string[] {
+  const fromTopic = detectTopic(lastUserMessage);
+
+  // Shuffle and pick 3-4 questions
+  const questions = [...FOLLOW_UPS[fromTopic]];
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+
+  return questions.slice(0, 4);
+}
 
 type Role = "user" | "assistant";
 type ChatItem = {
@@ -43,6 +153,67 @@ function getViewportLabel(): string {
 }
 
 /**
+ * Load chat history from localStorage
+ */
+function loadChatHistory(): ChatItem[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as {
+      version?: number;
+      messages: ChatItem[];
+    };
+    // Check version compatibility
+    if (parsed.version !== CHAT_STORAGE_VERSION) return null;
+    if (!Array.isArray(parsed.messages)) return null;
+    // Validate messages
+    return parsed.messages.filter(
+      (m) =>
+        m &&
+        typeof m.id === "string" &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string",
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save chat history to localStorage
+ */
+function saveChatHistory(messages: ChatItem[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    // Only save the last N messages to avoid storage bloat
+    const toSave = messages.slice(-MAX_STORED_MESSAGES);
+    localStorage.setItem(
+      CHAT_STORAGE_KEY,
+      JSON.stringify({
+        version: CHAT_STORAGE_VERSION,
+        messages: toSave,
+        savedAt: new Date().toISOString(),
+      }),
+    );
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+}
+
+/**
+ * Clear chat history from localStorage
+ */
+function clearChatHistory(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
  * Improved ChatWidget with production-grade UX:
  * - Debounced send button (prevents double-submit)
  * - Character counter with visual feedback
@@ -51,6 +222,7 @@ function getViewportLabel(): string {
  * - Auto-focus input on mount
  * - Clear chat button with confirmation
  * - Accessibility improvements
+ * - Persistent chat history via localStorage
  */
 export function ChatWidget() {
   const pathname = usePathname() ?? "/";
@@ -65,7 +237,11 @@ export function ChatWidget() {
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
+  const [liveMessage, setLiveMessage] = useState("");
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const typingTimerRef = useRef<number | null>(null);
+  const lastAnnouncedIdRef = useRef<string | null>(null);
 
   const [messages, setMessages] = useState<ChatItem[]>(() => [
     {
@@ -74,6 +250,25 @@ export function ChatWidget() {
       content: deriveChatUx(getViewportLabel()).initialAssistantMessage,
     },
   ]);
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    if (historyLoaded) return;
+    const stored = loadChatHistory();
+    if (stored && stored.length > 0) {
+      setMessages(stored);
+    }
+    setHistoryLoaded(true);
+  }, [historyLoaded]);
+
+  // Save chat history to localStorage when messages change
+  useEffect(() => {
+    if (!historyLoaded) return;
+    // Don't save if only the initial message exists
+    if (messages.length > 1) {
+      saveChatHistory(messages);
+    }
+  }, [messages, historyLoaded]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -229,6 +424,22 @@ export function ChatWidget() {
     }
   }, [open]);
 
+  // Accessible announcements for streaming updates
+  useEffect(() => {
+    if (streaming) {
+      setLiveMessage(`${ux.loadingLabel}`);
+      return;
+    }
+
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant" && m.content);
+    if (lastAssistant && lastAssistant.id !== lastAnnouncedIdRef.current) {
+      lastAnnouncedIdRef.current = lastAssistant.id;
+      setLiveMessage("ElonSim response ready.");
+    }
+  }, [messages, streaming, ux.loadingLabel]);
+
   const send = useCallback(
     async (text: string, isRetry = false) => {
       const trimmed = text.trim();
@@ -378,6 +589,10 @@ export function ChatWidget() {
         setRetryMessage(trimmed);
       } finally {
         setStreaming(false);
+        // Generate follow-up questions after successful response
+        if (!isRetryingError && trimmed) {
+          setFollowUpQuestions(getFollowUpQuestions(trimmed));
+        }
       }
     },
     [lastSendTime, messages],
@@ -389,6 +604,9 @@ export function ChatWidget() {
       return;
     }
 
+    // Clear localStorage history
+    clearChatHistory();
+
     setMessages([
       {
         id: uid(),
@@ -399,6 +617,7 @@ export function ChatWidget() {
     setShowClearConfirm(false);
     setNetworkError(null);
     setRetryMessage(null);
+    setFollowUpQuestions([]);
   }, [showClearConfirm, ux.initialAssistantMessage]);
 
   const handleRetry = useCallback(() => {
@@ -406,6 +625,44 @@ export function ChatWidget() {
       void send(retryMessage, true);
     }
   }, [retryMessage, send]);
+
+  const handleExportChat = useCallback(() => {
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0];
+    const timeStr = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const pageContext = pathname !== "/" ? pathname : "Homepage";
+
+    let markdown = `# ElonGoat Chat Export\n\n`;
+    markdown += `**Date:** ${dateStr} ${timeStr}\n`;
+    markdown += `**Topic:** ${pageContext}\n`;
+    markdown += `**Messages:** ${messages.length}\n\n`;
+    markdown += `---\n\n`;
+
+    for (const msg of messages) {
+      if (msg.role === "user") {
+        markdown += `## User\n\n${msg.content}\n\n`;
+      } else {
+        markdown += `## ElonSim\n\n${msg.content}\n\n`;
+      }
+    }
+
+    markdown += `---\n\n`;
+    markdown += `*Generated by [elongoat.io](https://elongoat.io)*`;
+
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `elongoat-chat-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [messages, pathname]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -425,312 +682,20 @@ export function ChatWidget() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 sm:bottom-4 sm:right-4"
+      className={`fixed z-50 ${
+        open
+          ? "bottom-0 left-0 right-0 sm:bottom-4 sm:left-auto sm:right-4"
+          : "bottom-4 right-4"
+      }`}
       role="region"
       aria-label="Chat widget"
     >
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            key="panel"
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="glass glow-ring w-[calc(100vw-2rem)] overflow-hidden rounded-3xl sm:w-[360px] md:w-[400px]"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/30 px-4 py-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                  <Image
-                    alt="ElonGoat"
-                    src="/favicon.svg"
-                    width={28}
-                    height={28}
-                    className="opacity-90"
-                  />
-                  {streaming && (
-                    <span className="absolute bottom-0 right-0 flex h-3 w-3">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-white">
-                    ElonSim Chat
-                  </div>
-                  <div
-                    className="truncate text-xs text-white/55"
-                    aria-live="polite"
-                  >
-                    {networkError
-                      ? "Connection lost"
-                      : streaming
-                        ? ux.loadingLabel
-                        : "Streaming • no history saved"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {/* Clear chat button */}
-                {hasMessagesBeyondInitial && (
-                  <button
-                    type="button"
-                    className={`rounded-xl border p-2 text-white/70 transition ${
-                      showClearConfirm
-                        ? "border-danger bg-danger/20 text-danger hover:bg-danger/30"
-                        : "border-white/10 bg-white/5 hover:bg-white/10 hover:text-white"
-                    }`}
-                    onClick={handleClearChat}
-                    aria-label={
-                      showClearConfirm ? "Confirm clear" : "Clear chat"
-                    }
-                    title={
-                      showClearConfirm ? "Click again to confirm" : "Clear chat"
-                    }
-                  >
-                    {showClearConfirm ? (
-                      <AlertCircle className="h-4 w-4" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  id="chat-close"
-                  type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
-                  onClick={() => setOpen(false)}
-                  aria-label="Close chat"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div
-              ref={messagesContainerRef}
-              className="max-h-[50vh] overflow-y-auto px-3 py-3 sm:max-h-[52vh] sm:px-4 sm:py-4"
-              role="log"
-              aria-live="polite"
-              aria-atomic="false"
-            >
-              {/* Quick start buttons */}
-              {!hasMessagesBeyondInitial && (
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {ux.quickStart.slice(0, 4).map((q) => (
-                    <button
-                      key={q}
-                      type="button"
-                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:border-white/20 hover:bg-white/10 sm:px-3 sm:text-xs active:bg-white/15 disabled:opacity-50"
-                      onClick={() => void send(q)}
-                      disabled={streaming}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Messages */}
-              <div className="mt-4 space-y-3">
-                {messages.map((m, idx) => (
-                  <div
-                    key={m.id}
-                    className={
-                      m.role === "user"
-                        ? "flex justify-end"
-                        : "flex justify-start"
-                    }
-                  >
-                    <div
-                      className={
-                        m.role === "user"
-                          ? "max-w-[85%] rounded-2xl bg-white px-4 py-3 text-sm text-black"
-                          : [
-                              "max-w-[85%] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80",
-                              shouldGlitchText(m.content) ? "glitch-text" : "",
-                              m.error ? "border-danger/50" : "",
-                            ].join(" ")
-                      }
-                    >
-                      {m.role === "assistant" &&
-                      streaming &&
-                      !m.content &&
-                      idx === messages.length - 1 ? (
-                        showTypingIndicator ? (
-                          <span className="inline-flex items-center gap-2 text-white/65">
-                            <span className="flex gap-1">
-                              <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" />
-                              <span className="h-2 w-2 animate-pulse rounded-full bg-white/60 delay-75" />
-                              <span className="h-2 w-2 animate-pulse rounded-full bg-white/60 delay-150" />
-                            </span>
-                            <span className="text-xs">{ux.loadingLabel}</span>
-                          </span>
-                        ) : (
-                          <span className="text-white/40">...</span>
-                        )
-                      ) : m.error ? (
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-danger" />
-                          <div>
-                            <div>{m.content}</div>
-                            <button
-                              type="button"
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-danger/20 px-2 py-1 text-xs text-danger transition hover:bg-danger/30"
-                              onClick={handleRetry}
-                              aria-label="Retry sending message"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                              Retry
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        renderMessage(m.content)
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-
-            {/* Input */}
-            <div className="border-t border-white/10 bg-black/30 p-2.5 sm:p-3">
-              <div className="flex items-end gap-2">
-                <div className="relative flex-1">
-                  <textarea
-                    ref={inputRef}
-                    id="chat-input"
-                    value={input}
-                    onChange={(e) => {
-                      const newVal = e.target.value;
-                      if (newVal.length <= MAX_INPUT_CHARS) {
-                        setInput(newVal);
-                      }
-                    }}
-                    placeholder={ux.inputPlaceholder}
-                    rows={1}
-                    maxLength={MAX_INPUT_CHARS}
-                    className="min-h-[40px] w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-3 py-2.5 pr-16 text-sm text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 sm:min-h-[44px] sm:px-4 sm:py-3"
-                    onKeyDown={handleKeyDown}
-                    disabled={streaming}
-                    aria-describedby="chat-character-count"
-                    aria-label="Type your message"
-                  />
-                  {/* Character counter */}
-                  <div
-                    id="chat-character-count"
-                    className={`absolute bottom-2 right-2.5 text-[10px] sm:bottom-2.5 sm:right-3.5 sm:text-[11px] ${characterCountColor}`}
-                    aria-live="polite"
-                  >
-                    {characterCount}/{MAX_INPUT_CHARS}
-                  </div>
-                </div>
-
-                <button
-                  id="chat-send"
-                  type="button"
-                  className="inline-flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-2xl bg-white text-black transition hover:bg-white/90 disabled:opacity-50 sm:h-[44px] sm:w-[44px] active:scale-95"
-                  disabled={!canSend}
-                  onClick={() => void send(input)}
-                  aria-label={
-                    streaming
-                      ? "Sending message"
-                      : canSend
-                        ? "Send message"
-                        : "Cannot send empty message"
-                  }
-                >
-                  {streaming ? (
-                    <Loader2
-                      className="h-4 w-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <CornerDownLeft className="h-4 w-4" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-
-              {/* Footer info */}
-              <div className="mt-1.5 flex items-center justify-between text-[10px] text-white/45 sm:mt-2 sm:text-[11px]">
-                <div className="flex items-center gap-1.5 overflow-hidden">
-                  <Shield className="h-3 w-3 flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-                  <span className="truncate">
-                    Keys stay server-side. This is a simulation.
-                  </span>
-                </div>
-
-                {/* Keyboard hint */}
-                <span className="hidden sm:inline text-white/30">
-                  Enter to send
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="button"
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="relative"
-          >
-            <AnimatePresence>
-              {nudge ? (
-                <motion.div
-                  key="nudge"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.18 }}
-                  className="absolute bottom-14 right-0 w-[240px] rounded-2xl border border-white/10 bg-black/50 p-2.5 text-sm text-white/80 backdrop-blur-xl sm:w-[280px] sm:p-3"
-                >
-                  <div className="flex items-start gap-2">
-                    <Sparkles
-                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-white/70"
-                      aria-hidden="true"
-                    />
-                    <div className="min-w-0">
-                      <div className="font-semibold text-white">
-                        {ux.nudgeTitle}
-                      </div>
-                      <div className="mt-1 text-xs text-white/60">
-                        {ux.nudgeBody}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="rounded-lg p-1 text-white/50 hover:text-white"
-                      onClick={() => setNudge(false)}
-                      aria-label="Dismiss notification"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-
-            <button
-              id="chat-open"
-              type="button"
-              className="glass glow-ring group flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
-              onClick={() => {
-                setOpen(true);
-                setNudge(false);
-              }}
-              aria-label="Open chat"
-            >
-              <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      {open ? (
+        <div className="chat-panel-animate glass glow-ring w-full overflow-hidden rounded-t-3xl sm:w-[360px] sm:rounded-3xl md:w-[400px]">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/30 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                 <Image
                   alt="ElonGoat"
                   src="/favicon.svg"
@@ -738,19 +703,327 @@ export function ChatWidget() {
                   height={28}
                   className="opacity-90"
                 />
-              </span>
-              <span className="min-w-0">
-                <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                  Chat <MessageSquareText className="h-4 w-4 text-white/70" />
+                {streaming && (
+                  <span className="absolute bottom-0 right-0 flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-white">
+                  ElonSim Chat
+                </div>
+                <div
+                  className="truncate text-xs text-white/55"
+                  aria-live="polite"
+                >
+                  {networkError
+                    ? "Connection lost"
+                    : streaming
+                      ? ux.loadingLabel
+                      : "Streaming • history saved locally"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* Export chat button */}
+              <button
+                type="button"
+                className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                onClick={handleExportChat}
+                aria-label="Export chat as markdown"
+                title="Export chat as markdown"
+              >
+                <Download className="h-4 w-4" />
+              </button>
+
+              {/* Clear chat button */}
+              {hasMessagesBeyondInitial && (
+                <button
+                  type="button"
+                  className={`rounded-xl border p-2 text-white/70 transition ${
+                    showClearConfirm
+                      ? "border-danger bg-danger/20 text-danger hover:bg-danger/30"
+                      : "border-white/10 bg-white/5 hover:bg-white/10 hover:text-white"
+                  }`}
+                  onClick={handleClearChat}
+                  aria-label={showClearConfirm ? "Confirm clear" : "Clear chat"}
+                  title={
+                    showClearConfirm ? "Click again to confirm" : "Clear chat"
+                  }
+                >
+                  {showClearConfirm ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+
+              <button
+                id="chat-close"
+                type="button"
+                className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                onClick={() => setOpen(false)}
+                aria-label="Close chat"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="sr-only" aria-live="polite" aria-atomic="true">
+            {liveMessage}
+          </div>
+          <div
+            ref={messagesContainerRef}
+            className="max-h-[60vh] overflow-y-auto px-3 py-3 sm:max-h-[52vh] sm:px-4 sm:py-4"
+            role="log"
+            aria-live="polite"
+            aria-atomic="false"
+          >
+            {/* Quick start buttons */}
+            {!hasMessagesBeyondInitial && (
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {ux.quickStart.slice(0, 4).map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:border-white/20 hover:bg-white/10 sm:px-3 sm:text-xs active:bg-white/15 disabled:opacity-50"
+                    onClick={() => void send(q)}
+                    disabled={streaming}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="mt-4 space-y-3">
+              {messages.map((m, idx) => (
+                <div
+                  key={m.id}
+                  className={
+                    m.role === "user"
+                      ? "flex justify-end"
+                      : "flex justify-start"
+                  }
+                >
+                  <div
+                    className={
+                      m.role === "user"
+                        ? "max-w-[85%] rounded-2xl bg-white px-4 py-3 text-sm text-black"
+                        : [
+                            "max-w-[85%] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80",
+                            shouldGlitchText(m.content) ? "glitch-text" : "",
+                            m.error ? "border-danger/50" : "",
+                          ].join(" ")
+                    }
+                  >
+                    {m.role === "assistant" &&
+                    streaming &&
+                    !m.content &&
+                    idx === messages.length - 1 ? (
+                      showTypingIndicator ? (
+                        <span className="inline-flex items-center gap-2 text-white/65">
+                          <span className="flex gap-1">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" />
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-white/60 delay-75" />
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-white/60 delay-150" />
+                          </span>
+                          <span className="text-xs">{ux.loadingLabel}</span>
+                        </span>
+                      ) : (
+                        <span className="text-white/40">...</span>
+                      )
+                    ) : m.error ? (
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-danger" />
+                        <div>
+                          <div>{m.content}</div>
+                          <button
+                            type="button"
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-danger/20 px-2 py-1 text-xs text-danger transition hover:bg-danger/30"
+                            onClick={handleRetry}
+                            aria-label="Retry sending message"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            Retry
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      renderMessage(m.content)
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Follow-up suggestions */}
+            {!streaming &&
+              followUpQuestions.length > 0 &&
+              hasMessagesBeyondInitial && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="w-full px-1 text-[10px] uppercase tracking-wider text-white/40 sm:text-[11px]">
+                    Suggested questions
+                  </span>
+                  {followUpQuestions.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:border-white/20 hover:bg-white/10 sm:px-3 sm:text-xs active:bg-white/15 disabled:opacity-50"
+                      onClick={() => {
+                        void send(q);
+                        setFollowUpQuestions([]);
+                      }}
+                      disabled={streaming}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-white/10 bg-black/30 p-2.5 sm:p-3">
+            <div className="flex items-end gap-2">
+              <div className="relative flex-1">
+                <textarea
+                  ref={inputRef}
+                  id="chat-input"
+                  value={input}
+                  onChange={(e) => {
+                    const newVal = e.target.value;
+                    if (newVal.length <= MAX_INPUT_CHARS) {
+                      setInput(newVal);
+                    }
+                  }}
+                  placeholder={ux.inputPlaceholder}
+                  rows={1}
+                  maxLength={MAX_INPUT_CHARS}
+                  className="min-h-[40px] w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-3 py-2.5 pr-16 text-sm text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 sm:min-h-[44px] sm:px-4 sm:py-3"
+                  onKeyDown={handleKeyDown}
+                  disabled={streaming}
+                  aria-describedby="chat-character-count"
+                  aria-label="Type your message"
+                />
+                {/* Character counter */}
+                <div
+                  id="chat-character-count"
+                  className={`absolute bottom-2 right-2.5 text-[10px] sm:bottom-2.5 sm:right-3.5 sm:text-[11px] ${characterCountColor}`}
+                  aria-live="polite"
+                >
+                  {characterCount}/{MAX_INPUT_CHARS}
+                </div>
+              </div>
+
+              <button
+                id="chat-send"
+                type="button"
+                className="inline-flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-2xl bg-white text-black transition hover:bg-white/90 disabled:opacity-50 sm:h-[44px] sm:w-[44px] active:scale-95"
+                disabled={!canSend}
+                onClick={() => void send(input)}
+                aria-label={
+                  streaming
+                    ? "Sending message"
+                    : canSend
+                      ? "Send message"
+                      : "Cannot send empty message"
+                }
+              >
+                {streaming ? (
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <CornerDownLeft className="h-4 w-4" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            {/* Footer info */}
+            <div className="mt-1.5 flex items-center justify-between text-[10px] text-white/45 sm:mt-2 sm:text-[11px]">
+              <div className="flex items-center gap-1.5 overflow-hidden">
+                <Shield className="h-3 w-3 flex-shrink-0 sm:h-3.5 sm:w-3.5" />
+                <span className="truncate">
+                  Keys stay server-side. This is a simulation.
                 </span>
-                <span className="block truncate text-xs text-white/55">
-                  {ux.buttonTagline}
-                </span>
+              </div>
+
+              {/* Keyboard hint */}
+              <span className="hidden sm:inline text-white/30">
+                Enter to send
               </span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="chat-button-animate relative">
+          {nudge ? (
+            <div className="chat-nudge-animate absolute bottom-14 right-0 w-[240px] rounded-2xl border border-white/10 bg-black/50 p-2.5 text-sm text-white/80 backdrop-blur-xl sm:w-[280px] sm:p-3">
+              <div className="flex items-start gap-2">
+                <Sparkles
+                  className="mt-0.5 h-4 w-4 flex-shrink-0 text-white/70"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <div className="font-semibold text-white">
+                    {ux.nudgeTitle}
+                  </div>
+                  <div className="mt-1 text-xs text-white/60">
+                    {ux.nudgeBody}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg p-1 text-white/50 hover:text-white"
+                  onClick={() => setNudge(false)}
+                  aria-label="Dismiss notification"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <button
+            id="chat-open"
+            type="button"
+            className="glass glow-ring group flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
+            onClick={() => {
+              setOpen(true);
+              setNudge(false);
+            }}
+            aria-label="Open chat"
+          >
+            <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <Image
+                alt="ElonGoat"
+                src="/favicon.svg"
+                width={28}
+                height={28}
+                className="opacity-90"
+              />
+            </span>
+            <span className="min-w-0">
+              <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                Chat <MessageSquareText className="h-4 w-4 text-white/70" />
+              </span>
+              <span className="block truncate text-xs text-white/55">
+                {ux.buttonTagline}
+              </span>
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -118,4 +118,94 @@ body {
   .delay-150 {
     animation-delay: 150ms;
   }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Prevent content shift when chat opens on mobile */
+  body.chat-open {
+    overflow: hidden;
+  }
+
+  /* Ensure proper touch targets on mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ============================================================================
+ * Chat Widget CSS Animations (replaces framer-motion)
+ * ============================================================================ */
+
+/* Chat panel entrance animation */
+.chat-panel-animate {
+  animation: chatPanelIn 0.18s ease-out forwards;
+}
+
+@keyframes chatPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Chat button entrance animation */
+.chat-button-animate {
+  animation: chatButtonIn 0.18s ease-out forwards;
+}
+
+@keyframes chatButtonIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Chat nudge tooltip animation */
+.chat-nudge-animate {
+  animation: chatNudgeIn 0.18s ease-out forwards;
+}
+
+@keyframes chatNudgeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth transitions for chat state changes */
+.chat-panel-animate,
+.chat-button-animate,
+.chat-nudge-animate {
+  transition-property: opacity, transform;
+  transition-timing-function: ease-out;
+  transition-duration: 0.18s;
 }

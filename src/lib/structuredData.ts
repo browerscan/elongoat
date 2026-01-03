@@ -30,7 +30,7 @@ export function generateWebSiteSchema() {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
       },
       "query-input": {
         "@type": "PropertyValueSpecification",
@@ -183,15 +183,36 @@ export function generateArticleSchema(params: {
 export interface FaqItem {
   question: string;
   answer: string;
+  author?: string;
+  dateCreated?: string;
+  dateModified?: string;
 }
 
 export function generateFaqPageSchema(items: FaqItem[]) {
   const mainEntity = items.map((item) => ({
     "@type": "Question",
     name: item.question,
+    ...(item.author && {
+      author: {
+        "@type": "Organization",
+        name: item.author,
+      },
+    }),
+    ...(item.dateCreated && {
+      dateCreated: item.dateCreated,
+    }),
+    ...(item.dateModified && {
+      dateModified: item.dateModified,
+    }),
     acceptedAnswer: {
       "@type": "Answer",
       text: item.answer.slice(0, 500), // Limit for schema
+      ...(item.author && {
+        author: {
+          "@type": "Organization",
+          name: item.author,
+        },
+      }),
     },
   }));
 
@@ -449,4 +470,296 @@ export function isValidSchema(obj: unknown): obj is Record<string, unknown> {
     "@context" in obj &&
     "@type" in obj
   );
+}
+
+/**
+ * HowTo step interface
+ */
+export interface HowToStep {
+  name: string;
+  text: string;
+  url?: string;
+  image?: string;
+}
+
+/**
+ * Generate HowTo schema for tutorial/guide pages
+ * Helps content appear in HowTo rich results
+ */
+export function generateHowToSchema(params: {
+  name: string;
+  description: string;
+  url: string;
+  steps: HowToStep[];
+  totalTime?: string;
+  estimatedCost?: {
+    currency: string;
+    value: string;
+  };
+  supply?: string[];
+  tool?: string[];
+  image?: string;
+}) {
+  const {
+    name,
+    description,
+    url,
+    steps,
+    totalTime,
+    estimatedCost,
+    supply,
+    tool,
+    image,
+  } = params;
+
+  const howTo: Record<string, unknown> = {
+    "@context": BASE_CONTEXT,
+    "@type": "HowTo",
+    name,
+    description: description.slice(0, 500),
+    url: `${SITE_URL}${url}`,
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+      ...(step.url && { url: step.url }),
+      ...(step.image && {
+        image: {
+          "@type": "ImageObject",
+          url: step.image,
+        },
+      }),
+    })),
+  };
+
+  if (totalTime) {
+    howTo.totalTime = totalTime;
+  }
+
+  if (estimatedCost) {
+    howTo.estimatedCost = {
+      "@type": "MonetaryAmount",
+      currency: estimatedCost.currency,
+      value: estimatedCost.value,
+    };
+  }
+
+  if (supply && supply.length > 0) {
+    howTo.supply = supply.map((s) => ({
+      "@type": "HowToSupply",
+      name: s,
+    }));
+  }
+
+  if (tool && tool.length > 0) {
+    howTo.tool = tool.map((t) => ({
+      "@type": "HowToTool",
+      name: t,
+    }));
+  }
+
+  if (image) {
+    howTo.image = {
+      "@type": "ImageObject",
+      url: image.startsWith("http") ? image : `${SITE_URL}${image}`,
+    };
+  }
+
+  return howTo;
+}
+
+/**
+ * ItemList item interface
+ */
+export interface ItemListItem {
+  name: string;
+  url: string;
+  description?: string;
+  image?: string;
+}
+
+/**
+ * Generate ItemList schema for index/listing pages
+ * Helps Google understand page collections
+ */
+export function generateItemListSchema(params: {
+  name: string;
+  description: string;
+  url: string;
+  items: ItemListItem[];
+  itemListOrder?: "Ascending" | "Descending" | "Unordered";
+}) {
+  const { name, description, url, items, itemListOrder = "Unordered" } = params;
+
+  return {
+    "@context": BASE_CONTEXT,
+    "@type": "ItemList",
+    name,
+    description: description.slice(0, 500),
+    url: `${SITE_URL}${url}`,
+    numberOfItems: items.length,
+    itemListOrder: `https://schema.org/ItemListOrder${itemListOrder}`,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url.startsWith("http") ? item.url : `${SITE_URL}${item.url}`,
+      ...(item.description && { description: item.description.slice(0, 200) }),
+      ...(item.image && {
+        image: {
+          "@type": "ImageObject",
+          url: item.image.startsWith("http")
+            ? item.image
+            : `${SITE_URL}${item.image}`,
+        },
+      }),
+    })),
+  };
+}
+
+/**
+ * Speakable selector interface
+ */
+export interface SpeakableSelector {
+  cssSelector?: string[];
+  xpath?: string[];
+}
+
+/**
+ * Generate Speakable schema for voice search optimization
+ * Marks content sections that are particularly suitable for text-to-speech
+ */
+export function generateSpeakableSchema(params: {
+  url: string;
+  cssSelector?: string[];
+  xpath?: string[];
+}) {
+  const { url, cssSelector, xpath } = params;
+
+  const speakable: Record<string, unknown> = {
+    "@type": "SpeakableSpecification",
+  };
+
+  if (cssSelector && cssSelector.length > 0) {
+    speakable.cssSelector = cssSelector;
+  }
+
+  if (xpath && xpath.length > 0) {
+    speakable.xpath = xpath;
+  }
+
+  // If no selectors provided, use common article selectors
+  if (!cssSelector && !xpath) {
+    speakable.cssSelector = [
+      "article h1",
+      "article h2",
+      "article > section > p:first-of-type",
+      "[data-speakable]",
+    ];
+  }
+
+  return {
+    "@context": BASE_CONTEXT,
+    "@type": "WebPage",
+    url: `${SITE_URL}${url}`,
+    speakable,
+  };
+}
+
+/**
+ * Generate combined Article schema with Speakable for voice search
+ */
+export function generateArticleWithSpeakableSchema(params: {
+  title: string;
+  description: string;
+  url: string;
+  publishedAt?: string;
+  updatedAt?: string;
+  authorName?: string;
+  imageUrl?: string;
+  section?: string;
+  keywords?: string[];
+  speakableSelectors?: string[];
+}) {
+  const articleSchema = generateArticleSchema(params);
+
+  // Add speakable specification
+  (articleSchema as Record<string, unknown>).speakable = {
+    "@type": "SpeakableSpecification",
+    cssSelector: params.speakableSelectors ?? [
+      "article h1",
+      "article h2",
+      "article > section > p:first-of-type",
+    ],
+  };
+
+  return articleSchema;
+}
+
+/**
+ * Extract HowTo steps from markdown content
+ * Parses numbered lists and headers to create structured steps
+ */
+export function extractHowToStepsFromMarkdown(markdown: string): HowToStep[] {
+  const steps: HowToStep[] = [];
+
+  // Pattern 1: Numbered headers (## 1. Step Name, ### Step 1: Name)
+  const headerPattern = /#{2,3}\s*(?:Step\s*)?(\d+)[.:]\s*(.+?)(?:\n|$)/gi;
+  let match;
+
+  while ((match = headerPattern.exec(markdown)) !== null) {
+    const stepName = match[2].trim();
+    // Get content until next header or end
+    const startIdx = match.index + match[0].length;
+    const nextHeaderMatch = markdown.slice(startIdx).match(/\n#{2,3}\s/);
+    const endIdx = nextHeaderMatch
+      ? startIdx + (nextHeaderMatch.index ?? 0)
+      : markdown.length;
+    const stepText = markdown
+      .slice(startIdx, endIdx)
+      .trim()
+      .replace(/\n+/g, " ")
+      .slice(0, 500);
+
+    if (stepName && stepText) {
+      steps.push({ name: stepName, text: stepText });
+    }
+  }
+
+  // Pattern 2: Numbered list items (1. Do this, 2. Then that)
+  if (steps.length === 0) {
+    const listPattern = /^(\d+)\.\s+(.+?)(?:\n|$)/gm;
+    while ((match = listPattern.exec(markdown)) !== null) {
+      const stepText = match[2].trim();
+      if (stepText.length > 10) {
+        steps.push({
+          name: `Step ${match[1]}`,
+          text: stepText.slice(0, 500),
+        });
+      }
+    }
+  }
+
+  return steps;
+}
+
+/**
+ * Check if content appears to be a HowTo/tutorial
+ */
+export function isHowToContent(markdown: string, title: string): boolean {
+  const howToIndicators = [
+    /how\s+to\s+/i,
+    /step[s]?\s+(?:by\s+step|to|for)/i,
+    /guide\s+(?:to|for|on)/i,
+    /tutorial/i,
+    /instructions?\s+(?:for|to|on)/i,
+    /learn\s+(?:how\s+)?to/i,
+    /^\d+\.\s+/m, // Starts with numbered list
+    /##\s*Step\s*\d/i, // Has step headers
+  ];
+
+  const combinedText = `${title} ${markdown.slice(0, 1000)}`;
+
+  return howToIndicators.some((pattern) => pattern.test(combinedText));
 }

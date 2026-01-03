@@ -5,12 +5,14 @@ import { notFound } from "next/navigation";
 
 import { FilterList, type FilterListItem } from "@/components/FilterList";
 import { JsonLd } from "@/components/JsonLd";
+import { LastModified } from "@/components/LastModified";
 import { RelatedContent } from "@/components/RelatedContent";
 import { SeeAlso } from "@/components/SeeAlso";
 import { findTopic, getClusterIndex, listTopicPages } from "@/lib/indexes";
 import { generateTopicMetadata } from "@/lib/seo";
 import {
   generateBreadcrumbSchema,
+  generateItemListSchema,
   generateProfilePageSchema,
   generateWebPageSchema,
 } from "@/lib/structuredData";
@@ -35,6 +37,7 @@ export async function generateMetadata({
     };
   return generateTopicMetadata({
     topic: topic.topic,
+    topicSlug: topic.slug,
     pageCount: topic.pageCount,
     totalVolume: topic.totalVolume,
   });
@@ -53,13 +56,15 @@ export default async function TopicHubPage({
     getClusterIndex(),
   ]);
 
+  const clusterUpdated = new Date(cluster.generatedAt);
+
   // JSON-LD structured data
   const jsonLd = [
     generateWebPageSchema({
       title: `${topic.topic} — Topic Hub`,
       description: `Browse ${topic.pageCount.toLocaleString()} pages in the "${topic.topic}" topic hub. Total search volume: ${topic.totalVolume.toLocaleString()}.`,
       url: `/${topic.slug}`,
-      dateModified: new Date(cluster.generatedAt).toISOString(),
+      dateModified: clusterUpdated.toISOString(),
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Topics", url: "/topics" },
@@ -77,6 +82,18 @@ export default async function TopicHubPage({
       { name: "Topics", url: "/topics" },
       { name: topic.topic, url: `/${topic.slug}` },
     ]),
+    // ItemList schema for pages in this topic
+    generateItemListSchema({
+      name: `${topic.topic} Pages`,
+      description: `Browse ${pages.length} pages about ${topic.topic}`,
+      url: `/${topic.slug}`,
+      items: pages.slice(0, 30).map((p) => ({
+        name: p.page,
+        url: `/${p.topicSlug}/${p.pageSlug}`,
+        description: `${p.keywordCount} keywords, peak volume ${p.maxVolume.toLocaleString()}`,
+      })),
+      itemListOrder: "Descending",
+    }),
   ];
 
   const items: FilterListItem[] = pages.map((p) => ({
@@ -102,6 +119,7 @@ export default async function TopicHubPage({
                 {topic.pageCount.toLocaleString()} pages • Total volume (sum):{" "}
                 {topic.totalVolume.toLocaleString()}
               </p>
+              <LastModified date={clusterUpdated} className="mt-2" />
             </div>
             <div className="flex flex-wrap gap-2">
               <Link

@@ -1,36 +1,60 @@
-import { Pool } from "pg";
+/**
+ * Backend database module - provides throwing versions for scripts
+ *
+ * This module wraps the main db module (src/lib/db.ts) with throwing semantics.
+ * Backend scripts require DATABASE_URL and should fail fast if missing.
+ *
+ * For frontend/API routes, use `src/lib/db.ts` directly with `getDbPool()`.
+ */
+import { Pool, PoolClient } from "pg";
 
-let pool: Pool | null = null;
+// Re-export core functionality from main db module
+export {
+  getPoolMetrics,
+  logPoolMetrics,
+  closeDbPool,
+  checkDbHealth,
+  setupDbShutdownHandlers,
+} from "../../src/lib/db";
 
+// Import the main pool getter
+import { getDbPool } from "../../src/lib/db";
+
+/**
+ * Gets the database pool, throwing if DATABASE_URL is not set.
+ * Use this for backend scripts where database is required.
+ *
+ * For frontend/API routes that need graceful fallback, use getDbPool() instead.
+ */
 export function getDb(): Pool {
-  if (pool) return pool;
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("Missing DATABASE_URL");
+  const pool = getDbPool();
+  if (!pool) {
+    throw new Error("Missing DATABASE_URL - database connection required");
   }
-  pool = new Pool({
-    connectionString,
-    max: Number.parseInt(process.env.PGPOOL_MAX ?? "5", 10),
-    statement_timeout: Number.parseInt(
-      process.env.PG_STATEMENT_TIMEOUT_MS ?? "60000",
-      10,
-    ),
-  });
   return pool;
 }
 
+/**
+ * Executes a function within a database transaction.
+ * Automatically handles BEGIN, COMMIT, and ROLLBACK.
+ *
+ * @param fn - Function to execute within the transaction
+ * @returns The result of the function
+ * @throws If the function throws or DATABASE_URL is not set
+ */
 export async function withTransaction<T>(
-  fn: (client: import("pg").PoolClient) => Promise<T>,
+  fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   const db = getDb();
   const client = await db.connect();
-  await client.query("begin");
+
   try {
+    await client.query("BEGIN");
     const result = await fn(client);
-    await client.query("commit");
+    await client.query("COMMIT");
     return result;
   } catch (err) {
-    await client.query("rollback");
+    await client.query("ROLLBACK");
     throw err;
   } finally {
     client.release();

@@ -26,8 +26,13 @@ COPY --from=builder /app/.next/standalone ./
 
 EXPOSE 3000
 
+# Copy entrypoint script for cache warmup
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Health check using the lightweight /api/healthz endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/healthz || exit 1
 
-CMD ["node", "server.js"]
+# Use entrypoint script for startup with cache warmup
+ENTRYPOINT ["/app/entrypoint.sh"]

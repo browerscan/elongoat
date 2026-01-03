@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
+import { AuthorInfo } from "@/components/AuthorInfo";
 import { getTranscript, getVideo } from "@/lib/videos";
 import { generateVideoMetadata } from "@/lib/seo";
 import {
@@ -151,6 +152,8 @@ export default async function VideoPage({
             </div>
           ) : null}
         </section>
+
+        <AuthorInfo lastUpdated={video.scrapedAt} contentType="video" />
       </div>
     </>
   );

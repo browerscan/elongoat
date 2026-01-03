@@ -4,14 +4,87 @@ import { findPage, findPaaQuestion } from "@/lib/indexes";
 import { setCachedContent } from "@/lib/contentCache";
 import { getDynamicVariables } from "@/lib/variables";
 import { buildRagContext, formatRagContexts } from "@/lib/rag";
-import {
-  generateWithCodex,
-  validateWordCount,
-  countWords,
-} from "../../backend/lib/codex";
+import { vectorEngineChatComplete } from "@/lib/vectorengine";
+
+// Word count utilities
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).length;
+}
+
+function validateWordCount(
+  content: string,
+  minWords: number,
+): { valid: boolean; actual: number; message?: string } {
+  const actual = countWords(content);
+  const valid = actual >= minWords;
+  return {
+    valid,
+    actual,
+    message: valid
+      ? undefined
+      : `Content has ${actual} words, requires at least ${minWords}`,
+  };
+}
 
 const MIN_WORDS_CLUSTER = 1200;
 const MIN_WORDS_PAA = 800;
+
+/**
+ * Generate content with retry logic for word count validation
+ * If first attempt is too short, retry with higher maxTokens
+ */
+async function generateWithRetry(params: {
+  prompt: string;
+  model: string;
+  minWords: number;
+  initialMaxTokens: number;
+  retryMaxTokens: number;
+  slug: string;
+  kind: "cluster" | "paa";
+}): Promise<{ contentMd: string; wordCount: number; model: string }> {
+  let contentMd = "";
+  let wordCount = 0;
+  let attempt = 0;
+  const maxAttempts = 2;
+
+  while (attempt < maxAttempts) {
+    const maxTokens =
+      attempt === 0 ? params.initialMaxTokens : params.retryMaxTokens;
+
+    const result = await vectorEngineChatComplete({
+      model: params.model,
+      messages: [{ role: "user", content: params.prompt }],
+      temperature: 0.35,
+      maxTokens,
+    });
+
+    contentMd = result.text.trim();
+    wordCount = countWords(contentMd);
+
+    const validation = validateWordCount(contentMd, params.minWords);
+
+    if (validation.valid) {
+      // Success - log word count achieved
+      console.info(
+        `[contentGen] ${params.kind.toUpperCase()} ${params.slug}: ${wordCount} words (attempt ${attempt + 1})`,
+      );
+      break;
+    }
+
+    attempt++;
+    if (attempt < maxAttempts) {
+      console.warn(
+        `[contentGen] ${params.kind.toUpperCase()} ${params.slug}: ${validation.message} - retrying with higher token limit...`,
+      );
+    } else {
+      console.warn(
+        `[contentGen] ${params.kind.toUpperCase()} ${params.slug}: ${validation.message} (final attempt)`,
+      );
+    }
+  }
+
+  return { contentMd, wordCount, model: params.model };
+}
 
 /**
  * Generate cluster page content using RAG + Codex
@@ -20,7 +93,6 @@ export async function generateClusterPageContentEnhanced(params: {
   topicSlug: string;
   pageSlug: string;
   ttlSeconds?: number;
-  useCodex?: boolean;
 }): Promise<{
   contentMd: string;
   model: string;
@@ -32,7 +104,6 @@ export async function generateClusterPageContentEnhanced(params: {
   if (!page) throw new Error("Cluster page not found");
 
   const vars = await getDynamicVariables();
-  const useCodex = params.useCodex ?? true;
 
   // Build RAG context
   const ragQuery = `${page.page} ${page.topic} ${page.topKeywords
@@ -135,7 +206,8 @@ STRUCTURE (follow strictly):
 
 WRITING GUIDELINES:
 - Use clear, engaging language (avoid jargon unless explained)
-- Cite timeframes for all time-sensitive information
+- Cite timeframes for all time-sensitive information (e.g., "[As of 2025]", "As of January 2025")
+- Cite sources for factual claims when possible (e.g., "According to...", "Reported by...")
 - Be factual and objective (not promotional)
 - Include specific numbers, dates, and data points when available
 - Naturally integrate keywords from the search queries
@@ -154,42 +226,29 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
 `.trim();
 
   let contentMd = "";
-  const model = "codex-high";
+  const modelName =
+    process.env.VECTORENGINE_CONTENT_MODEL ?? "claude-sonnet-4-5-20250929";
   let wordCount = 0;
 
-  if (useCodex) {
-    // Use Codex for generation
-    const result = await generateWithCodex({
-      prompt,
-      effort: "high", // High quality for long-form content
-      timeout: 90000, // 90s timeout for long content
-    });
+  // Generate with retry logic for word count
+  const genResult = await generateWithRetry({
+    prompt,
+    model: modelName,
+    minWords: MIN_WORDS_CLUSTER,
+    initialMaxTokens: 3000,
+    retryMaxTokens: 4000,
+    slug,
+    kind: "cluster",
+  });
 
-    if (result.success && result.content) {
-      contentMd = result.content.trim();
-      wordCount = countWords(contentMd);
-
-      // Validate word count
-      const validation = validateWordCount(contentMd, MIN_WORDS_CLUSTER);
-      if (!validation.valid) {
-        console.warn(`[contentGen] Cluster ${slug}: ${validation.message}`);
-        // Don't retry, just log the warning
-      }
-    } else {
-      console.error(`[contentGen] Codex failed for ${slug}: ${result.error}`);
-      throw new Error(`Content generation failed: ${result.error}`);
-    }
-  } else {
-    throw new Error(
-      "Non-codex generation not implemented for enhanced version",
-    );
-  }
+  contentMd = genResult.contentMd;
+  wordCount = genResult.wordCount;
 
   // Cache the result
   await setCachedContent({
     kind: "cluster_page",
     slug,
-    model,
+    model: modelName,
     contentMd,
     ttlSeconds: params.ttlSeconds ?? 60 * 60 * 24 * 30, // 30 days
     sources: {
@@ -203,19 +262,18 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
 
   return {
     contentMd,
-    model,
+    model: modelName,
     wordCount,
     ragContextsUsed: ragResult.contexts.length,
   };
 }
 
 /**
- * Generate PAA answer using RAG + Codex
+ * Generate PAA answer using RAG + VectorEngine
  */
 export async function generatePaaAnswerEnhanced(params: {
   slug: string;
   ttlSeconds?: number;
-  useCodex?: boolean;
 }): Promise<{
   contentMd: string;
   model: string;
@@ -226,7 +284,6 @@ export async function generatePaaAnswerEnhanced(params: {
   if (!q) throw new Error("PAA question not found");
 
   const vars = await getDynamicVariables();
-  const useCodex = params.useCodex ?? true;
 
   // Build RAG context
   const ragResult = await buildRagContext({
@@ -295,8 +352,8 @@ STRUCTURE:
 
 GUIDELINES:
 - Be factual and objective
-- Always include timeframes for time-sensitive info
-- Cite specific dates, numbers, and sources
+- Always include timeframes for time-sensitive info (e.g., "[As of 2025]", "As of January 2025")
+- Cite specific dates, numbers, and sources when possible
 - Avoid speculation unless clearly marked as such
 - Write in clear, accessible language
 - Target 800-1000 words total
@@ -305,41 +362,29 @@ Write ONLY the markdown content. Begin:
 `.trim();
 
   let contentMd = "";
-  const model = "codex-high";
+  const modelName =
+    process.env.VECTORENGINE_CONTENT_MODEL ?? "claude-sonnet-4-5-20250929";
   let wordCount = 0;
 
-  if (useCodex) {
-    const result = await generateWithCodex({
-      prompt,
-      effort: "high",
-      timeout: 90000,
-    });
+  // Generate with retry logic for word count
+  const genResult = await generateWithRetry({
+    prompt,
+    model: modelName,
+    minWords: MIN_WORDS_PAA,
+    initialMaxTokens: 2000,
+    retryMaxTokens: 3000,
+    slug: params.slug,
+    kind: "paa",
+  });
 
-    if (result.success && result.content) {
-      contentMd = result.content.trim();
-      wordCount = countWords(contentMd);
-
-      const validation = validateWordCount(contentMd, MIN_WORDS_PAA);
-      if (!validation.valid) {
-        console.warn(`[contentGen] PAA ${params.slug}: ${validation.message}`);
-      }
-    } else {
-      console.error(
-        `[contentGen] Codex failed for PAA ${params.slug}: ${result.error}`,
-      );
-      throw new Error(`Content generation failed: ${result.error}`);
-    }
-  } else {
-    throw new Error(
-      "Non-codex generation not implemented for enhanced version",
-    );
-  }
+  contentMd = genResult.contentMd;
+  wordCount = genResult.wordCount;
 
   // Cache the result
   await setCachedContent({
     kind: "paa_question",
     slug: params.slug,
-    model,
+    model: modelName,
     contentMd,
     ttlSeconds: params.ttlSeconds ?? 60 * 60 * 24 * 30,
     sources: {
@@ -353,7 +398,7 @@ Write ONLY the markdown content. Begin:
 
   return {
     contentMd,
-    model,
+    model: modelName,
     wordCount,
     ragContextsUsed: ragResult.contexts.length,
   };

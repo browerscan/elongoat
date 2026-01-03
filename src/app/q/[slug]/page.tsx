@@ -4,10 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { JsonLd } from "@/components/JsonLd";
+import { LastModified } from "@/components/LastModified";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
 import { RelatedContent } from "@/components/RelatedContent";
 import { SeeAlso } from "@/components/SeeAlso";
+import { AuthorInfo } from "@/components/AuthorInfo";
 import { getPaaAnswerContent } from "@/lib/contentGen";
 import { getCustomQa } from "@/lib/customQa";
 import {
@@ -19,8 +21,12 @@ import {
 import { generateQaMetadata } from "@/lib/seo";
 import {
   generateBreadcrumbSchema,
+  generateFaqPageSchema,
   generateQaPageSchema,
   generateWebPageSchema,
+  generateHowToSchema,
+  extractHowToStepsFromMarkdown,
+  isHowToContent,
 } from "@/lib/structuredData";
 import { getDynamicVariables } from "@/lib/variables";
 
@@ -153,19 +159,46 @@ export default async function QuestionPage({
           />
 
           <SeeAlso type="qa" keywords={keywords} currentSlug={params.slug} />
+
+          <AuthorInfo lastUpdated={custom.updatedAt} contentType="custom" />
         </article>
       </>
     );
   }
 
+  const ai = await getPaaAnswerContent({ slug: q!.slug });
+
+  const siblings = paa.questions
+    .filter(
+      (x) =>
+        x.parent && q!.parent && x.parent === q!.parent && x.slug !== q!.slug,
+    )
+    .slice(0, 8);
+
+  // Build FAQ items from siblings for FAQ schema
+  const faqItems = siblings
+    .filter((s) => s.answer)
+    .slice(0, 5)
+    .map((s) => ({
+      question: s.question,
+      answer: s.answer!,
+    }));
+
+  // Check if content is HowTo-style
+  const contentIsHowTo = isHowToContent(ai.contentMd, q!.question);
+  const howToSteps = contentIsHowTo
+    ? extractHowToStepsFromMarkdown(ai.contentMd)
+    : [];
+
   // JSON-LD for PAA questions
-  const jsonLd = [
+  const jsonLd: Record<string, unknown>[] = [
     generateWebPageSchema({
       title: q!.question,
       description:
         q!.answer ??
         "A People Also Ask question about Elon Musk — open it, see sources, and ask the AI for a deeper answer.",
       url: `/q/${q!.slug}`,
+      dateModified: new Date(paa.generatedAt).toISOString(),
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Q&A", url: "/q" },
@@ -176,6 +209,7 @@ export default async function QuestionPage({
       question: q!.question,
       answer: q!.answer ?? "Use the chat to generate an answer.",
       url: `/q/${q!.slug}`,
+      createdAt: new Date(paa.generatedAt).toISOString(),
     }),
     generateBreadcrumbSchema([
       { name: "Home", url: "/" },
@@ -184,14 +218,30 @@ export default async function QuestionPage({
     ]),
   ];
 
-  const ai = await getPaaAnswerContent({ slug: q!.slug });
+  // Add FAQ schema if there are related questions with answers
+  if (faqItems.length >= 2) {
+    jsonLd.push(
+      generateFaqPageSchema([
+        {
+          question: q!.question,
+          answer: q!.answer ?? ai.contentMd.slice(0, 500),
+        },
+        ...faqItems,
+      ]),
+    );
+  }
 
-  const siblings = paa.questions
-    .filter(
-      (x) =>
-        x.parent && q!.parent && x.parent === q!.parent && x.slug !== q!.slug,
-    )
-    .slice(0, 8);
+  // Add HowTo schema if content has steps
+  if (contentIsHowTo && howToSteps.length >= 2) {
+    jsonLd.push(
+      generateHowToSchema({
+        name: q!.question,
+        description: q!.answer ?? `Step-by-step guide: ${q!.question}`,
+        url: `/q/${q!.slug}`,
+        steps: howToSteps,
+      }),
+    );
+  }
 
   const sourceHref = normalizeSourceUrl(q!.sourceUrl);
 
@@ -214,6 +264,7 @@ export default async function QuestionPage({
             Fast variables: age {vars.age}, children {vars.children_count}. For
             deeper nuance, open the chat.
           </p>
+          <LastModified date={paa.generatedAt} className="mt-3" />
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <OpenChatButton
@@ -333,6 +384,8 @@ export default async function QuestionPage({
         />
 
         <SeeAlso type="qa" keywords={keywords} currentSlug={params.slug} />
+
+        <AuthorInfo lastUpdated={paa.generatedAt} contentType="qa" />
       </article>
     </>
   );

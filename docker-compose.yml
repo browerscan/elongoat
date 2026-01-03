@@ -3,6 +3,19 @@ services:
     build: .
     container_name: standalone-elongoat
     restart: unless-stopped
+    # Resource limits for production stability
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    # Memory limits (Docker Compose v2 compatibility)
+    mem_limit: 1024m
+    memswap_limit: 1536m
+    cpus: 2.0
     environment:
       - NODE_ENV=production
       # Nginx-proxy auto-discovery for backend API
@@ -34,14 +47,26 @@ services:
 
       # Admin (required for /api/admin/* - must be explicitly set)
       - ELONGOAT_ADMIN_TOKEN=${ELONGOAT_ADMIN_TOKEN}
+      - ELONGOAT_ADMIN_SESSION_SECRET=${ELONGOAT_ADMIN_SESSION_SECRET}
+
+      # RAG API (required for /api/rag/* endpoints)
+      - ELONGOAT_RAG_API_KEY=${ELONGOAT_RAG_API_KEY}
+
+      # Rate limiting security (HMAC secret for IP hashing)
+      - RATE_LIMIT_IP_SECRET=${RATE_LIMIT_IP_SECRET}
 
       # X monitor (optional; determines primary handle displayed on /x)
       - X_HANDLES=${X_HANDLES:-elonmusk}
 
+      # Cache warmup on startup (delay in seconds)
+      - WARMUP_DELAY_MS=${WARMUP_DELAY_MS:-10}
+      - SKIP_WARMUP=${SKIP_WARMUP:-0}
+
     volumes:
       - ./data:/app/data:ro
-    ports:
-      - "3000:3000" # Expose port for direct health checks
+    # No host port binding - nginx-proxy handles external access via VIRTUAL_HOST
+    expose:
+      - "3000"
     networks:
       - proxy-tier
       - supabase-tier

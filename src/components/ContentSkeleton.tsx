@@ -1,3 +1,5 @@
+"use client";
+
 import { Skeleton } from "./Skeleton";
 
 /**
@@ -216,6 +218,103 @@ export function LoadingSpinner({
           {text}
         </span>
       )}
+    </div>
+  );
+}
+
+/**
+ * AI Brief skeleton - matches the AI content section styling.
+ */
+export function AIBriefSkeleton(): JSX.Element {
+  return (
+    <div className="glass rounded-3xl p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Skeleton height="24px" width="80px" />
+        <Skeleton height="16px" width="100px" />
+      </div>
+      <div className="mt-4 space-y-4">
+        {/* TL;DR section */}
+        <div className="space-y-2">
+          <Skeleton height="20px" width="60px" />
+          <div className="ml-4 space-y-1.5">
+            <Skeleton height="14px" width="95%" />
+            <Skeleton height="14px" width="88%" />
+            <Skeleton height="14px" width="72%" />
+          </div>
+        </div>
+
+        {/* Main content paragraphs */}
+        <div className="space-y-3">
+          <Skeleton height="18px" width="200px" />
+          <div className="space-y-1.5">
+            <Skeleton height="14px" width="100%" />
+            <Skeleton height="14px" width="97%" />
+            <Skeleton height="14px" width="85%" />
+          </div>
+        </div>
+
+        {/* Key angles section */}
+        <div className="space-y-2">
+          <Skeleton height="18px" width="180px" />
+          <div className="ml-4 space-y-1.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} height="14px" width={`${85 - i * 5}%`} />
+            ))}
+          </div>
+        </div>
+
+        {/* FAQ section */}
+        <div className="space-y-2">
+          <Skeleton height="18px" width="50px" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-1">
+                <Skeleton height="14px" width="70%" />
+                <Skeleton height="12px" width="90%" className="opacity-60" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Cluster page metrics skeleton.
+ */
+export function MetricsSkeleton(): JSX.Element {
+  return (
+    <section className="grid gap-4 md:grid-cols-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="glass rounded-3xl p-6">
+          <Skeleton height="12px" width="80px" />
+          <Skeleton height="32px" width="120px" className="mt-2" />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/**
+ * Keywords grid skeleton.
+ */
+export function KeywordsGridSkeleton({
+  count = 8,
+}: {
+  count?: number;
+}): JSX.Element {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-white/10 bg-white/5 p-4"
+        >
+          <Skeleton height="16px" width="80%" />
+          <Skeleton height="12px" width="60%" className="mt-1" />
+        </div>
+      ))}
     </div>
   );
 }

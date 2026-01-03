@@ -188,10 +188,15 @@ export class CircuitBreakerOpenError extends Error {
 }
 
 // ============================================================================
-// Circuit Breaker Registry
+// Circuit Breaker Registry with TTL Cleanup
 // ============================================================================
 
-const circuitBreakers = new Map<string, CircuitBreaker>();
+interface CircuitBreakerEntry {
+  breaker: CircuitBreaker;
+  lastAccessTime: number;
+}
+
+const circuitBreakers = new Map<string, CircuitBreakerEntry>();
 
 const DEFAULT_CONFIG: CircuitBreakerConfig = {
   threshold: 5,
@@ -200,16 +205,110 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
   halfOpenMaxAttempts: 3,
 };
 
+// TTL for inactive circuit breakers (default: 1 hour)
+const CIRCUIT_BREAKER_TTL_MS = Number.parseInt(
+  process.env.CIRCUIT_BREAKER_TTL_MS ?? "3600000",
+  10,
+);
+
+// Cleanup interval (default: 5 minutes)
+const CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS = Number.parseInt(
+  process.env.CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS ?? "300000",
+  10,
+);
+
+// Maximum number of circuit breakers to prevent unbounded growth
+const MAX_CIRCUIT_BREAKERS = Number.parseInt(
+  process.env.MAX_CIRCUIT_BREAKERS ?? "1000",
+  10,
+);
+
+let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Clean up stale circuit breakers that haven't been accessed within TTL
+ */
+function cleanupStaleCircuitBreakers(): void {
+  const now = Date.now();
+  const staleThreshold = now - CIRCUIT_BREAKER_TTL_MS;
+  let cleanedCount = 0;
+
+  for (const [name, entry] of circuitBreakers.entries()) {
+    // Only clean up closed circuit breakers that haven't been accessed recently
+    if (
+      entry.lastAccessTime < staleThreshold &&
+      entry.breaker.getStats().state === "closed"
+    ) {
+      circuitBreakers.delete(name);
+      cleanedCount++;
+    }
+  }
+
+  if (cleanedCount > 0 && process.env.NODE_ENV === "development") {
+    console.log(
+      `[CircuitBreaker] Cleaned up ${cleanedCount} stale circuit breakers. Remaining: ${circuitBreakers.size}`,
+    );
+  }
+}
+
+/**
+ * Start the cleanup interval if not already running
+ */
+function ensureCleanupInterval(): void {
+  if (cleanupInterval === null && typeof setInterval !== "undefined") {
+    cleanupInterval = setInterval(
+      cleanupStaleCircuitBreakers,
+      CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS,
+    );
+    // Don't prevent Node.js from exiting
+    if (cleanupInterval.unref) {
+      cleanupInterval.unref();
+    }
+  }
+}
+
 export function getCircuitBreaker(
   name: string,
   config?: Partial<CircuitBreakerConfig>,
 ): CircuitBreaker {
-  if (!circuitBreakers.has(name)) {
-    const fullConfig = { ...DEFAULT_CONFIG, ...config };
-    circuitBreakers.set(name, new CircuitBreaker(name, fullConfig));
+  ensureCleanupInterval();
+
+  const existing = circuitBreakers.get(name);
+  if (existing) {
+    // Update last access time
+    existing.lastAccessTime = Date.now();
+    return existing.breaker;
   }
 
-  return circuitBreakers.get(name)!;
+  // Check if we've exceeded the maximum number of circuit breakers
+  if (circuitBreakers.size >= MAX_CIRCUIT_BREAKERS) {
+    // Force cleanup of stale entries
+    cleanupStaleCircuitBreakers();
+
+    // If still at max, remove oldest entries
+    if (circuitBreakers.size >= MAX_CIRCUIT_BREAKERS) {
+      const entries = Array.from(circuitBreakers.entries()).sort(
+        (a, b) => a[1].lastAccessTime - b[1].lastAccessTime,
+      );
+      // Remove oldest 10% of entries
+      const toRemove = Math.max(1, Math.floor(entries.length * 0.1));
+      for (let i = 0; i < toRemove; i++) {
+        circuitBreakers.delete(entries[i][0]);
+      }
+      console.warn(
+        `[CircuitBreaker] Exceeded max circuit breakers (${MAX_CIRCUIT_BREAKERS}), removed ${toRemove} oldest entries`,
+      );
+    }
+  }
+
+  const fullConfig = { ...DEFAULT_CONFIG, ...config };
+  const breaker = new CircuitBreaker(name, fullConfig);
+  circuitBreakers.set(name, {
+    breaker,
+    lastAccessTime: Date.now(),
+  });
+
+  return breaker;
 }
 
 export function getAllCircuitBreakerStats(): Record<
@@ -218,16 +317,16 @@ export function getAllCircuitBreakerStats(): Record<
 > {
   const stats: Record<string, CircuitBreakerStats> = {};
 
-  for (const [name, breaker] of circuitBreakers.entries()) {
-    stats[name] = breaker.getStats();
+  for (const [name, entry] of circuitBreakers.entries()) {
+    stats[name] = entry.breaker.getStats();
   }
 
   return stats;
 }
 
 export function resetAllCircuitBreakers(): void {
-  for (const breaker of circuitBreakers.values()) {
-    breaker.reset();
+  for (const entry of circuitBreakers.values()) {
+    entry.breaker.reset();
   }
 }
 
@@ -238,8 +337,8 @@ export function getCircuitBreakerHealth(): {
   const details: Record<string, { state: CircuitState; healthy: boolean }> = {};
   let healthy = true;
 
-  for (const [name, breaker] of circuitBreakers.entries()) {
-    const stats = breaker.getStats();
+  for (const [name, entry] of circuitBreakers.entries()) {
+    const stats = entry.breaker.getStats();
     const isHealthy = stats.state !== "open";
 
     details[name] = {
@@ -253,4 +352,30 @@ export function getCircuitBreakerHealth(): {
   }
 
   return { healthy, details };
+}
+
+/**
+ * Stop the cleanup interval (for testing or shutdown)
+ */
+export function stopCleanupInterval(): void {
+  if (cleanupInterval !== null) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+/**
+ * Get current registry size (for monitoring)
+ */
+export function getCircuitBreakerCount(): number {
+  return circuitBreakers.size;
+}
+
+/**
+ * Force cleanup of stale circuit breakers (for testing or manual maintenance)
+ */
+export function forceCleanup(): number {
+  const before = circuitBreakers.size;
+  cleanupStaleCircuitBreakers();
+  return before - circuitBreakers.size;
 }

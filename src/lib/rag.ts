@@ -1,5 +1,6 @@
 // RAG is server-only by nature (DB access)
 import { getDbPool } from "@/lib/db";
+import { escapeLikePattern } from "@/lib/sqlSecurity";
 
 export type RagContext = {
   source: "paa" | "cluster" | "content_cache";
@@ -30,6 +31,8 @@ export async function searchPaaContext(params: {
   const limit = params.limit ?? 10;
 
   try {
+    // Escape LIKE special characters to prevent SQL injection
+    const escapedQuery = escapeLikePattern(params.query);
     // Use both full-text search and ILIKE for better recall
     const result = await pool.query<{
       question: string;
@@ -47,11 +50,11 @@ export async function searchPaaContext(params: {
       FROM elongoat.paa_tree
       WHERE
         to_tsvector('english', question || ' ' || coalesce(answer, '')) @@ plainto_tsquery('english', $1)
-        OR question ILIKE '%' || $1 || '%'
+        OR question ILIKE '%' || $2 || '%' ESCAPE '\\'
       ORDER BY rank DESC, volume DESC
-      LIMIT $2
+      LIMIT $3
       `,
-      [params.query, limit],
+      [params.query, escapedQuery, limit],
     );
 
     return result.rows.map((row) => ({
@@ -131,6 +134,8 @@ export async function searchClusterContext(params: {
   const limit = params.limit ?? 5;
 
   try {
+    // Escape LIKE special characters to prevent SQL injection
+    const escapedQuery = escapeLikePattern(params.query);
     const result = await pool.query<{
       topic: string;
       page: string;
@@ -143,12 +148,12 @@ export async function searchClusterContext(params: {
       WHERE
         to_tsvector('english', topic || ' ' || page || ' ' || coalesce(seed_keyword, ''))
         @@ plainto_tsquery('english', $1)
-        OR page ILIKE '%' || $1 || '%'
-        OR seed_keyword ILIKE '%' || $1 || '%'
+        OR page ILIKE '%' || $2 || '%' ESCAPE '\\'
+        OR seed_keyword ILIKE '%' || $2 || '%' ESCAPE '\\'
       ORDER BY max_volume DESC
-      LIMIT $2
+      LIMIT $3
       `,
-      [params.query, limit],
+      [params.query, escapedQuery, limit],
     );
 
     return result.rows.map((row) => ({

@@ -10,29 +10,33 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: ["/admin", "/api/", "/_next/", "/static/"],
-        crawlDelay: 1,
+        // No global crawlDelay - let major search engines crawl at their own pace
       },
       // Block aggressive AI scrapers (content protection)
       {
         userAgent: "GPTBot",
         disallow: ["/"],
+        crawlDelay: 10,
       },
       {
         userAgent: "ChatGPT-User",
         disallow: ["/"],
+        crawlDelay: 10,
       },
       {
         userAgent: "CCBot",
         disallow: ["/"],
+        crawlDelay: 10,
       },
-      // Allow research-focused AI crawlers selectively
+      // Allow research-focused AI crawlers selectively with rate limiting
       // These may provide citation/attribution benefits
       {
         userAgent: ["anthropic-ai", "Claude-Web", "Claude-Search"],
         allow: ["/topics", "/q", "/facts"],
         disallow: ["/admin", "/api/", "/x", "/videos"],
+        crawlDelay: 5,
       },
-      // Google-specific directives
+      // Google-specific directives (no crawlDelay for Googlebot)
       {
         userAgent: "Googlebot",
         allow: "/",
@@ -42,8 +46,25 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Google-Extended",
         disallow: ["/"],
       },
+      // Bingbot - no crawlDelay needed
+      {
+        userAgent: "Bingbot",
+        allow: "/",
+        disallow: ["/admin", "/api/"],
+      },
+      // Other aggressive crawlers get throttled
+      {
+        userAgent: ["SemrushBot", "AhrefsBot", "DotBot", "MJ12bot"],
+        crawlDelay: 5,
+      },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: [
+      `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/sitemaps/topics/sitemap.xml`,
+      `${baseUrl}/sitemaps/qa/sitemap.xml`,
+      `${baseUrl}/sitemaps/videos/sitemap.xml`,
+      `${baseUrl}/sitemaps/videos/video-sitemap.xml`,
+    ],
     host: baseUrl,
   };
 }

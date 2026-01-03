@@ -1,6 +1,6 @@
 // Server-only module (import removed for backend compatibility)
 
-import { getRedis, getRedisFromPool } from "@/lib/redis";
+import { getConnectedRedisFromPool } from "@/lib/redis";
 
 // ============================================================================
 // Configuration
@@ -172,13 +172,13 @@ function clearL1(): void {
 
 /**
  * Gets data from L2 (Redis) cache.
+ * Uses getConnectedRedisFromPool() which handles connection state efficiently.
  */
 async function getL2<T>(key: string): Promise<T | null> {
-  const redis = getRedisFromPool();
-  if (!redis) return null;
-
   try {
-    await redis.connect();
+    const redis = await getConnectedRedisFromPool();
+    if (!redis) return null;
+
     const raw = await redis.get(key);
     if (!raw) return null;
 
@@ -191,20 +191,23 @@ async function getL2<T>(key: string): Promise<T | null> {
     }
 
     return parsed.data;
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[TieredCache] L2 get error:", error);
+    }
     return null;
   }
 }
 
 /**
  * Sets data in L2 (Redis) cache.
+ * Uses getConnectedRedisFromPool() which handles connection state efficiently.
  */
 async function setL2<T>(key: string, data: T, ttlMs: number): Promise<boolean> {
-  const redis = getRedis();
-  if (!redis) return false;
-
   try {
-    await redis.connect();
+    const redis = await getConnectedRedisFromPool();
+    if (!redis) return false;
+
     const payload = {
       data,
       expiresAt: ttlMs > 0 ? Date.now() + ttlMs : null,
@@ -212,23 +215,28 @@ async function setL2<T>(key: string, data: T, ttlMs: number): Promise<boolean> {
     const expirySeconds = Math.max(1, Math.floor(ttlMs / 1000));
     await redis.set(key, JSON.stringify(payload), "EX", expirySeconds);
     return true;
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[TieredCache] L2 set error:", error);
+    }
     return false;
   }
 }
 
 /**
  * Deletes a key from L2 cache.
+ * Uses getConnectedRedisFromPool() which handles connection state efficiently.
  */
 async function deleteL2(key: string): Promise<void> {
-  const redis = getRedis();
-  if (!redis) return;
-
   try {
-    await redis.connect();
+    const redis = await getConnectedRedisFromPool();
+    if (!redis) return;
+
     await redis.del(key);
-  } catch {
-    // Ignore
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[TieredCache] L2 delete error:", error);
+    }
   }
 }
 

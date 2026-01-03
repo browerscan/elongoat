@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 
 import { CopyPromptButton } from "@/components/CopyPromptButton";
 import { JsonLd } from "@/components/JsonLd";
+import { LastModified } from "@/components/LastModified";
 import { Markdown } from "@/components/Markdown";
 import { OpenChatButton } from "@/components/OpenChatButton";
 import { RelatedContent } from "@/components/RelatedContent";
 import { SeeAlso } from "@/components/SeeAlso";
+import { AuthorInfo } from "@/components/AuthorInfo";
 import { getClusterPageContent } from "@/lib/contentGen";
 import {
   findPage,
@@ -18,9 +20,12 @@ import {
 } from "@/lib/indexes";
 import { generateClusterPageMetadata } from "@/lib/seo";
 import {
-  generateArticleSchema,
+  generateArticleWithSpeakableSchema,
   generateBreadcrumbSchema,
+  generateHowToSchema,
   generateWebPageSchema,
+  extractHowToStepsFromMarkdown,
+  isHowToContent,
 } from "@/lib/structuredData";
 import { getDynamicVariables } from "@/lib/variables";
 
@@ -82,13 +87,22 @@ export default async function ClusterPage({
     .slice(0, 5)
     .join(" ")}`;
 
+  const keywordsList = page.topKeywords.map((k) => k.keyword).slice(0, 10);
+  const clusterUpdated = new Date(cluster.generatedAt);
+
+  // Check if content is HowTo-style
+  const contentIsHowTo = isHowToContent(ai.contentMd, page.page);
+  const howToSteps = contentIsHowTo
+    ? extractHowToStepsFromMarkdown(ai.contentMd)
+    : [];
+
   // JSON-LD structured data
-  const jsonLd = [
+  const jsonLd: Record<string, unknown>[] = [
     generateWebPageSchema({
       title: `${page.page} — ${page.topic}`,
       description: `Explore "${page.page}" in ${page.topic}. Peak search volume: ${page.maxVolume.toLocaleString()}. ${page.keywordCount.toLocaleString()} keywords with search intent analysis and AI chat.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
-      dateModified: new Date(cluster.generatedAt).toISOString(),
+      dateModified: clusterUpdated.toISOString(),
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Topics", url: "/topics" },
@@ -96,14 +110,21 @@ export default async function ClusterPage({
         { name: page.page, url: `/${page.topicSlug}/${page.pageSlug}` },
       ],
     }),
-    generateArticleSchema({
+    // Use Article with Speakable for voice search optimization
+    generateArticleWithSpeakableSchema({
       title: `${page.page} — ${page.topic}`,
       description: `Explore "${page.page}" in ${page.topic}. Peak search volume: ${page.maxVolume.toLocaleString()}. ${page.keywordCount.toLocaleString()} keywords with search intent analysis and AI chat.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
-      publishedAt: new Date(cluster.generatedAt).toISOString(),
-      updatedAt: new Date(cluster.generatedAt).toISOString(),
+      publishedAt: clusterUpdated.toISOString(),
+      updatedAt: clusterUpdated.toISOString(),
       section: page.topic,
-      keywords: [page.page, page.topic, "keywords", "search volume", "SEO"],
+      keywords: [page.page, page.topic, ...keywordsList.slice(0, 3)],
+      speakableSelectors: [
+        "article h1",
+        "article header p",
+        "article section h2",
+        "[data-speakable]",
+      ],
     }),
     generateBreadcrumbSchema([
       { name: "Home", url: "/" },
@@ -112,6 +133,18 @@ export default async function ClusterPage({
       { name: page.page, url: `/${page.topicSlug}/${page.pageSlug}` },
     ]),
   ];
+
+  // Add HowTo schema if content has steps
+  if (contentIsHowTo && howToSteps.length >= 2) {
+    jsonLd.push(
+      generateHowToSchema({
+        name: page.page,
+        description: `Step-by-step guide for ${page.page} in ${page.topic}`,
+        url: `/${page.topicSlug}/${page.pageSlug}`,
+        steps: howToSteps,
+      }),
+    );
+  }
 
   return (
     <>
@@ -136,8 +169,9 @@ export default async function ClusterPage({
           <p className="mt-2 max-w-3xl text-sm text-white/65">
             This page is generated from search clusters. Use it as a launchpad:
             what people search for, how to interpret intent, and how to ask the
-            AI the right follow‑ups.
+            AI the right follow-ups.
           </p>
+          <LastModified date={clusterUpdated} className="mt-3" />
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <OpenChatButton
@@ -266,6 +300,8 @@ export default async function ClusterPage({
           </div>
         </section>
 
+        <AuthorInfo lastUpdated={clusterUpdated} contentType="cluster" />
+
         <section className="glass rounded-3xl p-6">
           <h2 className="text-lg font-semibold text-white">
             More in {page.topic}
@@ -291,6 +327,8 @@ export default async function ClusterPage({
           type="page"
           topicSlug={page.topicSlug}
           currentSlug={page.slug}
+          pageTitle={page.page}
+          keywords={keywordsList}
         />
 
         <SeeAlso

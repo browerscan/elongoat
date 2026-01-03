@@ -8,6 +8,13 @@ export type { Redis } from "ioredis";
 // ============================================================================
 
 const REDIS_ENABLED = process.env.REDIS_URL !== undefined;
+
+/**
+ * Check if Redis is enabled (REDIS_URL is set).
+ */
+export function isRedisEnabled(): boolean {
+  return REDIS_ENABLED;
+}
 const REDIS_MAX_RETRIES = Number.parseInt(
   process.env.REDIS_MAX_RETRIES ?? "3",
   10,
