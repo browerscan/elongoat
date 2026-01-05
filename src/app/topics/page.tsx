@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Brain, Globe, HelpCircle, Rocket, Sparkles, Zap } from "lucide-react";
+import { Brain, Globe, HelpCircle, Rocket, Sparkles } from "lucide-react";
 
 import { FilterList, type FilterListItem } from "../../components/FilterList";
 import { JsonLd } from "../../components/JsonLd";
@@ -72,7 +72,6 @@ export default async function TopicsIndexPage() {
 
   // Calculate total stats
   const totalPages = cluster.pages.length;
-  const totalVolume = cluster.topics.reduce((sum, t) => sum + t.totalVolume, 0);
 
   return (
     <>
@@ -119,19 +118,6 @@ export default async function TopicsIndexPage() {
                         {totalPages.toLocaleString()}
                       </div>
                       <div className="text-xs text-white/50">Articles</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent2/10">
-                      <Zap className="h-4 w-4 text-accent2" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">
-                        {(totalVolume / 1000000).toFixed(1)}M
-                      </div>
-                      <div className="text-xs text-white/50">
-                        Monthly Searches
-                      </div>
                     </div>
                   </div>
                 </div>

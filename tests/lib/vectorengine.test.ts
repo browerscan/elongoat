@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getVectorEngineChatUrl,
@@ -6,9 +6,16 @@ import {
 } from "../../src/lib/vectorengine";
 
 describe("vectorengine", () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
+    originalEnv = { ...process.env };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   describe("getVectorEngineChatUrl", () => {
@@ -18,41 +25,34 @@ describe("vectorengine", () => {
     });
 
     it("returns default URL when only API key is set", () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       expect(getVectorEngineChatUrl()).toBe(
         "https://api.vectorengine.ai/v1/chat/completions",
       );
-      delete process.env.VECTORENGINE_API_KEY;
     });
 
     it("uses custom base URL from env", () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       process.env.VECTORENGINE_BASE_URL = "https://custom.example.com";
       expect(getVectorEngineChatUrl()).toBe(
         "https://custom.example.com/v1/chat/completions",
       );
-      delete process.env.VECTORENGINE_API_KEY;
-      delete process.env.VECTORENGINE_BASE_URL;
     });
 
     it("uses full API URL from env", () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       process.env.VECTORENGINE_API_URL = "https://custom.example.com/v2/chat";
       expect(getVectorEngineChatUrl()).toBe(
         "https://custom.example.com/v2/chat",
       );
-      delete process.env.VECTORENGINE_API_KEY;
-      delete process.env.VECTORENGINE_API_URL;
     });
 
     it("trims trailing slash from base URL", () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       process.env.VECTORENGINE_BASE_URL = "https://custom.example.com/";
       expect(getVectorEngineChatUrl()).toBe(
         "https://custom.example.com/v1/chat/completions",
       );
-      delete process.env.VECTORENGINE_API_KEY;
-      delete process.env.VECTORENGINE_BASE_URL;
     });
   });
 
@@ -68,7 +68,7 @@ describe("vectorengine", () => {
     });
 
     it("throws when URL is not configured", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       // Empty BASE_URL results in an invalid URL when combined with path
       process.env.VECTORENGINE_BASE_URL = "";
       delete process.env.VECTORENGINE_API_URL;
@@ -79,12 +79,10 @@ describe("vectorengine", () => {
           messages: [{ role: "user", content: "Hello" }],
         }),
       ).rejects.toThrow(); // Error is thrown but message may vary
-
-      delete process.env.VECTORENGINE_API_KEY;
     });
 
     it("makes fetch request with correct headers and body", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
       process.env.VECTORENGINE_API_URL = "https://api.test.com/v1/chat";
 
       const mockFetch = vi.fn().mockResolvedValue({
@@ -111,7 +109,7 @@ describe("vectorengine", () => {
       expect(callArgs[0]).toBe("https://api.test.com/v1/chat");
       expect(callArgs[1]?.method).toBe("POST");
       expect(callArgs[1]?.headers).toEqual({
-        Authorization: "Bearer test-key",
+        Authorization: "Bearer sk-test",
         "Content-Type": "application/json",
       });
 
@@ -130,7 +128,7 @@ describe("vectorengine", () => {
     });
 
     it("uses default temperature and maxTokens", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -153,7 +151,7 @@ describe("vectorengine", () => {
     });
 
     it("extracts content from choices.message.content", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -174,7 +172,7 @@ describe("vectorengine", () => {
     });
 
     it("extracts content from choices.text as fallback", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -195,7 +193,7 @@ describe("vectorengine", () => {
     });
 
     it("returns empty string when no content is available", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -214,7 +212,7 @@ describe("vectorengine", () => {
     });
 
     it("handles non-string content gracefully", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -235,7 +233,7 @@ describe("vectorengine", () => {
     });
 
     it("throws on non-OK response with status and error text", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -255,7 +253,7 @@ describe("vectorengine", () => {
     });
 
     it("truncates long error messages", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const longError = "x".repeat(400);
       const mockFetch = vi.fn().mockResolvedValue({
@@ -278,7 +276,7 @@ describe("vectorengine", () => {
     });
 
     it("handles JSON parse error in response text gracefully", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -298,7 +296,7 @@ describe("vectorengine", () => {
     });
 
     it("returns usage.total_tokens when available", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -324,7 +322,7 @@ describe("vectorengine", () => {
     });
 
     it("omits usage when not in response", async () => {
-      process.env.VECTORENGINE_API_KEY = "test-key";
+      process.env.VECTORENGINE_API_KEY = "sk-test";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,

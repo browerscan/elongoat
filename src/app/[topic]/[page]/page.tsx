@@ -263,12 +263,6 @@ export default async function ClusterPage({
               </div>
             </div>
             <div className="space-y-4 text-sm">
-              <div className="elon-quote">
-                <p className="text-white/90">
-                  <span className="font-semibold text-accent3">Intent:</span>{" "}
-                  {inferIntent(page.topKeywords)}
-                </p>
-              </div>
               <p className="text-white/70">
                 This knowledge cluster captures{" "}
                 <span className="font-semibold text-white">real demand</span>{" "}
@@ -456,32 +450,4 @@ export default async function ClusterPage({
       </article>
     </>
   );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="stat-card">
-      <div className="flex items-center gap-2 text-xs text-white/55">
-        <Zap className="h-3 w-3 text-accent3" />
-        {label}
-      </div>
-      <div className="stat-card-value mt-2">{value}</div>
-    </div>
-  );
-}
-
-function inferIntent(topKeywords: { intent?: string }[]) {
-  const raw = topKeywords
-    .map((k) => (k.intent ?? "").trim())
-    .filter(Boolean)
-    .flatMap((s) => s.split(",").map((p) => p.trim()))
-    .filter(Boolean);
-  if (!raw.length) return "Unknown / mixed";
-  const counts = new Map<string, number>();
-  for (const i of raw) counts.set(i, (counts.get(i) ?? 0) + 1);
-  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  return sorted
-    .slice(0, 3)
-    .map(([k]) => k)
-    .join(", ");
 }

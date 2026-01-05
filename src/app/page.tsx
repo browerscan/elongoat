@@ -3,14 +3,12 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
-  Rocket,
+  FileText,
+  Search,
   Sparkles,
-  Zap,
-  Brain,
-  Globe,
+  UserRound,
 } from "lucide-react";
 
-import { FilterList, type FilterListItem } from "../components/FilterList";
 import { JsonLd } from "../components/JsonLd";
 import { OpenChatButton } from "../components/OpenChatButton";
 import {
@@ -20,7 +18,6 @@ import {
   getTopQuestionSlugs,
 } from "../lib/indexes";
 import { getDynamicVariables } from "../lib/variables";
-import { getSlugsWithAiContent } from "../lib/contentCache";
 import { generateHomeMetadata } from "../lib/seo";
 import {
   generateOrganizationSchema,
@@ -28,10 +25,26 @@ import {
   generateWebPageSchema,
   generateWebSiteSchema,
 } from "../lib/structuredData";
+import { getRecommendations } from "../lib/recommendations";
+import { getTimelineTweets, getTweetStats } from "../lib/muskTweets";
 
 export const revalidate = 3600;
 
 export const metadata = generateHomeMetadata();
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default async function Home() {
   const [
@@ -40,27 +53,26 @@ export default async function Home() {
     vars,
     topPageSlugs,
     topQuestionSlugs,
-    aiPageSlugs,
-    aiQaSlugs,
+    tweetStats,
+    tweets,
   ] = await Promise.all([
     getClusterIndex(),
     getPaaIndex(),
     getDynamicVariables(),
     getTopPageSlugs(),
     getTopQuestionSlugs(),
-    getSlugsWithAiContent("cluster_page"),
-    getSlugsWithAiContent("paa_question"),
+    getTweetStats(),
+    getTimelineTweets({ limit: 6, includeReplies: false }),
   ]);
 
-  // JSON-LD structured data
   const jsonLd = [
     generateWebSiteSchema(),
     generateOrganizationSchema(),
     generatePersonSchema(),
     generateWebPageSchema({
-      title: "ElonGoat — Digital Elon (AI)",
+      title: "Elon Musk (Unofficial) — ElonGoat",
       description:
-        "A sci-fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated). Explore Tesla, SpaceX, X, Neuralink and more — then ask the AI anything.",
+        "An unofficial personal-style hub for Elon Musk: tweets, long-form articles, and related recommendations. Not affiliated.",
       url: "/",
       dateModified: new Date(cluster.generatedAt).toISOString(),
       breadcrumbs: [{ name: "Home", url: "/" }],
@@ -70,363 +82,209 @@ export default async function Home() {
   const topPages = new Map(cluster.pages.map((p) => [p.slug, p]));
   const topQuestions = new Map(paa.questions.map((q) => [q.slug, q]));
 
-  // Prioritize pages with AI-generated content
-  const pagesWithAi = topPageSlugs.filter((slug) => aiPageSlugs.has(slug));
-  const pagesWithoutAi = topPageSlugs.filter((slug) => !aiPageSlugs.has(slug));
-  const sortedPageSlugs = [...pagesWithAi, ...pagesWithoutAi];
+  const trendingPages = topPageSlugs
+    .map((slug) => topPages.get(slug))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .slice(0, 8);
 
-  const trendingPages: (FilterListItem & { hasAi?: boolean })[] =
-    sortedPageSlugs
-      .map((slug) => topPages.get(slug))
-      .filter((p): p is NonNullable<typeof p> => Boolean(p))
-      .slice(0, 12)
-      .map((p) => ({
-        id: p.slug,
-        title: p.page,
-        subtitle: p.topic,
-        meta: aiPageSlugs.has(p.slug) ? "AI Article" : undefined,
-        hasAi: aiPageSlugs.has(p.slug),
-        href: `/${p.topicSlug}/${p.pageSlug}`,
-      }));
+  const trendingQuestions = topQuestionSlugs
+    .map((slug) => topQuestions.get(slug))
+    .filter((q): q is NonNullable<typeof q> => Boolean(q))
+    .slice(0, 6);
 
-  // Prioritize questions with AI-generated content
-  const questionsWithAi = topQuestionSlugs.filter((slug) =>
-    aiQaSlugs.has(slug),
-  );
-  const questionsWithoutAi = topQuestionSlugs.filter(
-    (slug) => !aiQaSlugs.has(slug),
-  );
-  const sortedQuestionSlugs = [...questionsWithAi, ...questionsWithoutAi];
+  const seedQuery = cluster.topics
+    .slice()
+    .sort((a, b) => b.totalVolume - a.totalVolume)
+    .slice(0, 4)
+    .map((t) => t.topic)
+    .join(" ");
 
-  const trendingQuestions: (FilterListItem & { hasAi?: boolean })[] =
-    sortedQuestionSlugs
-      .map((slug) => topQuestions.get(slug))
-      .filter((q): q is NonNullable<typeof q> => Boolean(q))
-      .slice(0, 12)
-      .map((q) => ({
-        id: q.slug,
-        title: q.question,
-        subtitle:
-          q.answer ?? "Open this question and ask the AI for a deeper answer.",
-        meta: aiQaSlugs.has(q.slug) ? "AI Answer" : undefined,
-        hasAi: aiQaSlugs.has(q.slug),
-        href: `/q/${q.slug}`,
-      }));
+  const recommendations = await getRecommendations({
+    query: seedQuery || "Tesla SpaceX Starship AI",
+    limitArticles: 8,
+    limitTweets: 4,
+    minLikes: 1000,
+    minScore: 0.12,
+  });
 
   return (
     <>
       <JsonLd data={jsonLd} />
-      <div className="space-y-10">
-        {/* Hero Section - Elon's Vision */}
-        <section className="hero-cosmic glass glow-ring rounded-3xl p-6 md:p-10">
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent3/30 bg-accent3/10 px-3 py-1 text-xs text-accent3">
-              <Rocket className="h-3.5 w-3.5" />
-              The future is already here
-            </div>
-
-            <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
-              <span className="text-gradient-bold">ElonGoat</span>
-              <span className="block mt-2 text-2xl md:text-3xl lg:text-4xl font-medium text-white/80">
-                The most comprehensive Elon Musk knowledge graph
-              </span>
-            </h1>
-
-            {/* Elon-style quote */}
-            <div className="elon-quote mt-6 max-w-2xl">
-              <p className="text-white/90">
-                When something is important enough, you do it even if the odds
-                are not in your favor.
+      <div className="space-y-12">
+        <header className="hero-cosmic glass-premium rounded-3xl p-6 md:p-10">
+          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+                Unofficial • Not affiliated
+              </div>
+              <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                Elon Musk
+              </h1>
+              <p className="mt-3 text-sm text-white/70 md:text-base">
+                A personal-site style hub for tweets and long-form articles —
+                with algorithmic related-content recommendations.
               </p>
-              <p className="mt-2 text-xs text-white/50 not-italic">
-                — Elon Musk
-              </p>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link href="/about" className="btn-launch">
+                  <UserRound className="h-4 w-4" />
+                  About
+                </Link>
+                <Link
+                  href="/writing"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+                >
+                  <FileText className="h-4 w-4" />
+                  Writing
+                </Link>
+                <Link
+                  href="/tweets"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Tweets
+                </Link>
+                <Link
+                  href="/search"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+                >
+                  <Search className="h-4 w-4" />
+                  Search
+                </Link>
+                <OpenChatButton />
+              </div>
             </div>
 
-            <p className="mission-statement mt-6 max-w-2xl">
-              Explore the mind behind Tesla, SpaceX, X, Neuralink, and the
-              mission to make humanity multi-planetary. Ask the AI anything —
-              get answers backed by 67K+ real tweets.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/topics" className="btn-launch">
-                <Rocket className="h-4 w-4" />
-                Explore the Universe
-              </Link>
-              <Link
-                href="/q"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-              >
-                <Brain className="h-4 w-4" />
-                Ask Questions
-              </Link>
-              <OpenChatButton />
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white/10 to-white/5 ring-1 ring-white/10">
+                <span className="text-sm font-semibold text-white/90">EM</span>
+              </div>
+              <div className="text-sm text-white/70">
+                <div className="text-white/90 font-semibold">Snapshot</div>
+                <div className="mt-1">
+                  Age <span className="text-white/90">{vars.age}</span> • Net
+                  worth <span className="text-white/90">{vars.net_worth}</span>
+                </div>
+                <div className="mt-1 text-xs text-white/50">
+                  {tweetStats?.totalTweets
+                    ? `${tweetStats.totalTweets.toLocaleString()} archived tweets`
+                    : "Tweets archive (DB optional)"}
+                </div>
+              </div>
             </div>
-
-            {/* Live Stats - First Principles Numbers */}
-            <div className="accent-line mt-8 w-24" />
-            <dl className="mt-6 grid gap-4 sm:grid-cols-3">
-              <Link href="/facts/age" className="stat-card group">
-                <div className="flex items-center gap-2 text-xs text-white/55">
-                  <Zap className="h-3 w-3 text-accent3" />
-                  Age
-                </div>
-                <div className="stat-card-value mt-2">{vars.age}</div>
-                <div className="mt-1 text-xs text-white/40 group-hover:text-white/60 transition-colors">
-                  years of innovation
-                </div>
-              </Link>
-              <Link href="/facts/children" className="stat-card group">
-                <div className="flex items-center gap-2 text-xs text-white/55">
-                  <Globe className="h-3 w-3 text-accent2" />
-                  Children
-                </div>
-                <div className="stat-card-value mt-2">
-                  {vars.children_count}
-                </div>
-                <div className="mt-1 text-xs text-white/40 group-hover:text-white/60 transition-colors">
-                  future Martians
-                </div>
-              </Link>
-              <Link href="/facts/net-worth" className="stat-card group">
-                <div className="flex items-center gap-2 text-xs text-white/55">
-                  <Sparkles className="h-3 w-3 text-accent" />
-                  Net Worth
-                </div>
-                <div className="stat-card-value mt-2">{vars.net_worth}</div>
-                <div className="mt-1 text-xs text-white/40 group-hover:text-white/60 transition-colors">
-                  invested in the future
-                </div>
-              </Link>
-            </dl>
           </div>
-        </section>
+        </header>
 
-        {/* Knowledge Scale - The Numbers */}
         <section className="grid gap-4 md:grid-cols-3">
-          <Card
-            title="Knowledge Nodes"
-            value={`${cluster.pages.length.toLocaleString()}`}
-            subtitle="Deep-dive articles on Tesla, SpaceX, X, AI & the future"
-            icon={<Brain className="h-5 w-5 text-accent" />}
+          <MetricCard
+            label="Articles"
+            value={cluster.pages.length.toLocaleString()}
+            hint="Cluster pages"
           />
-          <Card
-            title="Topic Universes"
-            value={`${cluster.topics.length.toLocaleString()}`}
-            subtitle="Interconnected hubs — like neurons in a giant brain"
-            icon={<Globe className="h-5 w-5 text-accent2" />}
+          <MetricCard
+            label="Questions"
+            value={paa.questions.length.toLocaleString()}
+            hint="PAA + custom Q&A"
           />
-          <Card
-            title="Questions Answered"
-            value={`${paa.questions.length.toLocaleString()}`}
-            subtitle="Real questions from people curious about the future"
-            icon={<Zap className="h-5 w-5 text-accent3" />}
+          <MetricCard
+            label="Topics"
+            value={cluster.topics.length.toLocaleString()}
+            hint="Knowledge graph hubs"
           />
         </section>
 
-        {/* Topic Universes - The Knowledge Map */}
-        <section className="glass-premium rounded-3xl p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-                <Globe className="h-5 w-5 text-accent" />
-              </div>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="glass-premium rounded-3xl p-6">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-white">
-                  Topic Universes
+                  Latest tweets
                 </h2>
-                <p className="text-xs text-white/50">
-                  Navigate the knowledge graph
+                <p className="mt-1 text-xs text-white/50">
+                  From the local 2010–2025 archive
                 </p>
               </div>
-            </div>
-            <Link href="/topics" className="badge-x">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="mt-6 grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {cluster.topics.map((topic) => (
-              <Link
-                key={topic.slug}
-                href={`/${topic.slug}`}
-                className="topic-card group"
-              >
-                <span className="text-sm font-medium text-white group-hover:text-accent transition-colors">
-                  {topic.topic}
-                </span>
-                <span className="ml-auto text-xs text-white/40 group-hover:text-white/60 transition-colors">
-                  {topic.pageCount} pages
-                </span>
+              <Link href="/tweets" className="badge-x">
+                View all <ArrowRight className="h-3 w-3" />
               </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Quick Facts - Real-Time Data */}
-        <section className="glass-premium rounded-3xl p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent2/10">
-                <BookOpen className="h-5 w-5 text-accent2" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Real-Time Facts
-                </h2>
-                <p className="text-xs text-white/50">
-                  Data that updates automatically
-                </p>
-              </div>
             </div>
-            <Link href="/facts" className="badge-x">
-              All facts <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <Link href="/facts/age" className="stat-card group">
-              <div className="text-xs text-white/55">Current Age</div>
-              <div className="stat-card-value mt-2">{vars.age}</div>
-              <div className="mt-2 text-xs text-white/40 group-hover:text-accent2 transition-colors">
-                Born June 28, 1971
-              </div>
-            </Link>
-            <Link href="/facts/children" className="stat-card group">
-              <div className="text-xs text-white/55">Children</div>
-              <div className="stat-card-value mt-2">{vars.children_count}</div>
-              <div className="mt-2 text-xs text-white/40 group-hover:text-accent2 transition-colors">
-                The next generation
-              </div>
-            </Link>
-            <Link href="/facts/dob" className="stat-card group">
-              <div className="text-xs text-white/55">Date of Birth</div>
-              <div className="stat-card-value mt-2 text-lg">{vars.dob}</div>
-              <div className="mt-2 text-xs text-white/40 group-hover:text-accent2 transition-colors">
-                Pretoria, South Africa
-              </div>
-            </Link>
-            <Link href="/facts/net-worth" className="stat-card group">
-              <div className="text-xs text-white/55">Net Worth</div>
-              <div className="stat-card-value mt-2">{vars.net_worth}</div>
-              <div className="mt-2 text-xs text-white/40 group-hover:text-accent2 transition-colors">
-                Building the future
-              </div>
-            </Link>
-          </div>
-        </section>
-
-        {/* Featured Q&A - What People Ask */}
-        <section className="glass-premium rounded-3xl p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent3/10">
-                <Brain className="h-5 w-5 text-accent3" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  What People Ask
-                </h2>
-                <p className="text-xs text-white/50">
-                  Curiosity-driven knowledge
-                </p>
-              </div>
-            </div>
-            <Link href="/q" className="badge-x">
-              All Q&A <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {trendingQuestions.slice(0, 6).map((q) => (
-              <Link key={q.id} href={q.href} className="knowledge-node group">
-                <div className="text-sm font-medium text-white group-hover:text-accent transition-colors line-clamp-2">
-                  {q.title}
+            <div className="mt-5 space-y-3">
+              {tweets.length ? (
+                tweets.map((t) => (
+                  <Link
+                    key={t.tweetId}
+                    href={`/tweets/${t.tweetId}`}
+                    className="group block rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs text-white/55">
+                        {formatDate(t.createdAt)}
+                      </div>
+                      {t.likeCount > 0 ? (
+                        <div className="text-xs text-white/45">
+                          ❤️ {formatNumber(t.likeCount)}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-3">
+                      {t.fullText}
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
+                  No tweets found. If you want the archive, ingest `musk_tweets`
+                  into Postgres.
                 </div>
-                {q.meta ? (
-                  <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-accent2">
-                    <Sparkles className="h-3 w-3" />
-                    {q.meta}
-                  </div>
-                ) : null}
-              </Link>
-            ))}
+              )}
+            </div>
           </div>
-        </section>
 
-        {/* Dual Column - Trending & Questions */}
-        <section className="grid gap-6 md:grid-cols-2">
           <div className="glass-premium rounded-3xl p-6">
-            <div className="flex items-center justify-between gap-3 mb-5">
-              <div className="flex items-center gap-2">
-                <Rocket className="h-5 w-5 text-accent3" />
+            <div className="flex items-center justify-between gap-3">
+              <div>
                 <h2 className="text-lg font-semibold text-white">
-                  Trending Now
+                  Featured writing
                 </h2>
+                <p className="mt-1 text-xs text-white/50">
+                  Articles + questions from the knowledge graph
+                </p>
               </div>
-              <Link
-                href="/topics"
-                className="text-xs text-white/50 hover:text-white transition-colors"
-              >
-                View all
+              <Link href="/writing" className="badge-x">
+                Browse <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
-            <div className="space-y-2">
-              {trendingPages.map((p, i) => (
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {trendingPages.map((p) => (
                 <Link
-                  key={p.id}
-                  href={p.href}
-                  className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/3 p-3 transition hover:border-accent/30 hover:bg-white/8"
+                  key={p.slug}
+                  href={`/${p.topicSlug}/${p.pageSlug}`}
+                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 text-xs font-bold text-white/40 group-hover:bg-accent/20 group-hover:text-accent transition-colors">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">
-                      {p.title}
-                    </div>
-                    <div className="text-xs text-white/40">{p.subtitle}</div>
+                  <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
+                    {p.page}
                   </div>
-                  {p.meta && (
-                    <span className="badge-ai shrink-0">{p.meta}</span>
-                  )}
+                  <div className="mt-1 text-xs text-white/55">{p.topic}</div>
+                  <div className="mt-3 text-[11px] text-white/45">
+                    {p.keywordCount.toLocaleString()} keywords • max vol{" "}
+                    {p.maxVolume.toLocaleString()}
+                  </div>
                 </Link>
               ))}
-            </div>
-          </div>
 
-          <div className="glass-premium rounded-3xl p-6">
-            <div className="flex items-center justify-between gap-3 mb-5">
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-accent2" />
-                <h2 className="text-lg font-semibold text-white">
-                  Top Questions
-                </h2>
-              </div>
-              <Link
-                href="/q"
-                className="text-xs text-white/50 hover:text-white transition-colors"
-              >
-                View all
-              </Link>
-            </div>
-            <div className="space-y-2">
-              {trendingQuestions.map((q, i) => (
+              {trendingQuestions.map((q) => (
                 <Link
-                  key={q.id}
-                  href={q.href}
-                  className="group flex items-start gap-3 rounded-xl border border-white/5 bg-white/3 p-3 transition hover:border-accent2/30 hover:bg-white/8"
+                  key={q.slug}
+                  href={`/q/${q.slug}`}
+                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 text-xs font-bold text-white/40 group-hover:bg-accent2/20 group-hover:text-accent2 transition-colors shrink-0">
-                    ?
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white group-hover:text-accent2 transition-colors line-clamp-2">
-                      {q.title}
-                    </div>
-                    {q.meta && (
-                      <span className="mt-1 inline-block badge-ai">
-                        {q.meta}
-                      </span>
-                    )}
+                  <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
+                    {q.question}
+                  </div>
+                  <div className="mt-1 text-xs text-white/55">Q&A</div>
+                  <div className="mt-3 text-[11px] text-white/45">
+                    volume {(q.volume ?? 0).toLocaleString()}
                   </div>
                 </Link>
               ))}
@@ -434,68 +292,114 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Global Search - Command Center */}
-        <section className="glass-premium glow-ring rounded-3xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+        <section className="glass-premium rounded-3xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-accent" />
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Recommended
+                </h2>
+                <p className="mt-1 text-xs text-white/50">
+                  Related content seeded by top topics
+                </p>
+              </div>
             </div>
+            <Link href="/discover" className="badge-x">
+              Tune it <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div>
-              <h2 className="text-lg font-semibold text-white">
-                Search the Knowledge Graph
-              </h2>
-              <p className="text-xs text-white/50">
-                Instant access to {cluster.pages.length.toLocaleString()}{" "}
-                articles & {paa.questions.length.toLocaleString()} answers
-              </p>
+              <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
+                Articles
+              </div>
+              <div className="mt-3 space-y-2">
+                {recommendations.articles.slice(0, 6).map((a) => (
+                  <Link
+                    key={a.url}
+                    href={a.url}
+                    className="group flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
+                        {a.title}
+                      </div>
+                      {a.snippet ? (
+                        <div className="mt-1 text-xs text-white/60 line-clamp-2">
+                          {a.snippet}
+                        </div>
+                      ) : null}
+                      <div className="mt-2 text-[11px] text-white/45">
+                        {a.source.replace("_", " ")} •{" "}
+                        {Math.round(
+                          Math.min(1, Math.max(0, a.relevance_score)) * 100,
+                        )}
+                        % match
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-white/25 group-hover:text-white/60 transition-colors shrink-0 mt-0.5" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
+                Tweets
+              </div>
+              <div className="mt-3 space-y-2">
+                {recommendations.tweets.length ? (
+                  recommendations.tweets.slice(0, 4).map((t) => (
+                    <a
+                      key={t.tweetId}
+                      href={t.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group block rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                    >
+                      <div className="flex items-center justify-between gap-3 text-xs text-white/55">
+                        <span>{formatDate(t.createdAt)}</span>
+                        <span>❤️ {formatNumber(t.likeCount)}</span>
+                      </div>
+                      <div className="mt-2 text-sm text-white/80 line-clamp-3">
+                        {t.text}
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
+                    No tweet matches yet. (Tweets require the archive DB.)
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <FilterList
-            placeholder="What do you want to know about Elon Musk?"
-            items={[
-              ...cluster.pages.slice(0, 400).map((p) => ({
-                id: p.slug,
-                title: p.page,
-                subtitle: p.topic,
-                meta: undefined,
-                href: `/${p.topicSlug}/${p.pageSlug}`,
-              })),
-              ...paa.questions.slice(0, 120).map((q) => ({
-                id: `q:${q.slug}`,
-                title: q.question,
-                subtitle: "Q&A",
-                meta: undefined,
-                href: `/q/${q.slug}`,
-              })),
-            ]}
-          />
         </section>
       </div>
     </>
   );
 }
 
-function Card({
-  title,
+function MetricCard({
+  label,
   value,
-  subtitle,
-  icon,
+  hint,
 }: {
-  title: string;
+  label: string;
   value: string;
-  subtitle: string;
-  icon?: React.ReactNode;
+  hint: string;
 }) {
   return (
-    <div className="glass-premium rounded-3xl p-6 group hover:glow-accent transition-all duration-300">
-      <div className="flex items-center gap-2 text-xs text-white/55">
-        {icon}
-        {title}
+    <div className="glass-premium rounded-3xl p-6">
+      <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
+        {label}
       </div>
-      <div className="stat-card-value mt-3">{value}</div>
-      <div className="mt-2 text-sm text-white/50 group-hover:text-white/70 transition-colors">
-        {subtitle}
+      <div className="mt-3 text-3xl font-semibold tracking-tight text-white">
+        {value}
       </div>
+      <div className="mt-2 text-sm text-white/55">{hint}</div>
     </div>
   );
 }

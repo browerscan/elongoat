@@ -9,11 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { SearchTrigger } from "./SearchTrigger";
 
 const navLinks = [
-  { href: "/q", label: "Q&A" },
-  { href: "/facts", label: "Facts" },
-  { href: "/videos", label: "Videos" },
-  { href: "/x", label: "X Monitor" },
+  { href: "/about", label: "About" },
+  { href: "/writing", label: "Writing" },
+  { href: "/tweets", label: "Tweets" },
+  { href: "/discover", label: "Discover" },
   { href: "/topics", label: "Topics" },
+  { href: "/q", label: "Q&A" },
+  { href: "/videos", label: "Videos" },
 ];
 
 export function SiteHeader() {

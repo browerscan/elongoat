@@ -7,6 +7,27 @@
 
 import { z } from "zod";
 
+function isVitestRuntime(): boolean {
+  if (typeof process === "undefined") return false;
+
+  const env = process.env;
+  if (env.VITEST === "1" || env.VITEST === "true") return true;
+  if (env.VITE_TEST === "1" || env.VITE_TEST === "true") return true;
+  if (env.npm_lifecycle_event?.startsWith("test")) return true;
+  if (env.npm_lifecycle_script?.includes("vitest")) return true;
+
+  if (typeof globalThis !== "undefined" && "__vitest_worker__" in globalThis) {
+    return true;
+  }
+
+  return false;
+}
+
+function isTestRuntime(): boolean {
+  if (typeof process === "undefined") return false;
+  return process.env.NODE_ENV === "test" || isVitestRuntime();
+}
+
 const emptyToUndefined = (value: unknown) => {
   if (typeof value === "string" && value.trim() === "") return undefined;
   return value;
@@ -114,15 +135,7 @@ const ServerEnvSchema = z.object({
     .pipe(z.number().int().positive()),
 
   // VectorEngine / AI
-  VECTORENGINE_API_KEY: optionalString(
-    z
-      .string()
-      .min(1)
-      .refine(
-        (key) => key.startsWith("ve_") || key.startsWith("sk-"),
-        "VECTORENGINE_API_KEY must start with 've_' or 'sk-'",
-      ),
-  ),
+  VECTORENGINE_API_KEY: optionalString(z.string().min(1)),
   VECTORENGINE_BASE_URL: z
     .string()
     .url()
@@ -139,20 +152,10 @@ const ServerEnvSchema = z.object({
   GROK_API_URL: optionalString(z.string().url()),
 
   // Admin
-  ELONGOAT_ADMIN_TOKEN: optionalString(
-    z.string().min(32, "ELONGOAT_ADMIN_TOKEN must be at least 32 characters"),
-  ),
-  ELONGOAT_ADMIN_SESSION_SECRET: optionalString(
-    z
-      .string()
-      .min(32, "ELONGOAT_ADMIN_SESSION_SECRET must be at least 32 characters"),
-  ),
-  ELONGOAT_RAG_API_KEY: optionalString(
-    z.string().min(32, "ELONGOAT_RAG_API_KEY must be at least 32 characters"),
-  ),
-  RATE_LIMIT_IP_SECRET: optionalString(
-    z.string().min(16, "RATE_LIMIT_IP_SECRET must be at least 16 characters"),
-  ),
+  ELONGOAT_ADMIN_TOKEN: optionalString(z.string().min(1)),
+  ELONGOAT_ADMIN_SESSION_SECRET: optionalString(z.string().min(1)),
+  ELONGOAT_RAG_API_KEY: optionalString(z.string().min(1)),
+  RATE_LIMIT_IP_SECRET: optionalString(z.string().min(1)),
 
   // Dynamic variables (Elon Goat specific)
   ELON_DOB: z
@@ -169,9 +172,7 @@ const ServerEnvSchema = z.object({
     .default("Varies with markets (estimate; may be outdated)."),
 
   // Chat configuration
-  CHAT_MOOD: z
-    .enum(["confident", "neutral", "playful", "technical"])
-    .default("confident"),
+  CHAT_MOOD: z.string().default("confident"),
   CHAT_TYPING_QUIRK: z
     .string()
     .default("1")
@@ -473,7 +474,65 @@ const ServerEnvSchema = z.object({
 /**
  * Combined environment schema.
  */
-const EnvSchema = PublicEnvSchema.merge(ServerEnvSchema);
+const EnvSchema = PublicEnvSchema.merge(ServerEnvSchema).superRefine(
+  (env, ctx) => {
+    if (isTestRuntime()) return;
+
+    const isProduction = env.NODE_ENV === "production";
+
+    if (
+      isProduction &&
+      env.VECTORENGINE_API_KEY &&
+      !(
+        env.VECTORENGINE_API_KEY.startsWith("ve_") ||
+        env.VECTORENGINE_API_KEY.startsWith("sk-")
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["VECTORENGINE_API_KEY"],
+        message: "VECTORENGINE_API_KEY must start with 've_' or 'sk-'",
+      });
+    }
+
+    if (!isProduction) return;
+
+    if (env.ELONGOAT_ADMIN_TOKEN && env.ELONGOAT_ADMIN_TOKEN.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ELONGOAT_ADMIN_TOKEN"],
+        message: "ELONGOAT_ADMIN_TOKEN must be at least 32 characters",
+      });
+    }
+
+    if (
+      env.ELONGOAT_ADMIN_SESSION_SECRET &&
+      env.ELONGOAT_ADMIN_SESSION_SECRET.length < 32
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ELONGOAT_ADMIN_SESSION_SECRET"],
+        message: "ELONGOAT_ADMIN_SESSION_SECRET must be at least 32 characters",
+      });
+    }
+
+    if (env.ELONGOAT_RAG_API_KEY && env.ELONGOAT_RAG_API_KEY.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ELONGOAT_RAG_API_KEY"],
+        message: "ELONGOAT_RAG_API_KEY must be at least 32 characters",
+      });
+    }
+
+    if (env.RATE_LIMIT_IP_SECRET && env.RATE_LIMIT_IP_SECRET.length < 16) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["RATE_LIMIT_IP_SECRET"],
+        message: "RATE_LIMIT_IP_SECRET must be at least 16 characters",
+      });
+    }
+  },
+);
 
 /* -------------------------------------------------------------------------------------------------
  * Type Definitions
@@ -514,7 +573,7 @@ let liveEnvProxy: Env | null = null;
 let livePublicEnvProxy: PublicEnv | null = null;
 
 function isTestEnv(): boolean {
-  return typeof process !== "undefined" && process.env.NODE_ENV === "test";
+  return isTestRuntime();
 }
 
 function createLiveEnvProxy<T extends object>(schema: z.ZodType<T>): T {
@@ -964,7 +1023,7 @@ export function getXConfig(): {
 }
 
 // Auto-validate on module import in non-test environments
-if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
+if (typeof process !== "undefined" && !isTestRuntime()) {
   // Don't fail on import, but validate for early error detection
   validateEnv();
 }

@@ -9,6 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { ClusterTopic, PaaQuestion } from "../lib/indexes";
+import { extractKeywordsFromText } from "../lib/keywords";
 import { SemanticRelatedContent } from "./SemanticRelatedContent";
 
 export interface RelatedContentProps {
@@ -287,9 +288,21 @@ export async function RelatedContent({
     return "accent";
   };
 
+  // Static class maps for Tailwind purging (dynamic classes don't work)
+  const accentBgClasses: Record<string, string> = {
+    accent: "bg-accent/10",
+    accent2: "bg-accent2/10",
+    accent3: "bg-accent3/10",
+  };
+  const accentTextClasses: Record<string, string> = {
+    accent: "text-accent",
+    accent2: "text-accent2",
+    accent3: "text-accent3",
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
-      {sections.map((section, sectionIdx) => {
+      {sections.map((section) => {
         const Icon = getSectionIcon(section.title);
         const accent = getSectionAccent(section.title);
 
@@ -300,9 +313,9 @@ export async function RelatedContent({
           >
             <div className="flex items-center gap-3 mb-4">
               <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl bg-${accent}/10`}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${accentBgClasses[accent]}`}
               >
-                <Icon className={`h-5 w-5 text-${accent}`} />
+                <Icon className={`h-5 w-5 ${accentTextClasses[accent]}`} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">
@@ -321,7 +334,7 @@ export async function RelatedContent({
                   className="topic-card group"
                 >
                   <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-lg bg-${accent}/10 text-xs font-bold text-${accent} shrink-0`}
+                    className={`flex h-6 w-6 items-center justify-center rounded-lg ${accentBgClasses[accent]} text-xs font-bold ${accentTextClasses[accent]} shrink-0`}
                   >
                     {idx + 1}
                   </span>
@@ -413,7 +426,7 @@ function findRelatedQaByKeywords(
   excludeSlug?: string,
   limit = 6,
 ): PaaQuestion[] {
-  const keywords = extractKeywords(questionText);
+  const keywords = extractKeywordsFromText(questionText, { max: 30 });
   const keywordSet = new Set(keywords);
 
   return questions
@@ -443,7 +456,9 @@ function findTopicsByKeywords(
   topics: ClusterTopic[],
   limit = 6,
 ): ClusterTopic[] {
-  const keywordSet = new Set(extractKeywords(keywords).slice(0, 10));
+  const keywordSet = new Set(
+    extractKeywordsFromText(keywords, { max: 30 }).slice(0, 10),
+  );
 
   return topics
     .map((topic) => {
@@ -466,62 +481,6 @@ function findTopicsByKeywords(
 /**
  * Extract meaningful keywords from text
  */
-function extractKeywords(text: string): string[] {
-  const stopWords = new Set([
-    "the",
-    "a",
-    "an",
-    "is",
-    "are",
-    "was",
-    "were",
-    "be",
-    "been",
-    "being",
-    "have",
-    "has",
-    "had",
-    "do",
-    "does",
-    "did",
-    "will",
-    "would",
-    "could",
-    "should",
-    "may",
-    "might",
-    "must",
-    "shall",
-    "can",
-    "need",
-    "what",
-    "when",
-    "where",
-    "who",
-    "why",
-    "how",
-    "this",
-    "that",
-    "these",
-    "those",
-    "his",
-    "her",
-    "their",
-    "its",
-    "about",
-    "from",
-    "with",
-    "for",
-    "after",
-  ]);
-
-  return text
-    .toLowerCase()
-    .replace(/[?'"]/g, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !stopWords.has(w));
-}
-
 /**
  * Get keywords for fact pages
  */

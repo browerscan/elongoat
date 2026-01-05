@@ -5,7 +5,6 @@
 import "server-only";
 
 import { getDbPool } from "./db";
-import { escapeLikePattern } from "./sqlSecurity";
 
 // ============================================================================
 // Types
