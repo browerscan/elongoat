@@ -29,12 +29,13 @@ jobs:
         run: |
           # Use export config for Cloudflare Pages static build
           cp next.config.export.mjs next.config.mjs
-          # Temporarily move API routes out so they don't interfere with static export
+          # Temporarily move dynamic routes out so they don't interfere with static export
           mkdir -p .api-backup
           mv src/app/api .api-backup/ || true
           mv src/app/search .api-backup/ || true
           mv src/app/x .api-backup/ || true
           mv src/app/admin .api-backup/ || true
+          mv src/app/tweets .api-backup/ || true
 
       - name: Build static export
         run: npm run build
@@ -44,12 +45,13 @@ jobs:
           VALIDATE_ENV_ON_STARTUP: "0"
           NODE_ENV: production
 
-      - name: Restore API routes
+      - name: Restore dynamic routes
         run: |
           mv .api-backup/api src/app/ || true
           mv .api-backup/search src/app/ || true
           mv .api-backup/x src/app/ || true
           mv .api-backup/admin src/app/ || true
+          mv .api-backup/tweets src/app/ || true
           rm -rf .api-backup || true
 
       - name: Deploy to Cloudflare Pages
