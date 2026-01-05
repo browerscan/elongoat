@@ -1,4 +1,13 @@
 import Link from "next/link";
+import {
+  ArrowRight,
+  Brain,
+  Globe,
+  HelpCircle,
+  MessageCircle,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
 import { FilterList, type FilterListItem } from "../../components/FilterList";
 import { JsonLd } from "../../components/JsonLd";
@@ -92,58 +101,134 @@ export default async function QuestionsIndexPage() {
     href: `/q/${q.slug}`,
   }));
 
+  // Count AI-enhanced answers
+  const aiAnswerCount = sortedQuestions.filter((q) =>
+    aiQaSlugs.has(q.slug),
+  ).length;
+
   return (
     <>
       <JsonLd data={jsonLd} />
       <div className="space-y-6">
-        <div className="glass rounded-3xl p-6">
-          <h1 className="text-2xl font-semibold text-white">Q&A</h1>
-          <p className="mt-2 max-w-2xl text-sm text-white/60">
-            These come from a Google People Also Ask scrape. We show the
-            original snippet when available and let the AI expand the answer.
-          </p>
-          <LastModified date={paaUpdated} className="mt-3" />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href="/"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
-            >
-              Back home
-            </Link>
-            <Link
-              href="/topics"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
-            >
-              Browse topics
-            </Link>
+        {/* Hero Header */}
+        <header className="hero-cosmic glass-premium glow-ring rounded-3xl p-6 md:p-8">
+          <div className="relative">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 rounded-full border border-accent2/20 bg-accent2/10 px-3 py-1 text-xs text-accent2">
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  Knowledge Base
+                </div>
+                <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                  <span className="text-gradient-bold">Q&A</span>
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm text-white/70 md:text-base">
+                  Get answers to the most common questions about Elon Musk.
+                  First principles thinking applied to every question.
+                </p>
+                <LastModified date={paaUpdated} className="mt-4" />
+
+                {/* Stats Row */}
+                <div className="mt-6 flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent2/10">
+                      <Brain className="h-4 w-4 text-accent2" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white">
+                        {paa.questions.length.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-white/50">Questions</div>
+                    </div>
+                  </div>
+                  {aiAnswerCount > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                        <Sparkles className="h-4 w-4 text-accent" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white">
+                          {aiAnswerCount}
+                        </div>
+                        <div className="text-xs text-white/50">AI Enhanced</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent3/10">
+                      <Zap className="h-4 w-4 text-accent3" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white">Instant</div>
+                      <div className="text-xs text-white/50">AI Answers</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Navigation */}
+              <div className="flex flex-wrap gap-2 md:flex-col">
+                <Link href="/" className="badge-x">
+                  <Globe className="h-3 w-3" />
+                  Home
+                </Link>
+                <Link href="/topics" className="badge-x">
+                  <Brain className="h-3 w-3" />
+                  Topics
+                </Link>
+                <Link href="/search" className="badge-x">
+                  <Zap className="h-3 w-3" />
+                  Search
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
+        </header>
 
         {custom.length ? (
-          <section className="glass rounded-3xl p-6">
+          <section className="glass-premium rounded-3xl p-6">
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
-              <div>
-                <h2 className="text-lg font-semibold text-white">From chat</h2>
-                <p className="mt-1 max-w-2xl text-sm text-white/60">
-                  These Q&As are promoted from real user questions (manual
-                  review) and become new pages.
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                  <MessageCircle className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    From the Community
+                  </h2>
+                  <p className="text-xs text-white/50">
+                    Real questions promoted from chat
+                  </p>
+                </div>
               </div>
-              <div className="text-xs text-white/50">Newest first</div>
+              <div className="badge-x">
+                <Sparkles className="h-3 w-3" />
+                Newest first
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {custom.map((c) => (
+              {custom.map((c, i) => (
                 <Link
                   key={c.slug}
                   href={`/q/${c.slug}`}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                  className="knowledge-node group"
                 >
-                  <div className="text-[11px] text-white/55">
-                    Chat-derived • {new Date(c.createdAt).toLocaleDateString()}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-white">
-                    {c.question}
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 text-[10px] text-white/50">
+                        <Zap className="h-3 w-3 text-accent3" />
+                        Chat-derived •{" "}
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </div>
+                      <div className="mt-1 text-sm font-medium text-white group-hover:text-accent transition-colors">
+                        {c.question}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-accent transition-colors shrink-0 mt-1" />
                   </div>
                 </Link>
               ))}
@@ -151,12 +236,28 @@ export default async function QuestionsIndexPage() {
           </section>
         ) : null}
 
-        <FilterList
-          items={items}
-          placeholder="Search questions (age, net worth, companies...)..."
-          enablePagination={true}
-          itemsPerPage={50}
-        />
+        {/* Search & Browse */}
+        <section className="glass-premium rounded-3xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent2/10">
+              <Brain className="h-4 w-4 text-accent2" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-white">
+                All Questions
+              </h2>
+              <p className="text-xs text-white/50">
+                Search or browse the knowledge base
+              </p>
+            </div>
+          </div>
+          <FilterList
+            items={items}
+            placeholder="Search questions (age, net worth, companies...)..."
+            enablePagination={true}
+            itemsPerPage={50}
+          />
+        </section>
       </div>
     </>
   );

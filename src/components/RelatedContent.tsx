@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Globe,
+  HelpCircle,
+  Rocket,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import type { ClusterTopic, PaaQuestion } from "../lib/indexes";
 import { SemanticRelatedContent } from "./SemanticRelatedContent";
 
@@ -129,7 +137,7 @@ export async function RelatedContent({
         items: pages.map((p) => ({
           title: p.page,
           url: `/${p.slug}`,
-          meta: `Peak ${p.maxVolume.toLocaleString()} • ${p.keywordCount} keywords`,
+          meta: "",
         })),
       });
     }
@@ -144,7 +152,7 @@ export async function RelatedContent({
           items: relatedTopics.map((t) => ({
             title: t.topic,
             url: `/${t.slug}`,
-            meta: `${t.pageCount} pages • vol ${t.totalVolume.toLocaleString()}`,
+            meta: "",
           })),
         });
       }
@@ -164,7 +172,7 @@ export async function RelatedContent({
         items: pages.map((p) => ({
           title: p.page,
           url: `/${p.slug}`,
-          meta: `Peak ${p.maxVolume.toLocaleString()} • ${p.keywordCount} keywords`,
+          meta: "",
         })),
       });
     }
@@ -177,7 +185,7 @@ export async function RelatedContent({
         items: relatedQa.map((q) => ({
           title: q.question,
           url: `/q/${q.slug}`,
-          meta: q.volume ? `Vol ${q.volume.toLocaleString()}` : undefined,
+          meta: undefined,
         })),
       });
     }
@@ -199,7 +207,7 @@ export async function RelatedContent({
           items: relatedQa.map((q) => ({
             title: q.question,
             url: `/q/${q.slug}`,
-            meta: q.volume ? `Vol ${q.volume.toLocaleString()}` : undefined,
+            meta: undefined,
           })),
         });
       }
@@ -259,34 +267,82 @@ export async function RelatedContent({
     return null;
   }
 
+  // Get icon for section based on title
+  const getSectionIcon = (title: string) => {
+    const lower = title.toLowerCase();
+    if (lower.includes("question")) return HelpCircle;
+    if (lower.includes("topic")) return Globe;
+    if (lower.includes("page")) return Rocket;
+    if (lower.includes("more") || lower.includes("explore")) return Sparkles;
+    if (lower.includes("learn")) return Brain;
+    return Zap;
+  };
+
+  // Get accent color for section
+  const getSectionAccent = (title: string) => {
+    const lower = title.toLowerCase();
+    if (lower.includes("question")) return "accent2";
+    if (lower.includes("topic")) return "accent3";
+    if (lower.includes("page")) return "accent";
+    return "accent";
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
-      {sections.map((section) => (
-        <section key={section.title} className="glass rounded-3xl p-6">
-          <h3 className="text-lg font-semibold text-white">{section.title}</h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {section.items.map((item) => (
-              <Link
-                key={item.url}
-                href={item.url}
-                className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+      {sections.map((section, sectionIdx) => {
+        const Icon = getSectionIcon(section.title);
+        const accent = getSectionAccent(section.title);
+
+        return (
+          <section
+            key={section.title}
+            className="glass-premium rounded-3xl p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl bg-${accent}/10`}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
-                    {item.title}
-                  </div>
-                  {item.meta && (
-                    <div className="mt-1 text-xs text-white/60">
-                      {item.meta}
+                <Icon className={`h-5 w-5 text-${accent}`} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {section.title}
+                </h3>
+                <p className="text-xs text-white/50">
+                  {section.items.length} related items
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {section.items.map((item, idx) => (
+                <Link
+                  key={item.url}
+                  href={item.url}
+                  className="topic-card group"
+                >
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-lg bg-${accent}/10 text-xs font-bold text-${accent} shrink-0`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-white group-hover:text-accent transition-colors line-clamp-2">
+                      {item.title}
                     </div>
-                  )}
-                </div>
-                <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0 mt-0.5" />
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+                    {item.meta && (
+                      <div className="mt-0.5 flex items-center gap-1 text-xs text-white/50">
+                        <Zap className="h-3 w-3 text-accent3" />
+                        {item.meta}
+                      </div>
+                    )}
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-accent transition-colors shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

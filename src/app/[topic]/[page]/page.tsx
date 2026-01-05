@@ -2,6 +2,16 @@ import type { Metadata } from "next";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ArrowRight,
+  Brain,
+  Globe,
+  MessageCircle,
+  Rocket,
+  Search,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
 import { CopyPromptButton } from "../../../components/CopyPromptButton";
 import { JsonLd } from "../../../components/JsonLd";
@@ -151,163 +161,273 @@ export default async function ClusterPage({
     <>
       <JsonLd data={jsonLd} />
       <article className="space-y-6">
-        <header className="glass glow-ring rounded-3xl p-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
-            <Link href="/topics" className="hover:text-white">
-              Topics
-            </Link>
-            <span className="text-white/30">/</span>
-            <Link href={`/${page.topicSlug}`} className="hover:text-white">
-              {page.topic}
-            </Link>
-            <span className="text-white/30">/</span>
-            <span className="text-white/80">{page.page}</span>
-          </div>
+        {/* Article Header - Knowledge Node */}
+        <header className="hero-cosmic glass-premium glow-ring rounded-3xl p-6 md:p-8">
+          <div className="relative">
+            {/* Breadcrumbs */}
+            <nav className="flex flex-wrap items-center gap-2 text-xs">
+              <Link
+                href="/topics"
+                className="flex items-center gap-1 text-white/50 hover:text-accent transition-colors"
+              >
+                <Globe className="h-3 w-3" />
+                Topics
+              </Link>
+              <ArrowRight className="h-3 w-3 text-white/20" />
+              <Link
+                href={`/${page.topicSlug}`}
+                className="text-white/60 hover:text-accent transition-colors"
+              >
+                {page.topic}
+              </Link>
+              <ArrowRight className="h-3 w-3 text-white/20" />
+              <span className="text-accent font-medium">{page.page}</span>
+            </nav>
 
-          <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-white md:text-4xl">
-            {page.page}
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-white/65">
-            This page is generated from search clusters. Use it as a launchpad:
-            what people search for, how to interpret intent, and how to ask the
-            AI the right follow-ups.
-          </p>
-          <LastModified date={clusterUpdated} className="mt-3" />
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <OpenChatButton
-              label="Ask the AI about this page"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
-            />
-            <Link
-              href={`/facts/age`}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+            {/* Title & Description */}
+            <h1 className="mt-5 text-balance text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+              <span className="text-gradient-bold">{page.page}</span>
+            </h1>
+            <p
+              className="mt-3 max-w-3xl text-sm text-white/70 md:text-base"
+              data-speakable
             >
-              Quick facts (age: {vars.age})
-            </Link>
+              Deep-dive into {page.page} — explore what people want to know and
+              get AI-powered insights backed by real data.
+            </p>
+            <LastModified date={clusterUpdated} className="mt-4" />
+
+            {/* CTA Buttons */}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <OpenChatButton label="Ask the AI" className="btn-launch" />
+              <Link
+                href={`/${page.topicSlug}`}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+              >
+                <Globe className="h-4 w-4" />
+                Explore {page.topic}
+              </Link>
+              <Link
+                href={`/facts/age`}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-accent3/20 bg-accent3/5 px-5 py-3 text-sm font-semibold text-accent3 transition hover:bg-accent3/10"
+              >
+                <Zap className="h-4 w-4" />
+                Age: {vars.age}
+              </Link>
+            </div>
           </div>
         </header>
 
+        {/* Stats & Metrics */}
         <section className="grid gap-4 md:grid-cols-2">
-          <Metric
-            label="Keywords in cluster"
-            value={page.keywordCount.toLocaleString()}
-          />
-          <Metric label="Content type" value={page.pageType ?? "General"} />
+          <div className="stat-card group">
+            <div className="flex items-center gap-2 text-xs text-white/55">
+              <Search className="h-3 w-3 text-accent" />
+              Keywords in Cluster
+            </div>
+            <div className="stat-card-value mt-2">
+              {page.keywordCount.toLocaleString()}
+            </div>
+            <div className="mt-1 text-xs text-white/40">
+              Related search terms
+            </div>
+          </div>
+          <div className="stat-card group">
+            <div className="flex items-center gap-2 text-xs text-white/55">
+              <Brain className="h-3 w-3 text-accent2" />
+              Content Type
+            </div>
+            <div className="stat-card-value mt-2 text-lg">
+              {page.pageType ?? "General"}
+            </div>
+            <div className="mt-1 text-xs text-white/40">
+              Article classification
+            </div>
+          </div>
         </section>
 
+        {/* First Principles Interpretation */}
         <section className="grid gap-6 md:grid-cols-5">
-          <div className="glass rounded-3xl p-6 md:col-span-3">
-            <h2 className="text-lg font-semibold text-white">
-              Quick interpretation
-            </h2>
-            <div className="mt-3 space-y-3 text-sm text-white/70">
-              <p>
-                <span className="font-semibold text-white">Intent:</span>{" "}
-                {inferIntent(page.topKeywords)}
+          <div className="glass-premium rounded-3xl p-6 md:col-span-3">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent3/10">
+                <Rocket className="h-5 w-5 text-accent3" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  First Principles Analysis
+                </h2>
+                <p className="text-xs text-white/50">
+                  Breaking it down to fundamentals
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="elon-quote">
+                <p className="text-white/90">
+                  <span className="font-semibold text-accent3">Intent:</span>{" "}
+                  {inferIntent(page.topKeywords)}
+                </p>
+              </div>
+              <p className="text-white/70">
+                This knowledge cluster captures{" "}
+                <span className="font-semibold text-white">real demand</span>{" "}
+                related to{" "}
+                <Link
+                  href={`/${page.topicSlug}`}
+                  className="text-accent hover:underline"
+                >
+                  {page.topic}
+                </Link>
+                . For the fastest answer, ask the AI a narrow question — include
+                timeframe, location, or source preference.
               </p>
-              <p>
-                <span className="font-semibold text-white">
-                  Why this matters:
-                </span>{" "}
-                this cluster captures real demand related to{" "}
-                <span className="text-white">{page.topic}</span>. If you want
-                the fastest answer, ask the AI a narrow question and include
-                what you care about (timeframe, location, source preference).
-              </p>
-              <p className="text-white/55">
-                Note: Any “net worth / live news” claims may be outdated. Use
-                primary sources when accuracy matters.
-              </p>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-white/50">
+                <Zap className="inline h-3 w-3 text-accent3 mr-1" />
+                Note: Net worth and live news claims may be outdated. Verify
+                with primary sources when accuracy matters.
+              </div>
             </div>
           </div>
 
-          <aside className="glass rounded-3xl p-6 md:col-span-2">
-            <h2 className="text-lg font-semibold text-white">
-              Ask better questions
-            </h2>
-            <div className="mt-3 space-y-2 text-sm text-white/70">
+          <aside className="glass-premium rounded-3xl p-6 md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent2/10">
+                <MessageCircle className="h-5 w-5 text-accent2" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Smart Prompts
+                </h2>
+                <p className="text-xs text-white/50">Ask better questions</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
               <CopyPromptButton
-                text={`Give me the 30‑second answer for “${page.page}”.`}
+                text={`Give me the 30-second answer for "${page.page}".`}
               />
               <CopyPromptButton
-                text={`What changed in the last 30 days about “${page.page}”?`}
+                text={`What changed in the last 30 days about "${page.page}"?`}
               />
               <CopyPromptButton
-                text={`List primary sources to verify “${page.page}”.`}
+                text={`List primary sources to verify "${page.page}".`}
               />
               <CopyPromptButton
-                text={`Explain “${page.page}” like I'm technical, not a beginner.`}
+                text={`Explain "${page.page}" like I'm technical, not a beginner.`}
               />
             </div>
-            <div className="mt-4 text-xs text-white/50">
-              Click a prompt to copy (chat widget will support paste).
+            <div className="mt-4 flex items-center gap-2 text-xs text-white/40">
+              <Sparkles className="h-3 w-3" />
+              Click to copy, then ask the AI
             </div>
           </aside>
         </section>
 
-        <section className="glass rounded-3xl p-6">
-          <h2 className="text-lg font-semibold text-white">
-            Top searches inside this cluster
-          </h2>
-          <p className="mt-2 text-sm text-white/60">
-            Highest‑volume keywords tied to this page (capped to 20).
-          </p>
+        {/* Keywords Grid */}
+        <section className="glass-premium rounded-3xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+              <Search className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                Top Search Keywords
+              </h2>
+              <p className="text-xs text-white/50">
+                Highest-volume keywords in this cluster
+              </p>
+            </div>
+          </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {page.topKeywords.map((k) => (
-              <div
-                key={k.keyword}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4"
-              >
-                <div className="text-sm font-semibold text-white">
-                  {k.keyword}
+          <div className="grid gap-3 md:grid-cols-2">
+            {page.topKeywords.map((k, i) => (
+              <div key={k.keyword} className="knowledge-node group">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent shrink-0">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white group-hover:text-accent transition-colors">
+                      {k.keyword}
+                    </div>
+                    {k.intent && (
+                      <div className="mt-1 flex items-center gap-1 text-xs text-white/50">
+                        <Zap className="h-3 w-3 text-accent3" />
+                        {k.intent}
+                      </div>
+                    )}
+                    {k.serp_features && (
+                      <div className="mt-1 text-[10px] text-white/40">
+                        {k.serp_features}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {k.intent ? (
-                  <div className="mt-1 text-xs text-white/60">
-                    Intent: {k.intent}
-                  </div>
-                ) : null}
-                {k.serp_features ? (
-                  <div className="mt-2 text-[11px] text-white/45">
-                    {k.serp_features}
-                  </div>
-                ) : null}
               </div>
             ))}
           </div>
         </section>
 
-        <section className="glass rounded-3xl p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-white">AI brief</h2>
-            <div className="text-xs text-white/50">
-              Model: {ai.model}
-              {ai.cached ? " • cached" : ""}
+        {/* AI Brief - The Main Content */}
+        <section className="glass-premium glow-ring rounded-3xl p-6 md:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent2">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  AI Deep Dive
+                </h2>
+                <p className="text-xs text-white/50">Comprehensive analysis</p>
+              </div>
+            </div>
+            <div className="badge-ai">
+              {ai.model}
+              {ai.cached && " • cached"}
             </div>
           </div>
-          <div className="mt-4">
+          <div className="prose prose-invert prose-sm max-w-none">
             <Markdown content={ai.contentMd} />
           </div>
         </section>
 
         <AuthorInfo lastUpdated={clusterUpdated} contentType="cluster" />
 
-        <section className="glass rounded-3xl p-6">
-          <h2 className="text-lg font-semibold text-white">
-            More in {page.topic}
-          </h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {related.map((p) => (
+        <section className="glass-premium rounded-3xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+              <Globe className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                More in {page.topic}
+              </h2>
+              <p className="text-xs text-white/50">
+                Related knowledge clusters
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {related.map((p, i) => (
               <Link
                 key={p.slug}
                 href={`/${p.topicSlug}/${p.pageSlug}`}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                className="topic-card"
               >
-                <div className="text-sm font-semibold text-white">{p.page}</div>
-                <div className="mt-1 text-xs text-white/60">
-                  {p.keywordCount.toLocaleString()} keywords
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent shrink-0">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-white">
+                    {p.page}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-white/50">
+                    <Search className="h-3 w-3" />
+                    {p.keywordCount.toLocaleString()} keywords
+                  </div>
                 </div>
+                <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-accent transition-colors shrink-0" />
               </Link>
             ))}
           </div>
@@ -340,9 +460,12 @@ export default async function ClusterPage({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="glass rounded-3xl p-6">
-      <div className="text-xs text-white/55">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
+    <div className="stat-card">
+      <div className="flex items-center gap-2 text-xs text-white/55">
+        <Zap className="h-3 w-3 text-accent3" />
+        {label}
+      </div>
+      <div className="stat-card-value mt-2">{value}</div>
     </div>
   );
 }

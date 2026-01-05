@@ -225,9 +225,7 @@ export async function GET(request: Request) {
           url: `/q/${qa.slug}`,
           type: "qa",
           relevance,
-          meta: qa.volume
-            ? `${qa.volume.toLocaleString()} searches`
-            : undefined,
+          meta: undefined,
         });
       }
     }

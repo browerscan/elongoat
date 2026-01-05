@@ -10,7 +10,9 @@
   --card-2: 0 0% 10%;
   --accent: 243 75% 59%; /* indigo */
   --accent-2: 162 73% 46%; /* emerald */
+  --accent-3: 38 92% 50%; /* Tesla orange/amber */
   --danger: 348 83% 60%; /* rose */
+  --success: 142 76% 36%; /* green */
 }
 
 body {
@@ -79,10 +81,50 @@ body {
     color: transparent;
   }
 
+  /* Bold gradient for hero text - Elon's visionary style */
+  .text-gradient-bold {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--accent-3)) 40%,
+      hsl(var(--accent)) 70%,
+      hsl(var(--accent-2)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+  }
+
   .glass {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(14px);
+  }
+
+  /* Premium glass with stronger contrast */
+  .glass-premium {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+  }
+
+  /* Interactive glass card with hover state */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    transition: all 0.2s ease;
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
   }
 
   .glow-ring {
@@ -90,6 +132,293 @@ body {
       0 0 0 1px rgba(255, 255, 255, 0.1),
       0 0 40px rgba(99, 102, 241, 0.18),
       0 0 60px rgba(16, 185, 129, 0.12);
+  }
+
+  /* Tesla-inspired glow for accent elements */
+  .glow-accent {
+    box-shadow:
+      0 0 0 1px rgba(251, 146, 60, 0.2),
+      0 0 20px rgba(251, 146, 60, 0.15),
+      0 0 40px rgba(99, 102, 241, 0.1);
+  }
+
+  /* Subtle pulse animation for CTAs */
+  .pulse-subtle {
+    animation: pulse-subtle 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 0 20px rgba(99, 102, 241, 0.15);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 30px rgba(99, 102, 241, 0.25);
+    }
+  }
+
+  /* Badge styles for "AI Article" labels */
+  .badge-ai {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--accent)) 0%,
+      hsl(var(--accent-2)) 100%
+    );
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 9999px;
+  }
+
+  /* First-principles quote styling */
+  .first-principles {
+    border-left: 3px solid hsl(var(--accent-3));
+    padding-left: 1rem;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* Elon Musk persona utilities */
+  .elon-quote {
+    position: relative;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(
+      135deg,
+      rgba(251, 146, 60, 0.08) 0%,
+      rgba(99, 102, 241, 0.06) 100%
+    );
+    border-left: 3px solid hsl(var(--accent-3));
+    border-radius: 0 1rem 1rem 0;
+    font-style: italic;
+  }
+
+  .elon-quote::before {
+    content: '"';
+    position: absolute;
+    top: 0.5rem;
+    left: 0.75rem;
+    font-size: 2rem;
+    line-height: 1;
+    color: rgba(251, 146, 60, 0.3);
+    font-family: Georgia, serif;
+  }
+
+  /* Mission statement - bold vision style */
+  .mission-statement {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+  }
+
+  /* Tesla/SpaceX inspired accent line */
+  .accent-line {
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--accent-3)),
+      hsl(var(--accent)),
+      hsl(var(--accent-2))
+    );
+    border-radius: 9999px;
+  }
+
+  /* Stats card with glow */
+  .stat-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(251, 146, 60, 0.3);
+    box-shadow: 0 0 30px rgba(251, 146, 60, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .stat-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--accent-3)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Hero section with Mars/space vibes */
+  .hero-cosmic {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-cosmic::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(251, 146, 60, 0.15),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at 80% 30%,
+        rgba(99, 102, 241, 0.2),
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 60% 80%,
+        rgba(16, 185, 129, 0.15),
+        transparent 50%
+      );
+    pointer-events: none;
+  }
+
+  /* "X" style badge */
+  .badge-x {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Rocket launch CTA button */
+  .btn-launch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--accent-3)) 0%,
+      hsl(var(--accent)) 100%
+    );
+    border-radius: 1rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .btn-launch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .btn-launch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(251, 146, 60, 0.3);
+  }
+
+  .btn-launch:hover::before {
+    opacity: 1;
+  }
+
+  /* Topic hub card with icon */
+  .topic-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .topic-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateX(4px);
+  }
+
+  /* Futuristic section divider */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+  }
+
+  /* Knowledge graph node style */
+  .knowledge-node {
+    position: relative;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .knowledge-node::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    width: 1px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .knowledge-node:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  /* Stats number styling - bold impactful numbers */
+  .stat-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
   .glitch-text {
