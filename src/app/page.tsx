@@ -11,13 +11,9 @@ import {
 
 import { JsonLd } from "../components/JsonLd";
 import { OpenChatButton } from "../components/OpenChatButton";
-import {
-  getClusterIndex,
-  getPaaIndex,
-  getTopPageSlugs,
-  getTopQuestionSlugs,
-} from "../lib/indexes";
+import { getClusterIndex } from "../lib/indexes";
 import { getDynamicVariables } from "../lib/variables";
+import { getFeaturedArticles, getArticleCount } from "../lib/articles";
 import { generateHomeMetadata } from "../lib/seo";
 import {
   generateOrganizationSchema,
@@ -47,23 +43,15 @@ function formatDate(iso: string): string {
 }
 
 export default async function Home() {
-  const [
-    cluster,
-    paa,
-    vars,
-    topPageSlugs,
-    topQuestionSlugs,
-    tweetStats,
-    tweets,
-  ] = await Promise.all([
-    getClusterIndex(),
-    getPaaIndex(),
-    getDynamicVariables(),
-    getTopPageSlugs(),
-    getTopQuestionSlugs(),
-    getTweetStats(),
-    getTimelineTweets({ limit: 6, includeReplies: false }),
-  ]);
+  const [cluster, vars, featuredArticles, articleCount, tweetStats, tweets] =
+    await Promise.all([
+      getClusterIndex(),
+      getDynamicVariables(),
+      getFeaturedArticles(8),
+      getArticleCount(),
+      getTweetStats(),
+      getTimelineTweets({ limit: 6, includeReplies: false }),
+    ]);
 
   const jsonLd = [
     generateWebSiteSchema(),
@@ -78,19 +66,6 @@ export default async function Home() {
       breadcrumbs: [{ name: "Home", url: "/" }],
     }),
   ];
-
-  const topPages = new Map(cluster.pages.map((p) => [p.slug, p]));
-  const topQuestions = new Map(paa.questions.map((q) => [q.slug, q]));
-
-  const trendingPages = topPageSlugs
-    .map((slug) => topPages.get(slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .slice(0, 8);
-
-  const trendingQuestions = topQuestionSlugs
-    .map((slug) => topQuestions.get(slug))
-    .filter((q): q is NonNullable<typeof q> => Boolean(q))
-    .slice(0, 6);
 
   const seedQuery = cluster.topics
     .slice()
@@ -178,13 +153,13 @@ export default async function Home() {
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard
             label="Articles"
-            value={cluster.pages.length.toLocaleString()}
-            hint="Cluster pages"
+            value={articleCount.toLocaleString()}
+            hint="AI-generated content"
           />
           <MetricCard
-            label="Questions"
-            value={paa.questions.length.toLocaleString()}
-            hint="PAA + custom Q&A"
+            label="Tweets"
+            value={tweetStats?.totalTweets.toLocaleString() || "55K+"}
+            hint="2010-2025 archive"
           />
           <MetricCard
             label="Topics"
@@ -247,7 +222,8 @@ export default async function Home() {
                   Featured writing
                 </h2>
                 <p className="mt-1 text-xs text-white/50">
-                  Articles + questions from the knowledge graph
+                  AI-generated articles from {articleCount.toLocaleString()}{" "}
+                  pieces
                 </p>
               </div>
               <Link href="/writing" className="badge-x">
@@ -256,38 +232,32 @@ export default async function Home() {
             </div>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {trendingPages.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/${p.topicSlug}/${p.pageSlug}`}
-                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
-                    {p.page}
-                  </div>
-                  <div className="mt-1 text-xs text-white/55">{p.topic}</div>
-                  <div className="mt-3 text-[11px] text-white/45">
-                    {p.keywordCount.toLocaleString()} keywords • max vol{" "}
-                    {p.maxVolume.toLocaleString()}
-                  </div>
-                </Link>
-              ))}
-
-              {trendingQuestions.map((q) => (
-                <Link
-                  key={q.slug}
-                  href={`/q/${q.slug}`}
-                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
-                    {q.question}
-                  </div>
-                  <div className="mt-1 text-xs text-white/55">Q&A</div>
-                  <div className="mt-3 text-[11px] text-white/45">
-                    volume {(q.volume ?? 0).toLocaleString()}
-                  </div>
-                </Link>
-              ))}
+              {featuredArticles.length > 0 ? (
+                featuredArticles.map((article) => (
+                  <Link
+                    key={article.slug}
+                    href={article.url}
+                    className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
+                      {article.title}
+                    </div>
+                    {article.snippet && (
+                      <div className="mt-1 text-xs text-white/60 line-clamp-2">
+                        {article.snippet}
+                      </div>
+                    )}
+                    <div className="mt-3 text-[11px] text-white/45">
+                      {formatDate(article.updatedAt)} •{" "}
+                      {article.wordCount.toLocaleString()} words
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
+                  No articles found. Check database connection.
+                </div>
+              )}
             </div>
           </div>
         </section>
