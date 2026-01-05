@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveChatUx, shouldGlitchText, type ChatUx } from "@/lib/chatUi";
+import {
+  deriveChatUx,
+  shouldGlitchText,
+  type ChatUx,
+} from "../../src/lib/chatUi";
 
 describe("chatUi", () => {
   describe("shouldGlitchText", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { rateLimit } from "@/lib/rateLimit";
+import { rateLimit } from "../src/lib/rateLimit";
 
 describe("rateLimit (in-memory)", () => {
   it("enforces a simple windowed limit", async () => {

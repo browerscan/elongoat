@@ -1,3 +1,4 @@
+import { getEnv, getPublicEnv } from "./env";
 /**
  * API client for fetching data from the backend.
  * During static export build, this fetches from NEXT_PUBLIC_API_URL.
@@ -5,15 +6,15 @@
  */
 
 const getApiBaseUrl = (): string => {
+  const publicEnv = getPublicEnv();
   // In browser, use relative paths (same-origin) or configured API URL
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL || "";
+    return publicEnv.NEXT_PUBLIC_API_URL || "";
   }
   // During build/SSR, use the full API URL
+  const env = getEnv();
   return (
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.API_URL ||
-    "http://localhost:3000"
+    publicEnv.NEXT_PUBLIC_API_URL || env.API_URL || "http://localhost:3000"
   );
 };
 

@@ -1,9 +1,9 @@
 // Lazy imports for backend-only dependencies
-let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
+let getDbPool: typeof import("./db").getDbPool | undefined;
 
 async function getBackendModules() {
   try {
-    const dbModule = await import("@/lib/db");
+    const dbModule = await import("./db");
     getDbPool = dbModule.getDbPool;
   } catch {
     // Modules not available in static export

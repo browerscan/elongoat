@@ -1,15 +1,20 @@
 // RAG is server-only by nature (DB access)
-import { getDbPool } from "@/lib/db";
-import { escapeLikePattern } from "@/lib/sqlSecurity";
+import { getDbPool } from "./db";
+import { escapeLikePattern } from "./sqlSecurity";
+import { getTweetsForRag } from "./muskTweets";
 
 export type RagContext = {
-  source: "paa" | "cluster" | "content_cache";
+  source: "paa" | "cluster" | "content_cache" | "tweet";
   weight: number;
   question?: string;
   answer?: string;
   title?: string;
   snippet?: string;
   volume?: number;
+  // Tweet-specific fields
+  tweetUrl?: string;
+  tweetLikes?: number;
+  tweetDate?: string;
 };
 
 export type RagResult = {
@@ -170,6 +175,34 @@ export async function searchClusterContext(params: {
 }
 
 /**
+ * Search Elon Musk's tweets for relevant content
+ * Highest priority source - first-person authentic content
+ */
+export async function searchTweetContext(params: {
+  query: string;
+  limit?: number;
+}): Promise<RagContext[]> {
+  try {
+    const tweets = await getTweetsForRag({
+      query: params.query,
+      limit: params.limit ?? 5,
+    });
+
+    return tweets.map((tweet) => ({
+      source: "tweet" as const,
+      weight: 0.9, // High weight - authentic first-person content
+      snippet: tweet.text,
+      tweetUrl: tweet.url,
+      tweetLikes: tweet.likes,
+      tweetDate: tweet.date,
+    }));
+  } catch (error) {
+    console.error("[rag] Error searching tweets:", error);
+    return [];
+  }
+}
+
+/**
  * Build comprehensive RAG context from multiple sources
  */
 export async function buildRagContext(params: {
@@ -177,17 +210,24 @@ export async function buildRagContext(params: {
   includeContentCache?: boolean;
   includePaa?: boolean;
   includeClusters?: boolean;
+  includeTweets?: boolean;
 }): Promise<RagResult> {
   const {
     includeContentCache = true,
     includePaa = true,
     includeClusters = true,
+    includeTweets = true,
   } = params;
 
   const contexts: RagContext[] = [];
 
   // Fetch all sources in parallel
   const promises: Promise<RagContext[]>[] = [];
+
+  // Tweets first - highest priority authentic content
+  if (includeTweets) {
+    promises.push(searchTweetContext({ query: params.query, limit: 5 }));
+  }
 
   if (includePaa) {
     promises.push(searchPaaContext({ query: params.query, limit: 8 }));
@@ -226,12 +266,27 @@ export function formatRagContexts(contexts: RagContext[]): string {
   const sections: string[] = [];
 
   // Group by source
+  const tweetContexts = contexts.filter((c) => c.source === "tweet");
   const paaContexts = contexts.filter((c) => c.source === "paa");
   const cacheContexts = contexts.filter((c) => c.source === "content_cache");
   const clusterContexts = contexts.filter((c) => c.source === "cluster");
 
+  // Tweets first - authentic first-person content (highest priority)
+  if (tweetContexts.length > 0) {
+    sections.push("### My actual tweets on this topic:");
+    for (const ctx of tweetContexts.slice(0, 5)) {
+      if (ctx.snippet) {
+        const likes = ctx.tweetLikes
+          ? ` (${ctx.tweetLikes.toLocaleString()} likes)`
+          : "";
+        const date = ctx.tweetDate ? ` [${ctx.tweetDate}]` : "";
+        sections.push(`\n> "${ctx.snippet}"${likes}${date}`);
+      }
+    }
+  }
+
   if (paaContexts.length > 0) {
-    sections.push("### Related Q&A (from Google PAA data):");
+    sections.push("\n### Related Q&A (from Google PAA data):");
     for (const ctx of paaContexts.slice(0, 5)) {
       sections.push(`\n**Q: ${ctx.question}**`);
       if (ctx.answer) {

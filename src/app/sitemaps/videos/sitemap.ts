@@ -1,13 +1,16 @@
 import type { MetadataRoute } from "next";
 
-import { listVideos } from "@/lib/videos";
+import { listVideos } from "../../../lib/videos";
+import { getPublicEnv } from "../../../lib/env";
 
+const env = getPublicEnv();
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io"
-  ).replace(/\/$/, "");
+  const siteUrl = (env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
+    /\/$/,
+    "",
+  );
   const videos = await listVideos(5000);
   const now = new Date();
 

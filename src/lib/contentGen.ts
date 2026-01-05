@@ -1,13 +1,14 @@
-import { findPage, findPaaQuestion } from "@/lib/indexes";
-import { getCachedContent, setCachedContent } from "@/lib/contentCache";
-import { getDynamicVariables } from "@/lib/variables";
-import { vectorEngineChatComplete } from "@/lib/vectorengine";
+import { findPage, findPaaQuestion } from "./indexes";
+import { getCachedContent, setCachedContent } from "./contentCache";
+import { getDynamicVariables } from "./variables";
+import { vectorEngineChatComplete } from "./vectorengine";
+import { getEnv } from "./env";
 
-const DEFAULT_CONTENT_MODEL = "claude-sonnet-4-5-20250929";
+const env = getEnv();
 
 function getContentModel(): string | null {
-  if (!process.env.VECTORENGINE_API_KEY) return null;
-  return process.env.VECTORENGINE_CONTENT_MODEL ?? DEFAULT_CONTENT_MODEL;
+  if (!env.VECTORENGINE_API_KEY) return null;
+  return env.VECTORENGINE_CONTENT_MODEL;
 }
 
 export async function getClusterPageContent(params: {

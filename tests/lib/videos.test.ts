@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getTranscript, getVideo, listVideos } from "@/lib/videos";
+import { getTranscript, getVideo, listVideos } from "../../src/lib/videos";
 
 // Mock dependencies
-vi.mock("@/lib/db", () => ({
+vi.mock("../../src/lib/db", () => ({
   getDbPool: vi.fn(),
 }));
 
@@ -12,7 +12,7 @@ const mockDbPool = {
   query: mockDbQuery,
 };
 
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "../../src/lib/db";
 
 describe("videos", () => {
   beforeEach(() => {

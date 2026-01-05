@@ -2,8 +2,8 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import { getPaaIndex } from "@/lib/indexes";
-import { listLatestCustomQas } from "@/lib/customQa";
+import { getPaaIndex } from "../../../../lib/indexes";
+import { listLatestCustomQas } from "../../../../lib/customQa";
 
 export const revalidate = 3600;
 

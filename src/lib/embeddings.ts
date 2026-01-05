@@ -1,3 +1,8 @@
+import "server-only";
+
+import { getEnv } from "./env";
+
+const env = getEnv();
 /**
  * Embedding Generation Utility
  *
@@ -10,8 +15,6 @@
  * - OpenAI text-embedding-ada-002 (1536 dimensions, legacy)
  * - Any OpenAI-compatible embedding API
  */
-
-import "server-only";
 
 // ============================================================================
 // Types
@@ -46,7 +49,6 @@ export interface BatchEmbeddingResult {
 // Constants
 // ============================================================================
 
-const DEFAULT_MODEL = "text-embedding-3-small";
 const DEFAULT_DIMENSIONS = 1536;
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 
@@ -64,7 +66,7 @@ const MAX_BATCH_SIZE = 100;
  * Get embedding configuration from environment
  */
 export function getEmbeddingConfig(): EmbeddingConfig | null {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.VECTORENGINE_API_KEY;
+  const apiKey = env.OPENAI_API_KEY || env.VECTORENGINE_API_KEY;
 
   if (!apiKey) {
     return null;
@@ -72,14 +74,9 @@ export function getEmbeddingConfig(): EmbeddingConfig | null {
 
   return {
     apiKey,
-    baseUrl:
-      process.env.EMBEDDING_BASE_URL ||
-      process.env.OPENAI_BASE_URL ||
-      DEFAULT_BASE_URL,
-    model: process.env.EMBEDDING_MODEL || DEFAULT_MODEL,
-    dimensions:
-      parseInt(process.env.EMBEDDING_DIMENSIONS || "", 10) ||
-      DEFAULT_DIMENSIONS,
+    baseUrl: env.EMBEDDING_BASE_URL || env.OPENAI_BASE_URL || DEFAULT_BASE_URL,
+    model: env.EMBEDDING_MODEL,
+    dimensions: env.EMBEDDING_DIMENSIONS || DEFAULT_DIMENSIONS,
   };
 }
 

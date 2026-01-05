@@ -1,20 +1,15 @@
 import "server-only";
 
 import { Pool } from "pg";
-
+import { getEnv } from "./env";
+const env = getEnv();
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const QUERY_CACHE_ENABLED = process.env.QUERY_CACHE_ENABLED !== "0";
-const QUERY_CACHE_TTL_MS = Number.parseInt(
-  process.env.QUERY_CACHE_TTL_MS ?? "60000",
-  10,
-);
-const QUERY_CACHE_MAX_SIZE = Number.parseInt(
-  process.env.QUERY_CACHE_MAX_SIZE ?? "500",
-  10,
-);
+const QUERY_CACHE_ENABLED = env.QUERY_CACHE_ENABLED;
+const QUERY_CACHE_TTL_MS = env.QUERY_CACHE_TTL_MS;
+const QUERY_CACHE_MAX_SIZE = env.QUERY_CACHE_MAX_SIZE;
 
 // ============================================================================
 // Query Result Cache (L1 - In-Memory)
@@ -60,7 +55,7 @@ function getCachedQuery(
     return null;
   }
 
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     console.log("[DbOptimized] Query cache hit for:", query.slice(0, 50));
   }
 
@@ -119,7 +114,7 @@ export function invalidateQueryCache(pattern: string): void {
     }
   }
 
-  if (process.env.NODE_ENV === "development" && count > 0) {
+  if (env.NODE_ENV === "development" && count > 0) {
     console.log("[DbOptimized] Invalidated " + count + " query cache entries");
   }
 }
@@ -354,7 +349,7 @@ export async function queryWithRetry<T>(
       const delay = Math.min(100 * Math.pow(2, attempt), 1000);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      if (process.env.NODE_ENV === "development") {
+      if (env.NODE_ENV === "development") {
         console.log(
           "[DbOptimized] Retry attempt " + (attempt + 1) + " for query",
         );

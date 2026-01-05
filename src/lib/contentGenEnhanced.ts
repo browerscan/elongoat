@@ -1,10 +1,13 @@
 // Content generation is server-only by nature
 
-import { findPage, findPaaQuestion } from "@/lib/indexes";
-import { setCachedContent } from "@/lib/contentCache";
-import { getDynamicVariables } from "@/lib/variables";
-import { buildRagContext, formatRagContexts } from "@/lib/rag";
-import { vectorEngineChatComplete } from "@/lib/vectorengine";
+import { findPage, findPaaQuestion } from "./indexes";
+import { setCachedContent } from "./contentCache";
+import { getDynamicVariables } from "./variables";
+import { buildRagContext, formatRagContexts } from "./rag";
+import { vectorEngineChatComplete } from "./vectorengine";
+import { getEnv } from "./env";
+
+const env = getEnv();
 
 // Word count utilities
 function countWords(text: string): number {
@@ -226,8 +229,7 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
 `.trim();
 
   let contentMd = "";
-  const modelName =
-    process.env.VECTORENGINE_CONTENT_MODEL ?? "claude-sonnet-4-5-20250929";
+  const modelName = env.VECTORENGINE_CONTENT_MODEL;
   let wordCount = 0;
 
   // Generate with retry logic for word count
@@ -362,8 +364,7 @@ Write ONLY the markdown content. Begin:
 `.trim();
 
   let contentMd = "";
-  const modelName =
-    process.env.VECTORENGINE_CONTENT_MODEL ?? "claude-sonnet-4-5-20250929";
+  const modelName = env.VECTORENGINE_CONTENT_MODEL;
   let wordCount = 0;
 
   // Generate with retry logic for word count

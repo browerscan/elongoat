@@ -1,8 +1,11 @@
 import "server-only";
 
-import { clearAdminSession, logAdminAction } from "@/lib/adminAuth";
-import { getAdminSecurityHeaders } from "@/lib/securityHeaders";
-import { rateLimitAdmin } from "@/lib/rateLimit";
+import {
+  clearAdminSession,
+  logAdminAction,
+} from "../../../../../lib/adminAuth";
+import { getAdminSecurityHeaders } from "../../../../../lib/securityHeaders";
+import { rateLimitAdmin } from "../../../../../lib/rateLimit";
 
 /**
  * POST /api/admin/auth/logout

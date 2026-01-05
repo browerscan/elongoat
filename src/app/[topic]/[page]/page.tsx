@@ -3,22 +3,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CopyPromptButton } from "@/components/CopyPromptButton";
-import { JsonLd } from "@/components/JsonLd";
-import { LastModified } from "@/components/LastModified";
-import { Markdown } from "@/components/Markdown";
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { RelatedContent } from "@/components/RelatedContent";
-import { SeeAlso } from "@/components/SeeAlso";
-import { AuthorInfo } from "@/components/AuthorInfo";
-import { getClusterPageContent } from "@/lib/contentGen";
+import { CopyPromptButton } from "../../../components/CopyPromptButton";
+import { JsonLd } from "../../../components/JsonLd";
+import { LastModified } from "../../../components/LastModified";
+import { Markdown } from "../../../components/Markdown";
+import { OpenChatButton } from "../../../components/OpenChatButton";
+import { RelatedContent } from "../../../components/RelatedContent";
+import { RelatedTweets } from "../../../components/RelatedTweets";
+import { SeeAlso } from "../../../components/SeeAlso";
+import { AuthorInfo } from "../../../components/AuthorInfo";
+import { getClusterPageContent } from "../../../lib/contentGen";
 import {
   findPage,
   getClusterIndex,
   getTopPageSlugs,
   listTopicPages,
-} from "@/lib/indexes";
-import { generateClusterPageMetadata } from "@/lib/seo";
+} from "../../../lib/indexes";
+import { generateClusterPageMetadata } from "../../../lib/seo";
 import {
   generateArticleWithSpeakableSchema,
   generateBreadcrumbSchema,
@@ -26,8 +27,8 @@ import {
   generateWebPageSchema,
   extractHowToStepsFromMarkdown,
   isHowToContent,
-} from "@/lib/structuredData";
-import { getDynamicVariables } from "@/lib/variables";
+} from "../../../lib/structuredData";
+import { getDynamicVariables } from "../../../lib/variables";
 
 export const revalidate = 3600;
 
@@ -100,7 +101,7 @@ export default async function ClusterPage({
   const jsonLd: Record<string, unknown>[] = [
     generateWebPageSchema({
       title: `${page.page} — ${page.topic}`,
-      description: `Explore "${page.page}" in ${page.topic}. Peak search volume: ${page.maxVolume.toLocaleString()}. ${page.keywordCount.toLocaleString()} keywords with search intent analysis and AI chat.`,
+      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
       dateModified: clusterUpdated.toISOString(),
       breadcrumbs: [
@@ -113,7 +114,7 @@ export default async function ClusterPage({
     // Use Article with Speakable for voice search optimization
     generateArticleWithSpeakableSchema({
       title: `${page.page} — ${page.topic}`,
-      description: `Explore "${page.page}" in ${page.topic}. Peak search volume: ${page.maxVolume.toLocaleString()}. ${page.keywordCount.toLocaleString()} keywords with search intent analysis and AI chat.`,
+      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
       publishedAt: clusterUpdated.toISOString(),
       updatedAt: clusterUpdated.toISOString(),
@@ -187,23 +188,12 @@ export default async function ClusterPage({
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <Metric
-            label="Peak search volume"
-            value={page.maxVolume.toLocaleString()}
-          />
+        <section className="grid gap-4 md:grid-cols-2">
           <Metric
             label="Keywords in cluster"
             value={page.keywordCount.toLocaleString()}
           />
-          <Metric
-            label="Keyword difficulty range"
-            value={
-              page.minKd != null && page.maxKd != null
-                ? `${page.minKd}–${page.maxKd}`
-                : "—"
-            }
-          />
+          <Metric label="Content type" value={page.pageType ?? "General"} />
         </section>
 
         <section className="grid gap-6 md:grid-cols-5">
@@ -273,10 +263,11 @@ export default async function ClusterPage({
                 <div className="text-sm font-semibold text-white">
                   {k.keyword}
                 </div>
-                <div className="mt-1 text-xs text-white/60">
-                  Volume: {k.volume.toLocaleString()} • KD: {k.kd}
-                  {k.intent ? ` • Intent: ${k.intent}` : ""}
-                </div>
+                {k.intent ? (
+                  <div className="mt-1 text-xs text-white/60">
+                    Intent: {k.intent}
+                  </div>
+                ) : null}
                 {k.serp_features ? (
                   <div className="mt-2 text-[11px] text-white/45">
                     {k.serp_features}
@@ -315,13 +306,18 @@ export default async function ClusterPage({
               >
                 <div className="text-sm font-semibold text-white">{p.page}</div>
                 <div className="mt-1 text-xs text-white/60">
-                  Peak {p.maxVolume.toLocaleString()} •{" "}
-                  {p.keywordCount.toLocaleString()} kws
+                  {p.keywordCount.toLocaleString()} keywords
                 </div>
               </Link>
             ))}
           </div>
         </section>
+
+        <RelatedTweets
+          keywords={[page.page, page.topic, ...keywordsList.slice(0, 3)]}
+          limit={4}
+          title="What Elon said about this"
+        />
 
         <RelatedContent
           type="page"

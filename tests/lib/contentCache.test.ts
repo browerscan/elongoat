@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getCachedContent, setCachedContent } from "@/lib/contentCache";
-import type { CachedContent } from "@/lib/contentCache";
+import { getCachedContent, setCachedContent } from "../../src/lib/contentCache";
+import type { CachedContent } from "../../src/lib/contentCache";
 
 const mockTieredGet = vi.fn();
 const mockTieredSet = vi.fn();
@@ -10,11 +10,11 @@ const mockBuildKey = vi.fn(
 );
 
 // Mock dependencies
-vi.mock("@/lib/db", () => ({
+vi.mock("../../src/lib/db", () => ({
   getDbPool: vi.fn(),
 }));
 
-vi.mock("@/lib/tieredCache", () => ({
+vi.mock("../../src/lib/tieredCache", () => ({
   get: mockTieredGet,
   set: mockTieredSet,
   buildKey: mockBuildKey,
@@ -25,7 +25,7 @@ const mockDbPool = {
   query: mockDbQuery,
 };
 
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "../../src/lib/db";
 
 describe("contentCache", () => {
   beforeEach(() => {

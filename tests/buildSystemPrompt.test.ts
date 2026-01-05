@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSystemPrompt } from "@/lib/buildSystemPrompt";
+import { buildSystemPrompt } from "../src/lib/buildSystemPrompt";
 
 const baseVars = {
   age: 54,

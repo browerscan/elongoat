@@ -1,3 +1,10 @@
+import "server-only";
+
+import { getPublicEnv } from "./env";
+import { getDbPool } from "./db";
+import { escapeLikePattern } from "./sqlSecurity";
+
+const env = getPublicEnv();
 /**
  * RAG Multi-Source Search Engine
  *
@@ -12,12 +19,6 @@
  * - Deduplication (similarity > 90%)
  * - Weighted scoring
  */
-
-import "server-only";
-
-import { getDbPool } from "@/lib/db";
-import { escapeLikePattern } from "@/lib/sqlSecurity";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -76,7 +77,7 @@ export const SOURCE_WEIGHTS: Record<RagSource, number> = {
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const DEFAULT_MIN_SCORE = 0.01;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://elongoat.io";
+const SITE_URL = env.NEXT_PUBLIC_SITE_URL || "https://elongoat.io";
 
 // ============================================================================
 // Search Functions
@@ -269,7 +270,7 @@ async function searchClusterPages(
 
     return result.rows.map((row) => ({
       title: row.page,
-      content: `Topic: ${row.topic}${row.seed_keyword ? `. Primary keyword: ${row.seed_keyword}` : ""}. Total search volume: ${row.total_volume.toLocaleString()}.`,
+      content: `Topic: ${row.topic}${row.seed_keyword ? `. Primary keyword: ${row.seed_keyword}` : ""}.`,
       source: "cluster" as RagSource,
       source_priority: SOURCE_WEIGHTS.cluster,
       relevance_score: row.rank * SOURCE_WEIGHTS.cluster,

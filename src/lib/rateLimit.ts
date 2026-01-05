@@ -1,15 +1,16 @@
 // Server-only module (import removed for backend compatibility)
+import { getRedis, type Redis } from "./redis";
+import { getEnv } from "./env";
 
-import { getRedis, type Redis } from "@/lib/redis";
+const env = getEnv();
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const RATE_LIMIT_ENABLED = process.env.RATE_LIMIT_ENABLED !== "0";
+const RATE_LIMIT_ENABLED = env.RATE_LIMIT_ENABLED;
 const RATE_LIMIT_WHITELIST = new Set(
-  (process.env.RATE_LIMIT_WHITELIST ?? "")
-    .split(",")
+  env.RATE_LIMIT_WHITELIST.split(",")
     .map((ip) => ip.trim())
     .filter(Boolean),
 );
@@ -18,35 +19,23 @@ const RATE_LIMIT_WHITELIST = new Set(
 const DEFAULT_LIMITS = {
   // General API endpoints
   api: {
-    limit: Number.parseInt(process.env.RATE_LIMIT_API ?? "100", 10),
-    windowSeconds: Number.parseInt(
-      process.env.RATE_LIMIT_API_WINDOW ?? "60",
-      10,
-    ),
+    limit: env.RATE_LIMIT_API,
+    windowSeconds: env.RATE_LIMIT_API_WINDOW,
   },
   // Chat endpoint (more restrictive)
   chat: {
-    limit: Number.parseInt(process.env.RATE_LIMIT_CHAT ?? "20", 10),
-    windowSeconds: Number.parseInt(
-      process.env.RATE_LIMIT_CHAT_WINDOW ?? "3600",
-      10,
-    ),
+    limit: env.RATE_LIMIT_CHAT,
+    windowSeconds: env.RATE_LIMIT_CHAT_WINDOW,
   },
   // Admin endpoints
   admin: {
-    limit: Number.parseInt(process.env.RATE_LIMIT_ADMIN ?? "60", 10),
-    windowSeconds: Number.parseInt(
-      process.env.RATE_LIMIT_ADMIN_WINDOW ?? "60",
-      10,
-    ),
+    limit: env.RATE_LIMIT_ADMIN,
+    windowSeconds: env.RATE_LIMIT_ADMIN_WINDOW,
   },
   // Health endpoint (very permissive)
   health: {
-    limit: Number.parseInt(process.env.RATE_LIMIT_HEALTH ?? "300", 10),
-    windowSeconds: Number.parseInt(
-      process.env.RATE_LIMIT_HEALTH_WINDOW ?? "60",
-      10,
-    ),
+    limit: env.RATE_LIMIT_HEALTH,
+    windowSeconds: env.RATE_LIMIT_HEALTH_WINDOW,
   },
 } as const;
 
@@ -239,7 +228,7 @@ async function redisRateLimit(
     };
   } catch (error) {
     // Redis error - fall back to in-memory
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[RateLimit] Redis error, falling back to memory:", error);
     }
     return memoryRateLimit(identifier, limit, windowSeconds);
@@ -474,8 +463,8 @@ function getIpHashSecret(): string {
     return IP_HASH_SECRET;
   }
 
-  const envSecret = process.env.RATE_LIMIT_IP_SECRET;
-  const isProduction = process.env.NODE_ENV === "production";
+  const envSecret = env.RATE_LIMIT_IP_SECRET;
+  const isProduction = env.NODE_ENV === "production";
 
   if (isProduction) {
     if (!envSecret || envSecret === "change_me_to_random_string") {

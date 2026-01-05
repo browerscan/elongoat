@@ -4,7 +4,7 @@ import {
   formatDisplayQuestion,
   normalizeQuestion,
   shouldStoreQuestion,
-} from "@/lib/chatAnalytics";
+} from "../src/lib/chatAnalytics";
 
 describe("chat analytics helpers", () => {
   it("normalizes questions for stable hashing", () => {

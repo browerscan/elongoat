@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSecurityHeaders } from "@/lib/securityHeaders";
+import { getSecurityHeaders } from "./lib/securityHeaders";
+import { getPublicEnv } from "./lib/env";
 
+const env = getPublicEnv();
 /**
  * Middleware for applying security headers, CORS, request tracing, and compression
  * Run on every request to ensure consistent security posture and performance
@@ -18,11 +20,11 @@ function generateRequestId(): string {
 }
 
 const ALLOWED_ORIGINS = new Set([
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io",
+  env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io",
   "https://elongoat.io",
 ]);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.elongoat.io";
+const API_URL = env.NEXT_PUBLIC_API_URL ?? "https://api.elongoat.io";
 
 export function middleware(request: NextRequest) {
   // Generate or retrieve request ID for distributed tracing

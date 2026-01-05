@@ -1,18 +1,14 @@
 import { getDb, withTransaction } from "../lib/db";
+import { getEnv } from "../lib/env";
 
-function env(name: string, fallback: string): string {
-  return (process.env[name] ?? fallback).trim();
-}
+const env = getEnv();
 
 async function main() {
-  const dob = env("ELON_DOB", "1971-06-28");
-  const children = env("ELON_CHILDREN_COUNT", "14");
-  const netWorth = env(
-    "ELON_NET_WORTH",
-    "Varies with markets (estimate; may be outdated).",
-  );
-  const chatMood = env("CHAT_MOOD", "confident");
-  const chatTyping = env("CHAT_TYPING_QUIRK", "1");
+  const dob = env.ELON_DOB;
+  const children = String(env.ELON_CHILDREN_COUNT);
+  const netWorth = env.ELON_NET_WORTH;
+  const chatMood = env.CHAT_MOOD;
+  const chatTyping = env.CHAT_TYPING_QUIRK ? "true" : "false";
 
   await withTransaction(async (client) => {
     await client.query(

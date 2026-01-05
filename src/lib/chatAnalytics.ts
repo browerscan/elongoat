@@ -2,18 +2,13 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "./db";
+import { getEnv } from "./env";
 
-function parseBool(value: string | undefined, fallback: boolean): boolean {
-  if (!value) return fallback;
-  const v = value.trim().toLowerCase();
-  if (["1", "true", "yes", "y", "on"].includes(v)) return true;
-  if (["0", "false", "no", "n", "off"].includes(v)) return false;
-  return fallback;
-}
+const env = getEnv();
 
 export function analyticsEnabled(): boolean {
-  return parseBool(process.env.CHAT_ANALYTICS_ENABLED, false);
+  return env.CHAT_ANALYTICS_ENABLED;
 }
 
 export function normalizeQuestion(input: string): string {

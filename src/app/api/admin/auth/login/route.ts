@@ -3,14 +3,17 @@ import "server-only";
 import { z } from "zod";
 import { timingSafeEqual } from "node:crypto";
 
+import { getEnv } from "../../../../../lib/env";
 import {
   createAdminSession,
   logAdminAction,
   validateAdminSession,
   validateSecurityConfig,
-} from "@/lib/adminAuth";
-import { getAdminSecurityHeaders } from "@/lib/securityHeaders";
-import { rateLimitAdmin } from "@/lib/rateLimit";
+} from "../../../../../lib/adminAuth";
+import { getAdminSecurityHeaders } from "../../../../../lib/securityHeaders";
+import { rateLimitAdmin } from "../../../../../lib/rateLimit";
+
+const env = getEnv();
 
 const LoginSchema = z.object({
   token: z.string().min(16, "Token too short").max(512),
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
       securityCheck.errors,
     );
     // In production, fail securely
-    if (process.env.NODE_ENV === "production") {
+    if (env.NODE_ENV === "production") {
       return Response.json(
         { error: "Server configuration error" },
         { status: 500, headers: getAdminSecurityHeaders() },
@@ -72,7 +75,7 @@ export async function POST(req: Request) {
   }
 
   const { token } = parsed.data;
-  const adminToken = process.env.ELONGOAT_ADMIN_TOKEN;
+  const adminToken = env.ELONGOAT_ADMIN_TOKEN;
 
   if (!adminToken) {
     logAdminAction({

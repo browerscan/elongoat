@@ -1,13 +1,13 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "../src/lib/db";
 import {
   formatDisplayQuestion,
   hashQuestion,
   normalizeQuestion,
   recordChatQuestionStat,
-} from "@/lib/chatAnalytics";
-import { getCustomQa, upsertCustomQa } from "@/lib/customQa";
+} from "../src/lib/chatAnalytics";
+import { getCustomQa, upsertCustomQa } from "../src/lib/customQa";
 
 const RUN_DB_TESTS = process.env.RUN_DB_TESTS === "1";
 

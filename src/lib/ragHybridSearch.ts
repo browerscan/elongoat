@@ -1,3 +1,21 @@
+import "server-only";
+
+import { getPublicEnv } from "./env";
+import { getDbPool } from "./db";
+import {
+  generateEmbedding,
+  formatEmbeddingForPg,
+  isEmbeddingEnabled,
+} from "./embeddings";
+import {
+  ragSearch,
+  type RagSearchOptions,
+  type RagSearchResponse,
+  type RagSource,
+  SOURCE_WEIGHTS,
+} from "./ragSearch";
+
+const env = getPublicEnv();
 /**
  * Hybrid RAG Search Engine
  *
@@ -9,23 +27,6 @@
  *
  * Falls back to full-text only when embeddings are not configured.
  */
-
-import "server-only";
-
-import { getDbPool } from "@/lib/db";
-import {
-  generateEmbedding,
-  formatEmbeddingForPg,
-  isEmbeddingEnabled,
-} from "@/lib/embeddings";
-import {
-  ragSearch,
-  type RagSearchOptions,
-  type RagSearchResponse,
-  type RagSource,
-  SOURCE_WEIGHTS,
-} from "@/lib/ragSearch";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -65,7 +66,7 @@ export interface HybridSearchResponse extends RagSearchResponse {
 
 const DEFAULT_FULL_TEXT_WEIGHT = 0.5;
 const DEFAULT_SEMANTIC_WEIGHT = 0.5;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://elongoat.io";
+const SITE_URL = env.NEXT_PUBLIC_SITE_URL || "https://elongoat.io";
 
 // ============================================================================
 // Hybrid Search Implementation

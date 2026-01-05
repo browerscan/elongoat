@@ -10,23 +10,26 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { validateRagAuth, RAG_RATE_LIMIT_CONFIG } from "@/lib/ragAuth";
+import {
+  validateRagAuth,
+  RAG_RATE_LIMIT_CONFIG,
+} from "../../../../lib/ragAuth";
 import {
   getCacheStats,
   clearAllCache,
   getCacheConfig,
   isCachingEnabled,
-} from "@/lib/ragCache";
+} from "../../../../lib/ragCache";
 import {
   rateLimit,
   getClientIdentifier,
   buildRateLimitHeaders,
-} from "@/lib/rateLimit";
+} from "../../../../lib/rateLimit";
 import {
   createStandardHeaders,
   CACHE_CONTROL,
   generateRequestId,
-} from "@/lib/apiResponse";
+} from "../../../../lib/apiResponse";
 
 // Skip static export
 export const dynamic = "force-dynamic";

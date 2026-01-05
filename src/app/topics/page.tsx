@@ -1,15 +1,15 @@
 import Link from "next/link";
 
-import { FilterList, type FilterListItem } from "@/components/FilterList";
-import { JsonLd } from "@/components/JsonLd";
-import { LastModified } from "@/components/LastModified";
-import { getClusterIndex } from "@/lib/indexes";
-import { generateTopicsIndexMetadata } from "@/lib/seo";
+import { FilterList, type FilterListItem } from "../../components/FilterList";
+import { JsonLd } from "../../components/JsonLd";
+import { LastModified } from "../../components/LastModified";
+import { getClusterIndex } from "../../lib/indexes";
+import { generateTopicsIndexMetadata } from "../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateItemListSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../lib/structuredData";
 
 export const revalidate = 3600;
 
@@ -65,7 +65,7 @@ export default async function TopicsIndexPage() {
     id: t.slug,
     title: t.topic,
     subtitle: `${t.pageCount.toLocaleString()} pages`,
-    meta: `Total volume (sum): ${t.totalVolume.toLocaleString()}`,
+    meta: undefined,
     href: `/${t.slug}`,
   }));
 

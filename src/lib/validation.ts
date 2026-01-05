@@ -7,8 +7,8 @@
 
 import { z } from "zod";
 import { NextRequest } from "next/server";
-import { ErrorCode, createErrorResponse } from "@/lib/errors";
-import type { JsonValue } from "@/lib/elongoat.types";
+import { ErrorCode, createErrorResponse } from "./errors";
+import type { JsonValue } from "./elongoat.types";
 
 /* -------------------------------------------------------------------------------------------------
  * Configuration

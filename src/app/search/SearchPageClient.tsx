@@ -4,9 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 
-import { SearchInput } from "@/components/SearchInput";
-import { SearchResults } from "@/components/SearchResults";
-import type { SearchResponse } from "@/lib/types/search";
+import { SearchInput } from "../../components/SearchInput";
+import { SearchResults } from "../../components/SearchResults";
+import type { SearchResponse } from "../../lib/types/search";
 
 function SearchInner() {
   const router = useRouter();

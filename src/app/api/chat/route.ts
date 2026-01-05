@@ -5,16 +5,18 @@ import { createHash } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { buildSystemPrompt } from "@/lib/buildSystemPrompt";
-import { recordChatQuestionStat } from "@/lib/chatAnalytics";
-import { getChatConfig } from "@/lib/chatConfig";
-import { findPage, findPaaQuestion, findTopic } from "@/lib/indexes";
-import { getRedis } from "@/lib/redis";
-import { rateLimit } from "@/lib/rateLimit";
-import { getDynamicVariables } from "@/lib/variables";
-import { getTranscript, getVideo } from "@/lib/videos";
-import { listXFollowing, listXTweets } from "@/lib/x";
+import { buildSystemPrompt } from "../../../lib/buildSystemPrompt";
+import { recordChatQuestionStat } from "../../../lib/chatAnalytics";
+import { getChatConfig } from "../../../lib/chatConfig";
+import { findPage, findPaaQuestion, findTopic } from "../../../lib/indexes";
+import { getRedis } from "../../../lib/redis";
+import { rateLimit } from "../../../lib/rateLimit";
+import { getDynamicVariables } from "../../../lib/variables";
+import { getTranscript, getVideo } from "../../../lib/videos";
+import { listXFollowing, listXTweets } from "../../../lib/x";
+import { getEnv } from "../../../lib/env";
 
+const env = getEnv();
 const RequestSchema = z
   .object({
     message: z.string().min(1).max(2000),
@@ -105,15 +107,14 @@ function getVectorEngineConfig(): {
   key: string;
   model: string;
 } | null {
-  const key = process.env.VECTORENGINE_API_KEY;
+  const key = env.VECTORENGINE_API_KEY;
   if (!key) return null;
 
-  const baseUrl =
-    process.env.VECTORENGINE_BASE_URL ?? "https://api.vectorengine.ai";
+  const baseUrl = env.VECTORENGINE_BASE_URL ?? "https://api.vectorengine.ai";
   const url =
-    process.env.VECTORENGINE_API_URL ??
+    env.VECTORENGINE_API_URL ??
     `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
-  const model = process.env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning";
+  const model = env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning";
 
   return { url, key, model };
 }
@@ -580,7 +581,7 @@ async function buildSiteContext(currentPage?: string): Promise<string> {
 
   // /x and /x/following (best-effort cached mirror)
   if (parts[0] === "x") {
-    const handle = (process.env.X_HANDLES?.split(",")[0] ?? "elonmusk")
+    const handle = (env.X_HANDLES?.split(",")[0] ?? "elonmusk")
       .trim()
       .replace(/^@/, "")
       .toLowerCase();
@@ -666,15 +667,14 @@ async function buildSiteContext(currentPage?: string): Promise<string> {
     if (!page) return "";
     const topK = page.topKeywords
       .slice(0, 8)
-      .map((k) => `${k.keyword} (vol ${k.volume}, kd ${k.kd})`)
+      .map((k) => k.keyword)
       .join("; ");
     return [
       `Type: Cluster page`,
       `Topic: ${page.topic}`,
       `Page: ${page.page}`,
-      `Peak volume: ${page.maxVolume}`,
       `Keywords: ${page.keywordCount}`,
-      topK ? `Top keywords: ${topK}` : "",
+      topK ? `Related keywords: ${topK}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -687,6 +687,5 @@ async function buildSiteContext(currentPage?: string): Promise<string> {
     `Type: Topic hub`,
     `Topic: ${topic.topic}`,
     `Pages: ${topic.pageCount}`,
-    `Total volume (sum): ${topic.totalVolume}`,
   ].join("\n");
 }

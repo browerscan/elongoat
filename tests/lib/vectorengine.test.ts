@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getVectorEngineChatUrl,
   vectorEngineChatComplete,
-} from "@/lib/vectorengine";
+} from "../../src/lib/vectorengine";
 
 describe("vectorengine", () => {
   beforeEach(() => {

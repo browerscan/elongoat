@@ -2,7 +2,9 @@ import "server-only";
 
 import { timingSafeEqual } from "node:crypto";
 import { createHmac, randomBytes, createHash } from "node:crypto";
+import { getEnv } from "./env";
 
+const env = getEnv();
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -112,7 +114,7 @@ function verifySessionToken(token: string): JwtPayload | null {
  * In production, this should be a long, random string
  */
 function getSessionSecret(): string {
-  const secret = process.env.ELONGOAT_ADMIN_SESSION_SECRET;
+  const secret = env.ELONGOAT_ADMIN_SESSION_SECRET;
   if (!secret) {
     throw new Error(
       "ELONGOAT_ADMIN_SESSION_SECRET must be set for secure admin authentication",
@@ -147,7 +149,7 @@ export async function createAdminSession(): Promise<{
   error?: string;
   cookieHeader?: string;
 }> {
-  const adminToken = process.env.ELONGOAT_ADMIN_TOKEN;
+  const adminToken = env.ELONGOAT_ADMIN_TOKEN;
   if (!adminToken) {
     return { success: false, error: "Admin authentication not configured" };
   }
@@ -291,7 +293,7 @@ export function clearAdminSession(): string {
  * @deprecated Use validateAdminSession for cookie-based auth instead
  */
 export function checkAdminAuth(req: Request): boolean {
-  const token = process.env.ELONGOAT_ADMIN_TOKEN;
+  const token = env.ELONGOAT_ADMIN_TOKEN;
   if (!token) return false;
 
   const header = req.headers.get("authorization") ?? "";
@@ -531,7 +533,7 @@ function buildSetCookieHeader(options: CookieOptions): string {
 }
 
 function isProduction(): boolean {
-  return process.env.NODE_ENV === "production";
+  return env.NODE_ENV === "production";
 }
 
 /**
@@ -543,21 +545,21 @@ export function validateSecurityConfig(): {
 } {
   const errors: string[] = [];
 
-  if (!process.env.ELONGOAT_ADMIN_TOKEN) {
+  if (!env.ELONGOAT_ADMIN_TOKEN) {
     errors.push("ELONGOAT_ADMIN_TOKEN is not set");
-  } else if (process.env.ELONGOAT_ADMIN_TOKEN.length < 32) {
+  } else if (env.ELONGOAT_ADMIN_TOKEN.length < 32) {
     errors.push("ELONGOAT_ADMIN_TOKEN should be at least 32 characters");
   }
 
-  if (!process.env.ELONGOAT_ADMIN_SESSION_SECRET) {
+  if (!env.ELONGOAT_ADMIN_SESSION_SECRET) {
     errors.push("ELONGOAT_ADMIN_SESSION_SECRET is not set");
-  } else if (process.env.ELONGOAT_ADMIN_SESSION_SECRET.length < 32) {
+  } else if (env.ELONGOAT_ADMIN_SESSION_SECRET.length < 32) {
     errors.push(
       "ELONGOAT_ADMIN_SESSION_SECRET should be at least 32 characters",
     );
   }
 
-  if (isProduction() && !process.env.DATABASE_URL) {
+  if (isProduction() && !env.DATABASE_URL) {
     errors.push("DATABASE_URL should be set in production for audit logging");
   }
 

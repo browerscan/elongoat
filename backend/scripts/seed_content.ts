@@ -1,15 +1,17 @@
 import "dotenv/config";
 
 import { getDb, withTransaction } from "../lib/db";
+import { getEnv } from "../lib/env";
 import { slugify } from "../lib/slugify";
 import { vectorEngineChatComplete } from "../../src/lib/vectorengine";
+
+const env = getEnv();
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const CONTENT_MODEL =
-  process.env.VECTORENGINE_CONTENT_MODEL ?? "claude-sonnet-4-5-20250929";
+const CONTENT_MODEL = env.VECTORENGINE_CONTENT_MODEL;
 const BATCH_SIZE = 5;
 const DELAY_MS = 500;
 
@@ -434,10 +436,10 @@ interface SeedOptions {
 
 async function main(options: SeedOptions = {}) {
   const {
-    paa = process.env.SEED_PAA === "true",
-    videos = process.env.SEED_VIDEOS === "true",
-    tweets = process.env.SEED_TWEETS === "true",
-    limit = Number.parseInt(process.env.SEED_LIMIT ?? "50", 10),
+    paa = env.SEED_PAA,
+    videos = env.SEED_VIDEOS,
+    tweets = env.SEED_TWEETS,
+    limit = env.SEED_LIMIT,
   } = options;
 
   // If no flags provided, do all
@@ -454,7 +456,7 @@ async function main(options: SeedOptions = {}) {
   console.log(`[seed] Sample tweets: ${doTweets ? "enabled" : "disabled"}`);
 
   // Check for API key
-  const hasApiKey = !!process.env.VECTORENGINE_API_KEY;
+  const hasApiKey = !!env.VECTORENGINE_API_KEY;
   if (doPaa && !hasApiKey) {
     console.warn(
       "[seed] VECTORENGINE_API_KEY not set - PAA answers will use static content",

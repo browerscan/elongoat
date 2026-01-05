@@ -1,4 +1,7 @@
 // Server-only module (import removed for backend compatibility)
+import { getEnv } from "./env";
+
+const env = getEnv();
 
 // ============================================================================
 // Types
@@ -206,22 +209,14 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
 };
 
 // TTL for inactive circuit breakers (default: 1 hour)
-const CIRCUIT_BREAKER_TTL_MS = Number.parseInt(
-  process.env.CIRCUIT_BREAKER_TTL_MS ?? "3600000",
-  10,
-);
+const CIRCUIT_BREAKER_TTL_MS = env.CIRCUIT_BREAKER_TTL_MS;
 
 // Cleanup interval (default: 5 minutes)
-const CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS = Number.parseInt(
-  process.env.CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS ?? "300000",
-  10,
-);
+const CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS =
+  env.CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS;
 
 // Maximum number of circuit breakers to prevent unbounded growth
-const MAX_CIRCUIT_BREAKERS = Number.parseInt(
-  process.env.MAX_CIRCUIT_BREAKERS ?? "1000",
-  10,
-);
+const MAX_CIRCUIT_BREAKERS = env.MAX_CIRCUIT_BREAKERS;
 
 let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -244,7 +239,7 @@ function cleanupStaleCircuitBreakers(): void {
     }
   }
 
-  if (cleanedCount > 0 && process.env.NODE_ENV === "development") {
+  if (cleanedCount > 0 && env.NODE_ENV === "development") {
     console.log(
       `[CircuitBreaker] Cleaned up ${cleanedCount} stale circuit breakers. Remaining: ${circuitBreakers.size}`,
     );

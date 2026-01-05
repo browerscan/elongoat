@@ -1,15 +1,16 @@
+import "server-only";
+
+import type { SemanticRelatedItem } from "../components/SemanticRelatedContent";
+import { isEmbeddingEnabled } from "./embeddings";
+import { getPublicEnv } from "./env";
+
+const env = getPublicEnv();
 /**
  * Semantic Related Content Utility
  *
  * Fetches related content using embedding-based similarity via ragHybridSearch.
  * Falls back to keyword matching when embeddings are not available.
  */
-
-import "server-only";
-
-import type { SemanticRelatedItem } from "@/components/SemanticRelatedContent";
-import { isEmbeddingEnabled } from "@/lib/embeddings";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -54,7 +55,7 @@ export async function getSemanticRelatedContent(
 
     if (useHybrid) {
       // Use hybrid search with embeddings
-      const { hybridSearch } = await import("@/lib/ragHybridSearch");
+      const { hybridSearch } = await import("./ragHybridSearch");
       const result = await hybridSearch({
         query,
         sources,
@@ -69,14 +70,14 @@ export async function getSemanticRelatedContent(
         .slice(0, limit)
         .map((r) => ({
           title: r.title,
-          url: r.url.replace(process.env.NEXT_PUBLIC_SITE_URL || "", ""),
+          url: r.url.replace(env.NEXT_PUBLIC_SITE_URL || "", ""),
           relevance_score: r.relevance_score,
           source: r.source,
           snippet: r.content?.slice(0, 150),
         }));
     } else {
       // Fall back to full-text search
-      const { ragSearch } = await import("@/lib/ragSearch");
+      const { ragSearch } = await import("./ragSearch");
       const result = await ragSearch({
         query,
         sources,
@@ -89,7 +90,7 @@ export async function getSemanticRelatedContent(
         .slice(0, limit)
         .map((r) => ({
           title: r.title,
-          url: r.url.replace(process.env.NEXT_PUBLIC_SITE_URL || "", ""),
+          url: r.url.replace(env.NEXT_PUBLIC_SITE_URL || "", ""),
           relevance_score: r.relevance_score,
           source: r.source,
           snippet: r.content?.slice(0, 150),
@@ -114,12 +115,12 @@ export async function getSimilarByEmbedding(
   }
 
   try {
-    const { getSimilarArticles } = await import("@/lib/ragHybridSearch");
+    const { getSimilarArticles } = await import("./ragHybridSearch");
     const results = await getSimilarArticles(slug, limit);
 
     return results.map((r) => ({
       title: r.title,
-      url: r.url.replace(process.env.NEXT_PUBLIC_SITE_URL || "", ""),
+      url: r.url.replace(env.NEXT_PUBLIC_SITE_URL || "", ""),
       relevance_score: r.relevance_score,
       source: r.source,
       snippet: r.content?.slice(0, 150),

@@ -2,8 +2,10 @@ import "server-only";
 
 import { z } from "zod";
 
-import { listXFollowing } from "@/lib/x";
+import { listXFollowing } from "../../../../lib/x";
+import { getEnv } from "../../../../lib/env";
 
+const env = getEnv();
 const QuerySchema = z.object({
   handle: z.string().min(1).max(32).optional(),
   limit: z.coerce.number().int().min(1).max(5000).optional(),
@@ -21,7 +23,7 @@ export async function GET(req: Request) {
 
   const handle = (
     parsed.data.handle ??
-    process.env.X_HANDLES?.split(",")[0] ??
+    env.X_HANDLES?.split(",")[0] ??
     "elonmusk"
   )
     .trim()

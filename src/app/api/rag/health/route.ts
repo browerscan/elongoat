@@ -26,12 +26,12 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "../../../../lib/db";
 import {
   createStandardHeaders,
   CACHE_CONTROL,
   generateRequestId,
-} from "@/lib/apiResponse";
+} from "../../../../lib/apiResponse";
 
 // Skip static export
 export const dynamic = "force-dynamic";

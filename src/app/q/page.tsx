@@ -1,17 +1,18 @@
 import Link from "next/link";
 
-import { FilterList, type FilterListItem } from "@/components/FilterList";
-import { JsonLd } from "@/components/JsonLd";
-import { LastModified } from "@/components/LastModified";
-import { listLatestCustomQas } from "@/lib/customQa";
-import { getPaaIndex } from "@/lib/indexes";
-import { generateQaIndexMetadata } from "@/lib/seo";
+import { FilterList, type FilterListItem } from "../../components/FilterList";
+import { JsonLd } from "../../components/JsonLd";
+import { LastModified } from "../../components/LastModified";
+import { getSlugsWithAiContent } from "../../lib/contentCache";
+import { listLatestCustomQas } from "../../lib/customQa";
+import { getPaaIndex } from "../../lib/indexes";
+import { generateQaIndexMetadata } from "../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateFaqPageSchema,
   generateItemListSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../lib/structuredData";
 
 export const revalidate = 3600;
 
@@ -23,9 +24,10 @@ export async function generateMetadata() {
 }
 
 export default async function QuestionsIndexPage() {
-  const [paa, custom] = await Promise.all([
+  const [paa, custom, aiQaSlugs] = await Promise.all([
     getPaaIndex(),
     listLatestCustomQas(8),
+    getSlugsWithAiContent("paa_question"),
   ]);
 
   const paaUpdated = new Date(paa.generatedAt);
@@ -73,11 +75,20 @@ export default async function QuestionsIndexPage() {
     ),
   ];
 
-  const items: FilterListItem[] = paa.questions.map((q) => ({
+  // Sort questions: AI content first, then by volume
+  const sortedQuestions = [...paa.questions].sort((a, b) => {
+    const aHasAi = aiQaSlugs.has(a.slug);
+    const bHasAi = aiQaSlugs.has(b.slug);
+    if (aHasAi && !bHasAi) return -1;
+    if (!aHasAi && bHasAi) return 1;
+    return (b.volume ?? 0) - (a.volume ?? 0);
+  });
+
+  const items: FilterListItem[] = sortedQuestions.map((q) => ({
     id: q.slug,
     title: q.question,
     subtitle: q.answer ?? "Open and ask the AI for a better answer.",
-    meta: q.volume ? `Search volume: ${q.volume.toLocaleString()}` : undefined,
+    meta: aiQaSlugs.has(q.slug) ? "AI Answer" : undefined,
     href: `/q/${q.slug}`,
   }));
 

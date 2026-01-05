@@ -1,9 +1,11 @@
 // Server-only module (import removed for backend compatibility)
-
 import { Pool, PoolConfig, PoolClient } from "pg";
+import { getEnv } from "./env";
 
 // P0 Security: Validate secrets on import (auto-validates in production)
 import "./validateEnv";
+
+const env = getEnv();
 
 // ============================================================================
 // Types
@@ -43,19 +45,10 @@ const DEFAULT_POOL_CONFIG: PoolConfig = {
 function getPoolConfig(): PoolConfig {
   return {
     ...DEFAULT_POOL_CONFIG,
-    max: Number.parseInt(process.env.PGPOOL_MAX ?? "10", 10),
-    idleTimeoutMillis: Number.parseInt(
-      process.env.PGPOOL_IDLE_TIMEOUT_MS ?? "30000",
-      10,
-    ),
-    connectionTimeoutMillis: Number.parseInt(
-      process.env.PGPOOL_CONNECT_TIMEOUT_MS ?? "10000",
-      10,
-    ),
-    statement_timeout: Number.parseInt(
-      process.env.PG_STATEMENT_TIMEOUT_MS ?? "60000",
-      10,
-    ),
+    max: env.PGPOOL_MAX,
+    idleTimeoutMillis: env.PGPOOL_IDLE_TIMEOUT_MS,
+    connectionTimeoutMillis: env.PGPOOL_CONNECT_TIMEOUT_MS,
+    statement_timeout: env.PG_STATEMENT_TIMEOUT_MS,
   };
 }
 
@@ -68,7 +61,7 @@ function getPoolConfig(): PoolConfig {
  * Must be called before any database operations
  */
 export async function initDbPool(): Promise<Pool> {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL environment variable is not set");
   }
@@ -118,7 +111,7 @@ export async function initDbPool(): Promise<Pool> {
   }
 
   // Log pool status periodically (only in development)
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     const metricsInterval = setInterval(() => {
       if (pool && poolInitialized && !isShuttingDown) {
         logPoolMetrics();
@@ -179,18 +172,14 @@ export function logPoolMetrics(): void {
  */
 export function getDbPool(): Pool | null {
   // Static generation or no DATABASE_URL: return null
-  if (!process.env.DATABASE_URL) {
+  if (!env.DATABASE_URL) {
     return null;
   }
 
   // Pool not initialized yet - return null for graceful degradation
   if (!poolInitialized || !pool) {
     // Log warning for runtime (not during build)
-    if (
-      pool &&
-      poolInitialized === false &&
-      process.env.NODE_ENV === "production"
-    ) {
+    if (pool && poolInitialized === false && env.NODE_ENV === "production") {
       console.warn("[DB] Pool accessed before initDbPool() completed");
     }
     return null;
@@ -210,7 +199,7 @@ export function getDbPool(): Pool | null {
  * @deprecated Use initDbPool() + getDbPool() instead
  */
 export function getDbPoolLegacy(): Pool | null {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = env.DATABASE_URL;
   if (!connectionString) return null;
 
   if (isShuttingDown) {
@@ -332,7 +321,7 @@ export function setupDbShutdownHandlers(): void {
 }
 
 // Auto-setup shutdown handlers in production
-if (process.env.NODE_ENV === "production") {
+if (env.NODE_ENV === "production") {
   setupDbShutdownHandlers();
 }
 

@@ -2,10 +2,10 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { findPaaQuestion, getPaaIndex } from "@/lib/indexes";
-import { getCustomQa } from "@/lib/customQa";
-import { getPaaAnswerContent } from "@/lib/contentGen";
-import { getDynamicVariables } from "@/lib/variables";
+import { findPaaQuestion, getPaaIndex } from "../../../../../lib/indexes";
+import { getCustomQa } from "../../../../../lib/customQa";
+import { getPaaAnswerContent } from "../../../../../lib/contentGen";
+import { getDynamicVariables } from "../../../../../lib/variables";
 
 export const revalidate = 3600;
 

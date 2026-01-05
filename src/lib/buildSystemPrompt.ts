@@ -1,6 +1,6 @@
 // Server-only module (import removed for backend compatibility)
 
-import type { DynamicVariables } from "@/lib/variables";
+import type { DynamicVariables } from "./variables";
 
 export type ChatMood = "confident" | "neutral" | "defensive";
 

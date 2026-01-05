@@ -1,7 +1,9 @@
 import "server-only";
 
 import { z } from "zod";
+import { getPublicEnv } from "./env";
 
+const env = getPublicEnv();
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -625,7 +627,7 @@ export function sanitizeFields<T extends Record<string, unknown>>(
  * Get Content-Security-Policy header value
  */
 export function getCspHeaderValue(): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
+  const siteUrl = env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
   const siteOrigin = new URL(siteUrl).origin;
 
   return [

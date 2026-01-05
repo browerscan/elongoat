@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET } from "@/app/api/variables/route";
+import { GET } from "../../src/app/api/variables/route";
 
 // Mock dependencies
-vi.mock("@/lib/variables", () => ({
+vi.mock("../../src/lib/variables", () => ({
   getDynamicVariables: vi.fn(),
 }));
 
-import { getDynamicVariables } from "@/lib/variables";
+import { getDynamicVariables } from "../../src/lib/variables";
 
 describe("API /variables", () => {
   beforeEach(() => {

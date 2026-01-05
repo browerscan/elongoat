@@ -13,7 +13,8 @@ Content is generated from:
 
 - Keyword clusters (topic hubs + keyword pages)
 - Google PAA (People Also Ask) Q&A pages
-- X timeline mirror (optional, best-effort scraping)
+- **Musk Tweets Archive** (67K+ tweets from 2010-2025, primary RAG source)
+- X timeline mirror (optional, best-effort live scraping)
 - YouTube video pages (SOAX ingest + optional transcripts)
 
 **Disclaimer**: Not affiliated with Elon Musk. Chat is an AI simulation.
@@ -32,6 +33,8 @@ npm run test:watch           # Vitest (watch mode)
 # Database (requires DATABASE_URL)
 npm run db:apply-schema      # Apply PostgreSQL schema
 npm run db:import:all        # Import all data (clusters + PAA + metrics)
+npm run db:apply-tweets      # Apply musk_tweets migration
+npm run db:import:tweets     # Import 67K tweets from CSV
 npm run db:seed:variables    # Seed dynamic variables
 
 # Content Generation (requires DATABASE_URL + /codex skill)
@@ -102,9 +105,12 @@ backend/
 │   ├── apply_schema.ts
 │   ├── import_clusters.ts
 │   ├── import_paa.ts
+│   ├── import_musk_tweets.ts # Import 67K tweets from CSV
 │   └── warm_content.ts       # Pre-warm content cache
+├── supabase/migrations/
+│   └── 002_musk_tweets.sql   # Musk tweets schema
 ├── workers/                  # Background workers
-│   ├── ingest_x.ts           # X/Twitter scraping (SOAX)
+│   ├── ingest_x.ts           # X/Twitter live scraping (SOAX)
 │   └── ingest_videos.ts      # Video scraping (SOAX)
 └── lib/                      # Shared backend utilities
 
@@ -113,6 +119,7 @@ scripts/                      # Python scripts
 
 data/
 ├── *.csv                     # Source data (clusters, PAA, metrics)
+├── all_musk_posts.csv        # 67K tweets (2010-2025)
 └── generated/                # JSON indexes (gitignored, auto-generated)
 ```
 
@@ -144,9 +151,10 @@ ElonGoat uses a hybrid RAG (Retrieval-Augmented Generation) system for high-qual
 
 **Data Sources & Weights:**
 
-1. **Content Cache** (weight 1.0): Previously generated high-quality content
-2. **PAA Tree** (weight 0.6): Google "People Also Ask" data with answers
-3. **Cluster Pages** (weight 0.3): Site architecture and keyword mapping
+1. **Musk Tweets** (weight 0.9): 67K+ tweets from 2010-2025, primary source
+2. **Content Cache** (weight 1.0): Previously generated high-quality content
+3. **PAA Tree** (weight 0.6): Google "People Also Ask" data with answers
+4. **Cluster Pages** (weight 0.3): Site architecture and keyword mapping
 
 **Generation Pipeline:**
 
@@ -216,9 +224,13 @@ Uses `nginx-proxy_default`, `supabase_default`, and `redis_default` external net
 | `/q`            | Q&A index                          |
 | `/q/:slug`      | Q&A detail                         |
 | `/videos`       | Video index                        |
-| `/x`            | X timeline mirror                  |
+| `/x`            | X timeline (live mirror)           |
+| `/x/archive`    | Tweet archive (2010-2025)          |
+| `/x/popular`    | Most popular tweets                |
+| `/x/search`     | Full-text tweet search             |
 | `/admin`        | Admin panel (token-protected)      |
 | `/api/chat`     | Streaming chat endpoint            |
+| `/api/tweets/*` | Tweet stats and search APIs        |
 | `/api/metrics`  | Prometheus metrics (optional auth) |
 | `/api/health`   | Health check with latency          |
 

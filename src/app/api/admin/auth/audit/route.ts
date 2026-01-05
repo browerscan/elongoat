@@ -6,10 +6,10 @@ import {
   checkAdminAuthEither,
   getAuditLogs,
   logAdminAction,
-} from "@/lib/adminAuth";
-import { unauthorized } from "@/lib/adminAuth";
-import { getAdminSecurityHeaders } from "@/lib/securityHeaders";
-import { rateLimitAdmin } from "@/lib/rateLimit";
+} from "../../../../../lib/adminAuth";
+import { unauthorized } from "../../../../../lib/adminAuth";
+import { getAdminSecurityHeaders } from "../../../../../lib/securityHeaders";
+import { rateLimitAdmin } from "../../../../../lib/rateLimit";
 
 const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional(),

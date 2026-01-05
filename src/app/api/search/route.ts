@@ -2,9 +2,9 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import { getClusterIndex, getPaaIndex } from "@/lib/indexes";
-import { listVideos } from "@/lib/videos";
-import { rateLimitApi } from "@/lib/rateLimit";
+import { getClusterIndex, getPaaIndex } from "../../../lib/indexes";
+import { listVideos } from "../../../lib/videos";
+import { rateLimitApi } from "../../../lib/rateLimit";
 
 // Skip static export - this is a backend-only API route
 export const dynamic = "force-dynamic";
@@ -173,7 +173,7 @@ export async function GET(request: Request) {
         results.results.topics.push({
           id: topic.slug,
           title: topic.topic,
-          snippet: `${topic.pageCount} pages • ${topic.totalVolume.toLocaleString()} monthly searches`,
+          snippet: `${topic.pageCount} pages in this topic hub`,
           url: `/${topic.slug}`,
           type: "topic",
           relevance,

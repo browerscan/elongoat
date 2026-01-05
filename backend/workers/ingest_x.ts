@@ -1,12 +1,14 @@
 import "dotenv/config";
 
 import { getDb, withTransaction } from "../lib/db";
-import { requireEnv } from "../lib/env";
+import { getEnv, requireEnv } from "../lib/env";
 import {
   extractNextDataFromHtml,
   extractXHandlesFromText,
   parseTweetsFromSyndicationNextData,
 } from "../lib/xSyndication";
+
+const env = getEnv();
 
 type TweetRow = {
   handle: string;
@@ -18,19 +20,10 @@ type TweetRow = {
 };
 
 function parseHandles(): string[] {
-  const raw = (process.env.X_HANDLES ?? "elonmusk")
-    .split(",")
+  const raw = env.X_HANDLES.split(",")
     .map((s) => s.trim().replace(/^@/, ""))
     .filter(Boolean);
   return [...new Set(raw.map((h) => h.toLowerCase()))];
-}
-
-function parseBool(value: string | undefined, defaultValue: boolean): boolean {
-  if (value == null) return defaultValue;
-  const v = value.trim().toLowerCase();
-  if (["1", "true", "yes", "y", "on"].includes(v)) return true;
-  if (["0", "false", "no", "n", "off"].includes(v)) return false;
-  return defaultValue;
 }
 
 /**
@@ -108,7 +101,7 @@ async function fetchText(url: string, timeoutMs: number): Promise<string> {
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          process.env.USER_AGENT ??
+          env.USER_AGENT ??
           "Mozilla/5.0 (compatible; ElonGoatBot/1.0; +https://elongoat.io)",
         Accept: "text/html,application/json;q=0.9,*/*;q=0.8",
       },
@@ -142,11 +135,12 @@ async function fetchSyndicationNextData(handle: string): Promise<unknown> {
 
 async function soaxFetchMarkdown(url: string): Promise<string> {
   const secret = requireEnv("SOAX_API_SECRET");
-  const baseUrl = (
-    process.env.SOAX_BASE_URL ?? "https://scraping.soax.com"
-  ).replace(/\/$/, "");
+  const baseUrl = (env.SOAX_BASE_URL ?? "https://scraping.soax.com").replace(
+    /\/$/,
+    "",
+  );
   // Support both SOAX_COUNTRY (preferred) and SOAX_LOCATION (legacy)
-  const country = process.env.SOAX_COUNTRY ?? process.env.SOAX_LOCATION ?? "us";
+  const country = env.SOAX_LOCATION ?? env.SOAX_COUNTRY ?? "us";
 
   return withRetry(
     async () => {
@@ -260,8 +254,8 @@ async function upsertFollowingPairs(
 }
 
 async function ingestHandle(handle: string) {
-  const limit = Number.parseInt(process.env.X_MAX_TWEETS ?? "60", 10);
-  const includeNonAuthor = parseBool(process.env.X_INCLUDE_NON_AUTHOR, true);
+  const limit = env.X_MAX_TWEETS;
+  const includeNonAuthor = env.X_INCLUDE_NON_AUTHOR;
 
   console.log(
     `[x] handle=@${handle} limit=${limit} include_non_author=${includeNonAuthor}`,
@@ -292,10 +286,10 @@ async function ingestHandle(handle: string) {
   console.log(`[x] tweets parsed=${tweets.length} stored=${rows.length}`);
   await upsertTweets(rows);
 
-  const fetchFollowing = parseBool(process.env.X_FETCH_FOLLOWING, false);
+  const fetchFollowing = env.X_FETCH_FOLLOWING;
   if (!fetchFollowing) return;
 
-  if (!process.env.SOAX_API_SECRET) {
+  if (!env.SOAX_API_SECRET) {
     console.log(
       "[x] X_FETCH_FOLLOWING=true but SOAX_API_SECRET is missing; skipping following.",
     );

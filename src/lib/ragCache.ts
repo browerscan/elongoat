@@ -1,3 +1,11 @@
+import "server-only";
+
+import { getRedis, isRedisEnabled } from "./redis";
+import type { RagSearchResponse } from "./ragSearch";
+import type { HybridSearchResponse } from "./ragHybridSearch";
+import { getEnv } from "./env";
+
+const env = getEnv();
 /**
  * RAG Search Cache Layer
  *
@@ -7,13 +15,6 @@
  * Cache keys are based on query + options hash.
  * TTL is configurable (default: 1 hour).
  */
-
-import "server-only";
-
-import { getRedis, isRedisEnabled } from "@/lib/redis";
-import type { RagSearchResponse } from "@/lib/ragSearch";
-import type { HybridSearchResponse } from "@/lib/ragHybridSearch";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -348,10 +349,8 @@ export async function resetCacheStats(): Promise<void> {
  */
 export function getCacheConfig(): CacheConfig {
   return {
-    ttlSeconds:
-      parseInt(process.env.RAG_CACHE_TTL_SECONDS || "", 10) ||
-      DEFAULT_TTL_SECONDS,
-    enabled: process.env.RAG_CACHE_ENABLED !== "0",
+    ttlSeconds: env.RAG_CACHE_TTL_SECONDS || DEFAULT_TTL_SECONDS,
+    enabled: env.RAG_CACHE_ENABLED,
   };
 }
 

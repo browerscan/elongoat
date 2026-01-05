@@ -11,6 +11,8 @@
     "db:seed:variables": "tsx backend/scripts/seed_variables.ts",
     "db:seed:content": "tsx backend/scripts/seed_content.ts",
     "db:import:all": "npm run db:apply-schema && npm run db:import:clusters && npm run db:import:paa && npm run db:import:metrics",
+    "db:import:tweets": "tsx backend/scripts/import_musk_tweets.ts",
+    "db:apply-tweets": "psql $DATABASE_URL -f backend/supabase/migrations/002_musk_tweets.sql",
     "warm:content": "tsx backend/scripts/warm_content.ts",
     "generate:all-clusters": "tsx backend/scripts/generate_all_clusters.ts",
     "generate:questions": "tsx backend/scripts/generate_questions.ts",

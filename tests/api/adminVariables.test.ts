@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET, POST } from "@/app/api/admin/variables/route";
+import { GET, POST } from "../../src/app/api/admin/variables/route";
 
 // Mock dependencies
-vi.mock("@/lib/adminAuth", () => ({
+vi.mock("../../src/lib/adminAuth", () => ({
   checkAdminAuth: vi.fn(),
   unauthorized: vi.fn(),
 }));
 
-vi.mock("@/lib/adminVariables", () => ({
+vi.mock("../../src/lib/adminVariables", () => ({
   getAdminVariablesSnapshot: vi.fn(),
   updateAdminVariables: vi.fn(),
   AdminVariablesUpdateSchema: {
@@ -16,12 +16,12 @@ vi.mock("@/lib/adminVariables", () => ({
   },
 }));
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
+import { checkAdminAuth, unauthorized } from "../../src/lib/adminAuth";
 import {
   getAdminVariablesSnapshot,
   updateAdminVariables,
   AdminVariablesUpdateSchema,
-} from "@/lib/adminVariables";
+} from "../../src/lib/adminVariables";
 
 describe("API /admin/variables", () => {
   beforeEach(() => {

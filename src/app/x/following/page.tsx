@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 
 import Link from "next/link";
 
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { listXFollowing } from "@/lib/x";
+import { OpenChatButton } from "../../../components/OpenChatButton";
+import { listXFollowing } from "../../../lib/x";
+import { getEnv } from "../../../lib/env";
 
+const env = getEnv();
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 function primaryHandle(): string {
-  const raw = process.env.X_HANDLES?.split(",")[0]?.trim();
+  const raw = env.X_HANDLES?.split(",")[0]?.trim();
   return (raw?.replace(/^@/, "") || "elonmusk").toLowerCase();
 }
 

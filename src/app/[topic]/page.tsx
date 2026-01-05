@@ -3,19 +3,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { FilterList, type FilterListItem } from "@/components/FilterList";
-import { JsonLd } from "@/components/JsonLd";
-import { LastModified } from "@/components/LastModified";
-import { RelatedContent } from "@/components/RelatedContent";
-import { SeeAlso } from "@/components/SeeAlso";
-import { findTopic, getClusterIndex, listTopicPages } from "@/lib/indexes";
-import { generateTopicMetadata } from "@/lib/seo";
+import { FilterList, type FilterListItem } from "../../components/FilterList";
+import { JsonLd } from "../../components/JsonLd";
+import { LastModified } from "../../components/LastModified";
+import { RelatedContent } from "../../components/RelatedContent";
+import { SeeAlso } from "../../components/SeeAlso";
+import { findTopic, getClusterIndex, listTopicPages } from "../../lib/indexes";
+import { getSlugsWithAiContent } from "../../lib/contentCache";
+import { generateTopicMetadata } from "../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateItemListSchema,
   generateProfilePageSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../lib/structuredData";
 
 export const revalidate = 3600;
 
@@ -51,9 +52,10 @@ export default async function TopicHubPage({
   const topic = await findTopic(params.topic);
   if (!topic) return notFound();
 
-  const [pages, cluster] = await Promise.all([
+  const [pages, cluster, aiPageSlugs] = await Promise.all([
     listTopicPages(topic.slug),
     getClusterIndex(),
+    getSlugsWithAiContent("cluster_page"),
   ]);
 
   const clusterUpdated = new Date(cluster.generatedAt);
@@ -62,7 +64,7 @@ export default async function TopicHubPage({
   const jsonLd = [
     generateWebPageSchema({
       title: `${topic.topic} — Topic Hub`,
-      description: `Browse ${topic.pageCount.toLocaleString()} pages in the "${topic.topic}" topic hub. Total search volume: ${topic.totalVolume.toLocaleString()}.`,
+      description: `Browse ${topic.pageCount.toLocaleString()} pages in the "${topic.topic}" topic hub about Elon Musk.`,
       url: `/${topic.slug}`,
       dateModified: clusterUpdated.toISOString(),
       breadcrumbs: [
@@ -90,17 +92,26 @@ export default async function TopicHubPage({
       items: pages.slice(0, 30).map((p) => ({
         name: p.page,
         url: `/${p.topicSlug}/${p.pageSlug}`,
-        description: `${p.keywordCount} keywords, peak volume ${p.maxVolume.toLocaleString()}`,
+        description: `${p.keywordCount} related keywords`,
       })),
       itemListOrder: "Descending",
     }),
   ];
 
-  const items: FilterListItem[] = pages.map((p) => ({
+  // Sort pages: AI content first, then by keyword count
+  const sortedPages = [...pages].sort((a, b) => {
+    const aHasAi = aiPageSlugs.has(a.slug);
+    const bHasAi = aiPageSlugs.has(b.slug);
+    if (aHasAi && !bHasAi) return -1;
+    if (!aHasAi && bHasAi) return 1;
+    return b.keywordCount - a.keywordCount;
+  });
+
+  const items: FilterListItem[] = sortedPages.map((p) => ({
     id: p.slug,
     title: p.page,
     subtitle: p.seedKeyword ? `Seed: ${p.seedKeyword}` : undefined,
-    meta: `Peak vol: ${p.maxVolume.toLocaleString()} • Keywords: ${p.keywordCount.toLocaleString()}`,
+    meta: aiPageSlugs.has(p.slug) ? "AI Article" : undefined,
     href: `/${p.topicSlug}/${p.pageSlug}`,
   }));
 
@@ -116,8 +127,7 @@ export default async function TopicHubPage({
                 {topic.topic}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-white/60">
-                {topic.pageCount.toLocaleString()} pages • Total volume (sum):{" "}
-                {topic.totalVolume.toLocaleString()}
+                {topic.pageCount.toLocaleString()} pages in this topic hub
               </p>
               <LastModified date={clusterUpdated} className="mt-2" />
             </div>

@@ -1,12 +1,13 @@
+import { getEnv } from "./env";
+import type { JsonValue } from "./elongoat.types";
+
+const env = getEnv();
 /**
  * Production-Grade Error Handling System
  *
  * Provides standardized error classes, error codes, and consistent
  * error response formatting for API routes.
  */
-
-import type { JsonValue } from "@/lib/elongoat.types";
-
 /* -------------------------------------------------------------------------------------------------
  * Error Codes Enum
  * ------------------------------------------------------------------------------------------------- */
@@ -198,7 +199,7 @@ export class AppError extends Error {
       statusCode: this.statusCode,
       timestamp: this.timestamp,
       // Only include cause in development
-      ...(process.env.NODE_ENV === "development" && this.cause
+      ...(env.NODE_ENV === "development" && this.cause
         ? { cause: this.cause.message }
         : {}),
     };
@@ -617,7 +618,7 @@ export function handleApiError(error: unknown, req?: Request): Response {
 
   // Handle generic errors
   const statusCode = 500;
-  const isDevelopment = process.env.NODE_ENV === "development";
+  const isDevelopment = env.NODE_ENV === "development";
   const message =
     isDevelopment && error instanceof Error
       ? error.message
@@ -653,7 +654,7 @@ export function handleApiError(error: unknown, req?: Request): Response {
  * Logs errors with context.
  */
 function logError(error: unknown, requestId?: string): void {
-  const isDevelopment = process.env.NODE_ENV === "development";
+  const isDevelopment = env.NODE_ENV === "development";
 
   if (error instanceof AppError) {
     // Log operational errors with info level

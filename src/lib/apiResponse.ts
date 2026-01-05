@@ -1,13 +1,14 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { getEnv } from "./env";
+import type { JsonValue } from "./elongoat.types";
+
+const env = getEnv();
 /**
  * API Response Standardization
  *
  * Provides standard success/error response wrappers, consistent headers,
  * CORS helpers, and response building utilities.
  */
-
-import { NextResponse, type NextRequest } from "next/server";
-import type { JsonValue } from "@/lib/elongoat.types";
-
 /* -------------------------------------------------------------------------------------------------
  * Standard Response Types
  * ------------------------------------------------------------------------------------------------- */
@@ -834,7 +835,7 @@ export function withStandardMiddleware<T extends NextRequest>(
  */
 export function filterResponseData<T extends Record<string, unknown>>(
   data: T,
-  isProduction: boolean = process.env.NODE_ENV === "production",
+  isProduction: boolean = env.NODE_ENV === "production",
 ): Partial<T> {
   if (!isProduction) {
     return data; // Return everything in development

@@ -68,15 +68,17 @@ services:
     expose:
       - "3000"
     networks:
+      - internal
       - proxy-tier
-      - supabase-tier
+      - supabase_default
       - redis-tier
 
 networks:
+  internal:
   proxy-tier:
     external: true
     name: nginx-proxy_default
-  supabase-tier:
+  supabase_default:
     external: true
     name: supabase_default
   redis-tier:

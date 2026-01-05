@@ -1,13 +1,15 @@
 import { z } from "zod";
+import { getEnv } from "./env";
 
+const env = getEnv();
 // Lazy imports for backend-only dependencies
-let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
-let getRedis: typeof import("@/lib/redis").getRedis | undefined;
+let getDbPool: typeof import("./db").getDbPool | undefined;
+let getRedis: typeof import("./redis").getRedis | undefined;
 
 async function getBackendModules() {
   try {
-    const dbModule = await import("@/lib/db");
-    const redisModule = await import("@/lib/redis");
+    const dbModule = await import("./db");
+    const redisModule = await import("./redis");
     getDbPool = dbModule.getDbPool;
     getRedis = redisModule.getRedis;
   } catch {
@@ -54,14 +56,9 @@ export async function getDynamicVariables(): Promise<DynamicVariables> {
     }
   }
 
-  const envDob = IsoDateSchema.parse(process.env.ELON_DOB ?? "1971-06-28");
-  const envChildren = Number.parseInt(
-    process.env.ELON_CHILDREN_COUNT ?? "14",
-    10,
-  );
-  const envNetWorth =
-    process.env.ELON_NET_WORTH ??
-    "Varies with markets (estimate; may be outdated).";
+  const envDob = IsoDateSchema.parse(env.ELON_DOB);
+  const envChildren = env.ELON_CHILDREN_COUNT;
+  const envNetWorth = env.ELON_NET_WORTH;
 
   let dob = envDob;
   let children_count = Number.isFinite(envChildren)

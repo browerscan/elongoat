@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
+import { getPublicEnv } from "../lib/env";
 
+const env = getPublicEnv();
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
+  const siteUrl = env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
   const baseUrl = siteUrl.replace(/\/$/, "");
 
   return {

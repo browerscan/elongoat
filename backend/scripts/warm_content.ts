@@ -2,14 +2,11 @@ import "dotenv/config";
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getEnv } from "../lib/env";
 
 type TopList = { slugs: string[] };
 
-function env(name: string, fallback?: string): string {
-  const v = process.env[name] ?? fallback;
-  if (!v) throw new Error(`Missing env: ${name}`);
-  return v;
-}
+const env = getEnv();
 
 async function loadTopList(fileName: string): Promise<string[]> {
   const filePath = path.join(process.cwd(), "data", "generated", fileName);
@@ -23,8 +20,13 @@ async function post(
   slugs: string[],
   ttlSeconds?: number,
 ) {
-  const siteUrl = env("SITE_URL", "http://localhost:3000").replace(/\/$/, "");
-  const token = env("ELONGOAT_ADMIN_TOKEN");
+  const siteUrl = (
+    env.NEXT_PUBLIC_API_URL ||
+    env.API_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
+  const token = env.ELONGOAT_ADMIN_TOKEN;
+  if (!token) throw new Error("Missing env: ELONGOAT_ADMIN_TOKEN");
 
   const res = await fetch(`${siteUrl}/api/admin/generate-content`, {
     method: "POST",
@@ -41,11 +43,8 @@ async function post(
 }
 
 async function main() {
-  const clusterCount = Number.parseInt(
-    process.env.WARM_CLUSTER_COUNT ?? "20",
-    10,
-  );
-  const paaCount = Number.parseInt(process.env.WARM_PAA_COUNT ?? "20", 10);
+  const clusterCount = env.WARM_CLUSTER_COUNT;
+  const paaCount = env.WARM_PAA_COUNT;
 
   const topPages = (await loadTopList("top-pages.json")).slice(
     0,

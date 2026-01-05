@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 
 import Link from "next/link";
 
-import { CopyPromptButton } from "@/components/CopyPromptButton";
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { listXTweets } from "@/lib/x";
+import { CopyPromptButton } from "../../components/CopyPromptButton";
+import { OpenChatButton } from "../../components/OpenChatButton";
+import { listXTweets } from "../../lib/x";
+import { getEnv } from "../../lib/env";
 
+const env = getEnv();
 export const revalidate = 300;
 
 export const metadata: Metadata = {
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 function primaryHandle(): string {
-  const raw = process.env.X_HANDLES?.split(",")[0]?.trim();
+  const raw = env.X_HANDLES?.split(",")[0]?.trim();
   return (raw?.replace(/^@/, "") || "elonmusk").toLowerCase();
 }
 
@@ -144,6 +146,24 @@ export default async function XIndexPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/x/archive"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+            >
+              Archive (2010-2025)
+            </Link>
+            <Link
+              href="/x/popular"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+            >
+              Popular
+            </Link>
+            <Link
+              href="/x/search"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+            >
+              Search
+            </Link>
             <Link
               href="/x/following"
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { slugify } from "@/lib/slugify";
+import { slugify } from "../../lib/slugify";
 
 type AdminTab = "flywheel" | "config";
 

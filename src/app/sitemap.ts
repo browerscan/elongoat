@@ -1,16 +1,19 @@
 import type { MetadataRoute } from "next";
 
-import { getClusterIndex, getPaaIndex } from "@/lib/indexes";
+import { getClusterIndex, getPaaIndex } from "../lib/indexes";
+import { getPublicEnv } from "../lib/env";
 
+const env = getPublicEnv();
 export const revalidate = 3600;
 
 // Fact pages that always exist
 const FACT_SLUGS = ["age", "children", "dob", "net-worth"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io"
-  ).replace(/\/$/, "");
+  const siteUrl = (env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
+    /\/$/,
+    "",
+  );
   const [cluster, paa] = await Promise.all([getClusterIndex(), getPaaIndex()]);
 
   const clusterUpdated = new Date(cluster.generatedAt);

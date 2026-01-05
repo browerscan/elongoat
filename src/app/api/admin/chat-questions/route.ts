@@ -2,8 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
-import { listTopChatQuestions } from "@/lib/chatAnalytics";
+import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
+import { listTopChatQuestions } from "../../../../lib/chatAnalytics";
 
 const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional(),

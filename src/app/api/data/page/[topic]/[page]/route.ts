@@ -7,9 +7,9 @@ import {
   findTopic,
   listTopicPages,
   getClusterIndex,
-} from "@/lib/indexes";
-import { getClusterPageContent } from "@/lib/contentGen";
-import { getDynamicVariables } from "@/lib/variables";
+} from "../../../../../../lib/indexes";
+import { getClusterPageContent } from "../../../../../../lib/contentGen";
+import { getDynamicVariables } from "../../../../../../lib/variables";
 
 export const revalidate = 3600;
 

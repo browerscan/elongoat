@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getEnv } from "../../../lib/env";
 
+const env = getEnv();
 /**
  * API endpoint for client-side error logging.
  *
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
     const errorData = await request.json();
 
     // Log to console for development
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[ErrorBoundary]", errorData);
     }
 

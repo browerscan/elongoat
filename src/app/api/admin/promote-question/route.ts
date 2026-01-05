@@ -2,14 +2,18 @@ import "server-only";
 
 import { z } from "zod";
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
+import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
 import {
   getChatQuestionByHash,
   markQuestionPromoted,
-} from "@/lib/chatAnalytics";
-import { generateCustomQa, getCustomQa, upsertCustomQa } from "@/lib/customQa";
-import { findPaaQuestion } from "@/lib/indexes";
-import { slugify } from "@/lib/slugify";
+} from "../../../../lib/chatAnalytics";
+import {
+  generateCustomQa,
+  getCustomQa,
+  upsertCustomQa,
+} from "../../../../lib/customQa";
+import { findPaaQuestion } from "../../../../lib/indexes";
+import { slugify } from "../../../../lib/slugify";
 
 const BodySchema = z
   .object({

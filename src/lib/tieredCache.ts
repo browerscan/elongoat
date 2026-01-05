@@ -1,31 +1,18 @@
 // Server-only module (import removed for backend compatibility)
+import { getConnectedRedisFromPool } from "./redis";
+import { getEnv } from "./env";
 
-import { getConnectedRedisFromPool } from "@/lib/redis";
+const env = getEnv();
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const L1_MAX_TTL_MS = Number.parseInt(
-  process.env.TIERED_CACHE_L1_TTL_MS ?? "300000",
-  10,
-); // 5 minutes default
-const L2_MAX_TTL_MS = Number.parseInt(
-  process.env.TIERED_CACHE_L2_TTL_MS ?? "3600000",
-  10,
-); // 1 hour default
-const L1_MAX_ENTRIES = Number.parseInt(
-  process.env.TIERED_CACHE_L1_MAX_ENTRIES ?? "1000",
-  10,
-);
-const L1_CLEANUP_INTERVAL_MS = Number.parseInt(
-  process.env.TIERED_CACHE_L1_CLEANUP_MS ?? "60000",
-  10,
-);
-const STAMP_PROTECTION_TIMEOUT_MS = Number.parseInt(
-  process.env.TIERED_CACHE_STAMP_TIMEOUT_MS ?? "5000",
-  10,
-);
+const L1_MAX_TTL_MS = env.TIERED_CACHE_L1_TTL_MS; // 5 minutes default
+const L2_MAX_TTL_MS = env.TIERED_CACHE_L2_TTL_MS; // 1 hour default
+const L1_MAX_ENTRIES = env.TIERED_CACHE_L1_MAX_ENTRIES;
+const L1_CLEANUP_INTERVAL_MS = env.TIERED_CACHE_L1_CLEANUP_MS;
+const STAMP_PROTECTION_TIMEOUT_MS = env.TIERED_CACHE_STAMP_TIMEOUT_MS;
 
 // ============================================================================
 // Types
@@ -105,7 +92,7 @@ function cleanupL1Cache(): void {
     }
   }
 
-  if (cleaned > 0 && process.env.NODE_ENV === "development") {
+  if (cleaned > 0 && env.NODE_ENV === "development") {
     console.log(
       "[TieredCache] L1 cleanup: removed " + cleaned + " expired entries",
     );
@@ -192,7 +179,7 @@ async function getL2<T>(key: string): Promise<T | null> {
 
     return parsed.data;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[TieredCache] L2 get error:", error);
     }
     return null;
@@ -216,7 +203,7 @@ async function setL2<T>(key: string, data: T, ttlMs: number): Promise<boolean> {
     await redis.set(key, JSON.stringify(payload), "EX", expirySeconds);
     return true;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[TieredCache] L2 set error:", error);
     }
     return false;
@@ -234,7 +221,7 @@ async function deleteL2(key: string): Promise<void> {
 
     await redis.del(key);
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[TieredCache] L2 delete error:", error);
     }
   }
@@ -442,7 +429,7 @@ export async function clear(): Promise<void> {
   clearL1();
   // Note: Clearing all Redis keys would require a SCAN operation
   // which is potentially expensive. For safety, we only clear L1.
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     console.warn(
       "[TieredCache] L2 clear not implemented (use key patterns or flushdb manually)",
     );
@@ -467,7 +454,7 @@ export async function invalidatePattern(pattern: string): Promise<number> {
 
   // For L2, we would need to use Redis SCAN with MATCH
   // This is expensive, so we skip it by default
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     console.log(
       "[TieredCache] Invalidated " + count + " L1 entries matching " + pattern,
     );

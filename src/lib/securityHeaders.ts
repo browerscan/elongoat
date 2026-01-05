@@ -1,3 +1,6 @@
+import { getEnv } from "./env";
+
+const env = getEnv();
 // ============================================================================
 // Types
 // ============================================================================
@@ -29,7 +32,7 @@ export interface SecurityHeadersResult {
  * Get the site origin for CSP
  */
 function getSiteOrigin(): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
+  const siteUrl = env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io";
   try {
     return new URL(siteUrl).origin;
   } catch {
@@ -41,7 +44,7 @@ function getSiteOrigin(): string {
  * Get API URL for CSP connect-src
  */
 function getApiOrigin(): string {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) return "";
 
   try {
@@ -73,7 +76,7 @@ export function getNonce(): string {
 export function getContentSecurityPolicy(nonce?: string): string {
   const siteOrigin = getSiteOrigin();
   const apiOrigin = getApiOrigin();
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = env.NODE_ENV === "development";
 
   const directives: string[] = [];
 
@@ -187,9 +190,9 @@ export function getContentSecurityPolicyReportOnly(): string {
  */
 export function getStrictTransportSecurity(): string {
   const maxAge = 60 * 60 * 24 * 365; // 1 year (31536000 seconds) - meets preload requirement
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = env.NODE_ENV === "production";
   // Default to preload in production, allow opt-out with HSTS_PRELOAD=0
-  const preload = isProduction && process.env.HSTS_PRELOAD !== "0";
+  const preload = isProduction && env.HSTS_PRELOAD;
   const includeSubDomains = isProduction;
 
   const parts = [`max-age=${maxAge}`];
@@ -334,7 +337,7 @@ export function getSecurityHeaders(
   // Strict Transport Security (HTTPS only)
   if (
     config.strictTransportSecurity !== false &&
-    process.env.NODE_ENV === "production"
+    env.NODE_ENV === "production"
   ) {
     headers["Strict-Transport-Security"] = getStrictTransportSecurity();
   }
@@ -395,7 +398,7 @@ export function getApiSecurityHeaders(): Record<string, string> {
     "X-Frame-Options": "DENY",
     "X-XSS-Protection": getXXssProtection(),
     "Strict-Transport-Security":
-      process.env.NODE_ENV === "production" ? getStrictTransportSecurity() : "",
+      env.NODE_ENV === "production" ? getStrictTransportSecurity() : "",
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": getPermissionsPolicy(),
   };
@@ -480,7 +483,7 @@ export function handleCspViolation(report: unknown): void {
   console.error("[CSP Violation]", JSON.stringify(report, null, 2));
 
   // In production, send to monitoring service
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     // TODO: Send to Sentry, DataDog, or other monitoring
   }
 }
@@ -500,24 +503,18 @@ export function validateSecurityConfig(): {
   const warnings: string[] = [];
   const errors: string[] = [];
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) {
     errors.push("NEXT_PUBLIC_SITE_URL is not set");
-  } else if (
-    !siteUrl.startsWith("https://") &&
-    process.env.NODE_ENV === "production"
-  ) {
+  } else if (!siteUrl.startsWith("https://") && env.NODE_ENV === "production") {
     errors.push("NEXT_PUBLIC_SITE_URL should use HTTPS in production");
   }
 
-  if (process.env.NODE_ENV === "production") {
-    if (!process.env.ELONGOAT_ADMIN_SESSION_SECRET) {
+  if (env.NODE_ENV === "production") {
+    if (!env.ELONGOAT_ADMIN_SESSION_SECRET) {
       errors.push("ELONGOAT_ADMIN_SESSION_SECRET must be set in production");
     }
-    if (
-      !process.env.ELONGOAT_ADMIN_TOKEN ||
-      process.env.ELONGOAT_ADMIN_TOKEN.length < 32
-    ) {
+    if (!env.ELONGOAT_ADMIN_TOKEN || env.ELONGOAT_ADMIN_TOKEN.length < 32) {
       errors.push(
         "ELONGOAT_ADMIN_TOKEN must be at least 32 characters in production",
       );

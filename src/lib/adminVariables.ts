@@ -2,10 +2,10 @@ import "server-only";
 
 import { z } from "zod";
 
-import { getDbPool } from "@/lib/db";
-import { getRedis } from "@/lib/redis";
-import { getChatConfig } from "@/lib/chatConfig";
-import { getDynamicVariables } from "@/lib/variables";
+import { getDbPool } from "./db";
+import { getRedis } from "./redis";
+import { getChatConfig } from "./chatConfig";
+import { getDynamicVariables } from "./variables";
 
 const IsoDateSchema = z
   .string()

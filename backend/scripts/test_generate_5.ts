@@ -3,6 +3,7 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 
 import { getDb } from "../lib/db";
+import { getEnv } from "../lib/env";
 import { vectorEngineChatComplete } from "../../src/lib/vectorengine";
 import { buildRagContext, formatRagContexts } from "../../src/lib/rag";
 
@@ -22,8 +23,8 @@ type ClusterPage = {
 };
 
 const MIN_WORDS = 1200;
-const CONTENT_MODEL =
-  process.env.VECTORENGINE_CONTENT_MODEL || "claude-sonnet-4-5-20250929";
+const env = getEnv();
+const CONTENT_MODEL = env.VECTORENGINE_CONTENT_MODEL;
 const MAX_TOKENS = 3000;
 const TEST_LIMIT = 5; // Only generate 5 pages for testing
 
@@ -207,7 +208,7 @@ async function main() {
   console.log("=".repeat(70));
 
   // Check VectorEngine API key
-  if (!process.env.VECTORENGINE_API_KEY) {
+  if (!env.VECTORENGINE_API_KEY) {
     throw new Error("VECTORENGINE_API_KEY not set in environment");
   }
 

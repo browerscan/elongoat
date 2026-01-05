@@ -1,8 +1,11 @@
+import { getEnv } from "./env";
+
+const env = getEnv();
 /**
  * Structured logging utility for consistent error handling
  *
  * Usage:
- *   import { logger } from "@/lib/logger";
+ *   import { logger } from "./logger";
  *   logger.error("ContentCache", "Database fetch failed", { kind, slug }, error);
  *   logger.warn("TieredCache", "L2 cache miss", { key });
  *   logger.info("RAG", "Query completed", { resultCount: 5 });
@@ -37,7 +40,7 @@ function formatError(err: unknown): LogEntry["error"] | undefined {
     return {
       name: err.name,
       message: err.message,
-      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+      stack: env.NODE_ENV === "development" ? err.stack : undefined,
     };
   }
 
@@ -72,7 +75,7 @@ function createLogEntry(
  */
 function output(entry: LogEntry): void {
   const prefix = `[${entry.module}]`;
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = env.NODE_ENV === "development";
 
   // In development, use human-readable format
   if (isDev) {
@@ -124,7 +127,7 @@ export const logger = {
    * Debug level - only shown in development
    */
   debug(module: string, message: string, context?: LogContext): void {
-    if (process.env.NODE_ENV !== "development") return;
+    if (env.NODE_ENV !== "development") return;
     output(createLogEntry("debug", module, message, context));
   },
 

@@ -7,6 +7,9 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { existsSync } from "node:fs";
+import { getEnv } from "../lib/env";
+
+const env = getEnv();
 
 // Types from indexes.ts
 type ClusterKeyword = {
@@ -54,9 +57,8 @@ async function vectorEngineChatComplete(params: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<{ success: boolean; text: string; error?: string }> {
-  const apiKey = process.env.VECTORENGINE_API_KEY;
-  const baseUrl =
-    process.env.VECTORENGINE_BASE_URL || "https://api.vectorengine.ai";
+  const apiKey = env.VECTORENGINE_API_KEY;
+  const baseUrl = env.VECTORENGINE_BASE_URL;
 
   if (!apiKey) {
     return { success: false, text: "", error: "VECTORENGINE_API_KEY not set" };
@@ -289,13 +291,13 @@ function countWords(text: string): number {
 
 // Configuration
 const CONFIG = {
-  model: process.env.VECTORENGINE_CONTENT_MODEL || "claude-sonnet-4-5-20250929",
+  model: env.VECTORENGINE_CONTENT_MODEL,
   maxTokens: 3000,
   temperature: 0.35,
   minWords: 1200,
-  testLimit: parseInt(process.env.TEST_LIMIT || "5", 10),
-  batchMode: process.env.BATCH_MODE === "true",
-  delayMs: parseInt(process.env.DELAY_MS || "2000", 10),
+  testLimit: env.TEST_LIMIT,
+  batchMode: env.BATCH_MODE,
+  delayMs: env.DELAY_MS ?? 2000,
 };
 
 async function main() {
@@ -305,7 +307,7 @@ async function main() {
   console.log();
 
   // Check API key
-  if (!process.env.VECTORENGINE_API_KEY) {
+  if (!env.VECTORENGINE_API_KEY) {
     console.error("ERROR: VECTORENGINE_API_KEY not set");
     console.error("Set it in .env or environment");
     process.exit(1);

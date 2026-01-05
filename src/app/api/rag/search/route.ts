@@ -27,28 +27,31 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { validateRagAuth, RAG_RATE_LIMIT_CONFIG } from "@/lib/ragAuth";
+import {
+  validateRagAuth,
+  RAG_RATE_LIMIT_CONFIG,
+} from "../../../../lib/ragAuth";
 import {
   ragSearch,
   type RagSource,
   type RagSearchResponse,
-} from "@/lib/ragSearch";
+} from "../../../../lib/ragSearch";
 import {
   rateLimit,
   getClientIdentifier,
   buildRateLimitHeaders,
-} from "@/lib/rateLimit";
+} from "../../../../lib/rateLimit";
 import {
   createStandardHeaders,
   CACHE_CONTROL,
   generateRequestId,
-} from "@/lib/apiResponse";
+} from "../../../../lib/apiResponse";
 import {
   generateCacheKey,
   getCachedSearchResult,
   cacheSearchResult,
   getCacheConfig,
-} from "@/lib/ragCache";
+} from "../../../../lib/ragCache";
 
 // Skip static export
 export const dynamic = "force-dynamic";

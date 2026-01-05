@@ -3,6 +3,7 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 
 import { getDb } from "../lib/db";
+import { getEnv } from "../lib/env";
 import { vectorEngineChatComplete } from "../../src/lib/vectorengine";
 import { buildRagContext, formatRagContexts } from "../../src/lib/rag";
 
@@ -24,8 +25,8 @@ type ClusterPage = {
 const MIN_WORDS = 1200;
 const BATCH_SIZE = 3; // Conservative: 3 parallel requests
 const BATCH_DELAY_MS = 3000; // 3 seconds between batches
-const CONTENT_MODEL =
-  process.env.VECTORENGINE_CONTENT_MODEL || "claude-sonnet-4-5-20250929";
+const env = getEnv();
+const CONTENT_MODEL = env.VECTORENGINE_CONTENT_MODEL;
 const MAX_TOKENS = 3000; // Ensure enough tokens for 1200+ words
 
 const PROGRESS_FILE = path.join(
@@ -358,7 +359,7 @@ async function main() {
   );
 
   // Check VectorEngine API key
-  if (!process.env.VECTORENGINE_API_KEY) {
+  if (!env.VECTORENGINE_API_KEY) {
     throw new Error("VECTORENGINE_API_KEY not set in environment");
   }
 

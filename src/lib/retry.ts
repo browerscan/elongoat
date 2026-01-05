@@ -1,3 +1,6 @@
+import { getEnv } from "./env";
+
+const env = getEnv();
 // Server-only module (import removed for backend compatibility)
 
 // ============================================================================
@@ -106,7 +109,7 @@ export async function withRetry<T>(
       }
 
       // Log retry attempt in development
-      if (process.env.NODE_ENV === "development") {
+      if (env.NODE_ENV === "development") {
         console.log(
           `[Retry] Attempt ${attempt}/${maxAttempts} failed, retrying in ${currentDelay}ms:`,
           error instanceof Error ? error.message : String(error),

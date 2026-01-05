@@ -1,3 +1,14 @@
+import "server-only";
+
+import { getEnv } from "../../../lib/env";
+import { NextRequest } from "next/server";
+import { getPoolMetrics } from "../../../lib/db";
+import { getRedisStats } from "../../../lib/redis";
+import { getMetrics as getCacheMetrics } from "../../../lib/tieredCache";
+import { generatePerformanceReport } from "../../../lib/performance";
+import { createStandardHeaders, CACHE_CONTROL } from "../../../lib/apiResponse";
+
+const env = getEnv();
 /**
  * Prometheus-compatible Metrics Endpoint
  *
@@ -12,16 +23,6 @@
  *
  * Authentication: Optional via METRICS_TOKEN env var
  */
-
-import "server-only";
-
-import { NextRequest } from "next/server";
-import { getPoolMetrics } from "@/lib/db";
-import { getRedisStats } from "@/lib/redis";
-import { getMetrics as getCacheMetrics } from "@/lib/tieredCache";
-import { generatePerformanceReport } from "@/lib/performance";
-import { createStandardHeaders, CACHE_CONTROL } from "@/lib/apiResponse";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -355,7 +356,7 @@ function formatPrometheusMetrics(metrics: PrometheusMetric[]): string {
 
 export async function GET(request: NextRequest) {
   // Optional authentication via token
-  const metricsToken = process.env.METRICS_TOKEN;
+  const metricsToken = env.METRICS_TOKEN;
   if (metricsToken) {
     const authHeader = request.headers.get("authorization");
     const providedToken = authHeader?.replace("Bearer ", "");

@@ -9,7 +9,7 @@ import {
   escapeLikePattern,
   isValidIdentifier,
   isValidSchemaTable,
-} from "@/lib/sqlSecurity";
+} from "../../src/lib/sqlSecurity";
 
 // ============================================================================
 // SQL Injection Prevention Tests
@@ -137,7 +137,8 @@ describe("Content Security Policy", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://elongoat.io";
 
     // Dynamic import to get fresh module with new env
-    const { getContentSecurityPolicy } = await import("@/lib/securityHeaders");
+    const { getContentSecurityPolicy } =
+      await import("../../src/lib/securityHeaders");
 
     const nonce = "test-nonce-12345";
     const csp = getContentSecurityPolicy(nonce);
@@ -152,7 +153,8 @@ describe("Content Security Policy", () => {
     process.env.NODE_ENV = "production";
     process.env.NEXT_PUBLIC_SITE_URL = "https://elongoat.io";
 
-    const { getContentSecurityPolicy } = await import("@/lib/securityHeaders");
+    const { getContentSecurityPolicy } =
+      await import("../../src/lib/securityHeaders");
 
     const csp = getContentSecurityPolicy();
 
@@ -165,7 +167,8 @@ describe("Content Security Policy", () => {
     process.env.NODE_ENV = "development";
     process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
 
-    const { getContentSecurityPolicy } = await import("@/lib/securityHeaders");
+    const { getContentSecurityPolicy } =
+      await import("../../src/lib/securityHeaders");
 
     const csp = getContentSecurityPolicy();
 
@@ -178,7 +181,8 @@ describe("Content Security Policy", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://elongoat.io";
     process.env.NEXT_PUBLIC_API_URL = "https://api.elongoat.io";
 
-    const { getContentSecurityPolicy } = await import("@/lib/securityHeaders");
+    const { getContentSecurityPolicy } =
+      await import("../../src/lib/securityHeaders");
 
     const csp = getContentSecurityPolicy();
 
@@ -186,7 +190,7 @@ describe("Content Security Policy", () => {
   });
 
   it("should generate valid nonce", async () => {
-    const { getNonce } = await import("@/lib/securityHeaders");
+    const { getNonce } = await import("../../src/lib/securityHeaders");
 
     const nonce = getNonce();
 
@@ -216,7 +220,7 @@ describe("Circuit Breaker TTL Cleanup", () => {
       getCircuitBreaker,
       getAllCircuitBreakerStats,
       resetAllCircuitBreakers,
-    } = await import("@/lib/circuitBreaker");
+    } = await import("../../src/lib/circuitBreaker");
 
     // Clean up any existing breakers
     resetAllCircuitBreakers();
@@ -232,7 +236,7 @@ describe("Circuit Breaker TTL Cleanup", () => {
       getCircuitBreaker,
       getCircuitBreakerCount,
       resetAllCircuitBreakers,
-    } = await import("@/lib/circuitBreaker");
+    } = await import("../../src/lib/circuitBreaker");
 
     resetAllCircuitBreakers();
 
@@ -249,7 +253,7 @@ describe("Circuit Breaker TTL Cleanup", () => {
       getCircuitBreaker,
       getCircuitBreakerCount,
       resetAllCircuitBreakers,
-    } = await import("@/lib/circuitBreaker");
+    } = await import("../../src/lib/circuitBreaker");
 
     resetAllCircuitBreakers();
 
@@ -263,7 +267,8 @@ describe("Circuit Breaker TTL Cleanup", () => {
   });
 
   it("should have stop cleanup interval function", async () => {
-    const { stopCleanupInterval } = await import("@/lib/circuitBreaker");
+    const { stopCleanupInterval } =
+      await import("../../src/lib/circuitBreaker");
 
     // Should not throw
     expect(() => stopCleanupInterval()).not.toThrow();
@@ -293,7 +298,8 @@ describe("Security Environment Validation", () => {
     process.env.ELONGOAT_ADMIN_TOKEN =
       "this-is-a-very-long-token-that-is-more-than-32-chars";
 
-    const { validateSecurityConfig } = await import("@/lib/securityHeaders");
+    const { validateSecurityConfig } =
+      await import("../../src/lib/securityHeaders");
 
     const result = validateSecurityConfig();
 
@@ -309,7 +315,8 @@ describe("Security Environment Validation", () => {
     process.env.ELONGOAT_ADMIN_SESSION_SECRET = "secret";
     process.env.ELONGOAT_ADMIN_TOKEN = "short";
 
-    const { validateSecurityConfig } = await import("@/lib/securityHeaders");
+    const { validateSecurityConfig } =
+      await import("../../src/lib/securityHeaders");
 
     const result = validateSecurityConfig();
 
@@ -326,7 +333,8 @@ describe("Security Environment Validation", () => {
     process.env.ELONGOAT_ADMIN_TOKEN =
       "this-is-a-very-long-token-that-is-more-than-32-characters-for-sure";
 
-    const { validateSecurityConfig } = await import("@/lib/securityHeaders");
+    const { validateSecurityConfig } =
+      await import("../../src/lib/securityHeaders");
 
     const result = validateSecurityConfig();
 

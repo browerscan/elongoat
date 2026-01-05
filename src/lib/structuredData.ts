@@ -1,4 +1,4 @@
-import { getSiteConfig } from "@/lib/seo";
+import { getSiteConfig } from "./seo";
 
 const SITE_URL = getSiteConfig().url;
 

@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import { getDbPool } from "@/lib/db";
-import { listXFollowing, listXTweets } from "@/lib/x";
+import { getDbPool } from "../src/lib/db";
+import { listXFollowing, listXTweets } from "../src/lib/x";
 
 const RUN_DB_TESTS = process.env.RUN_DB_TESTS === "1";
 

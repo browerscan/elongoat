@@ -1,7 +1,6 @@
-FROM node:22-alpine AS builder
+FROM node:20-slim AS builder
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
-RUN apk add --no-cache python3
 
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -9,30 +8,28 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine AS runner
+FROM node:20-slim AS production
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Install wget for health check
-RUN apk add --no-cache wget
-
+COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/.next/standalone ./
 
-EXPOSE 3000
+# CRITICAL: Reinstall sharp for production
+RUN npm prune --production && npm install --os=linux --cpu=x64 sharp
 
 # Copy entrypoint script for cache warmup
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Health check using the lightweight /api/healthz endpoint
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=10s CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Use entrypoint script for startup with cache warmup
+EXPOSE 3000
 ENTRYPOINT ["/app/entrypoint.sh"]

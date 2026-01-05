@@ -2,37 +2,47 @@ import Link from "next/link";
 
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 
-import { FilterList, type FilterListItem } from "@/components/FilterList";
-import { JsonLd } from "@/components/JsonLd";
-import { OpenChatButton } from "@/components/OpenChatButton";
+import { FilterList, type FilterListItem } from "../components/FilterList";
+import { JsonLd } from "../components/JsonLd";
+import { OpenChatButton } from "../components/OpenChatButton";
 import {
   getClusterIndex,
   getPaaIndex,
   getTopPageSlugs,
   getTopQuestionSlugs,
-} from "@/lib/indexes";
-import { getDynamicVariables } from "@/lib/variables";
-import { generateHomeMetadata } from "@/lib/seo";
+} from "../lib/indexes";
+import { getDynamicVariables } from "../lib/variables";
+import { getSlugsWithAiContent } from "../lib/contentCache";
+import { generateHomeMetadata } from "../lib/seo";
 import {
   generateOrganizationSchema,
   generatePersonSchema,
   generateWebPageSchema,
   generateWebSiteSchema,
-} from "@/lib/structuredData";
+} from "../lib/structuredData";
 
 export const revalidate = 3600;
 
 export const metadata = generateHomeMetadata();
 
 export default async function Home() {
-  const [cluster, paa, vars, topPageSlugs, topQuestionSlugs] =
-    await Promise.all([
-      getClusterIndex(),
-      getPaaIndex(),
-      getDynamicVariables(),
-      getTopPageSlugs(),
-      getTopQuestionSlugs(),
-    ]);
+  const [
+    cluster,
+    paa,
+    vars,
+    topPageSlugs,
+    topQuestionSlugs,
+    aiPageSlugs,
+    aiQaSlugs,
+  ] = await Promise.all([
+    getClusterIndex(),
+    getPaaIndex(),
+    getDynamicVariables(),
+    getTopPageSlugs(),
+    getTopQuestionSlugs(),
+    getSlugsWithAiContent("cluster_page"),
+    getSlugsWithAiContent("paa_question"),
+  ]);
 
   // JSON-LD structured data
   const jsonLd = [
@@ -52,32 +62,48 @@ export default async function Home() {
   const topPages = new Map(cluster.pages.map((p) => [p.slug, p]));
   const topQuestions = new Map(paa.questions.map((q) => [q.slug, q]));
 
-  const trendingPages: FilterListItem[] = topPageSlugs
-    .map((slug) => topPages.get(slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .slice(0, 12)
-    .map((p) => ({
-      id: p.slug,
-      title: p.page,
-      subtitle: p.topic,
-      meta: `Volume peak: ${p.maxVolume.toLocaleString()} • Keywords: ${p.keywordCount.toLocaleString()}`,
-      href: `/${p.topicSlug}/${p.pageSlug}`,
-    }));
+  // Prioritize pages with AI-generated content
+  const pagesWithAi = topPageSlugs.filter((slug) => aiPageSlugs.has(slug));
+  const pagesWithoutAi = topPageSlugs.filter((slug) => !aiPageSlugs.has(slug));
+  const sortedPageSlugs = [...pagesWithAi, ...pagesWithoutAi];
 
-  const trendingQuestions: FilterListItem[] = topQuestionSlugs
-    .map((slug) => topQuestions.get(slug))
-    .filter((q): q is NonNullable<typeof q> => Boolean(q))
-    .slice(0, 12)
-    .map((q) => ({
-      id: q.slug,
-      title: q.question,
-      subtitle:
-        q.answer ?? "Open this question and ask the AI for a deeper answer.",
-      meta: q.volume
-        ? `Search volume: ${q.volume.toLocaleString()}`
-        : undefined,
-      href: `/q/${q.slug}`,
-    }));
+  const trendingPages: (FilterListItem & { hasAi?: boolean })[] =
+    sortedPageSlugs
+      .map((slug) => topPages.get(slug))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .slice(0, 12)
+      .map((p) => ({
+        id: p.slug,
+        title: p.page,
+        subtitle: p.topic,
+        meta: aiPageSlugs.has(p.slug) ? "AI Article" : undefined,
+        hasAi: aiPageSlugs.has(p.slug),
+        href: `/${p.topicSlug}/${p.pageSlug}`,
+      }));
+
+  // Prioritize questions with AI-generated content
+  const questionsWithAi = topQuestionSlugs.filter((slug) =>
+    aiQaSlugs.has(slug),
+  );
+  const questionsWithoutAi = topQuestionSlugs.filter(
+    (slug) => !aiQaSlugs.has(slug),
+  );
+  const sortedQuestionSlugs = [...questionsWithAi, ...questionsWithoutAi];
+
+  const trendingQuestions: (FilterListItem & { hasAi?: boolean })[] =
+    sortedQuestionSlugs
+      .map((slug) => topQuestions.get(slug))
+      .filter((q): q is NonNullable<typeof q> => Boolean(q))
+      .slice(0, 12)
+      .map((q) => ({
+        id: q.slug,
+        title: q.question,
+        subtitle:
+          q.answer ?? "Open this question and ask the AI for a deeper answer.",
+        meta: aiQaSlugs.has(q.slug) ? "AI Answer" : undefined,
+        hasAi: aiQaSlugs.has(q.slug),
+        href: `/q/${q.slug}`,
+      }));
 
   return (
     <>
@@ -384,16 +410,14 @@ export default async function Home() {
                   id: p.slug,
                   title: p.page,
                   subtitle: p.topic,
-                  meta: `Peak ${p.maxVolume.toLocaleString()} • ${p.keywordCount.toLocaleString()} kws`,
+                  meta: `${p.keywordCount.toLocaleString()} keywords`,
                   href: `/${p.topicSlug}/${p.pageSlug}`,
                 })),
                 ...paa.questions.slice(0, 120).map((q) => ({
                   id: `q:${q.slug}`,
                   title: q.question,
                   subtitle: "Q&A",
-                  meta: q.volume
-                    ? `Volume ${q.volume.toLocaleString()}`
-                    : undefined,
+                  meta: undefined,
                   href: `/q/${q.slug}`,
                 })),
               ]}

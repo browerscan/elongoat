@@ -15,6 +15,8 @@ const nextConfig = {
       allowedOrigins: ["elongoat.io", "api.elongoat.io"],
     },
   },
+
+  serverExternalPackages: ["drizzle-kit", "esbuild", "pg-native"],
 };
 
 export default nextConfig;

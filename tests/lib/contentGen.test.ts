@@ -5,31 +5,31 @@ import {
   generateClusterPageContent,
   getPaaAnswerContent,
   generatePaaAnswer,
-} from "@/lib/contentGen";
+} from "../../src/lib/contentGen";
 
 // Mock dependencies
-vi.mock("@/lib/indexes", () => ({
+vi.mock("../../src/lib/indexes", () => ({
   findPage: vi.fn(),
   findPaaQuestion: vi.fn(),
 }));
 
-vi.mock("@/lib/contentCache", () => ({
+vi.mock("../../src/lib/contentCache", () => ({
   getCachedContent: vi.fn(),
   setCachedContent: vi.fn(),
 }));
 
-vi.mock("@/lib/variables", () => ({
+vi.mock("../../src/lib/variables", () => ({
   getDynamicVariables: vi.fn(),
 }));
 
-vi.mock("@/lib/vectorengine", () => ({
+vi.mock("../../src/lib/vectorengine", () => ({
   vectorEngineChatComplete: vi.fn(),
 }));
 
-import { findPage, findPaaQuestion } from "@/lib/indexes";
-import { getCachedContent, setCachedContent } from "@/lib/contentCache";
-import { getDynamicVariables } from "@/lib/variables";
-import { vectorEngineChatComplete } from "@/lib/vectorengine";
+import { findPage, findPaaQuestion } from "../../src/lib/indexes";
+import { getCachedContent, setCachedContent } from "../../src/lib/contentCache";
+import { getDynamicVariables } from "../../src/lib/variables";
+import { vectorEngineChatComplete } from "../../src/lib/vectorengine";
 
 describe("contentGen", () => {
   beforeEach(() => {

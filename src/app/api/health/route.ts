@@ -1,3 +1,18 @@
+import "server-only";
+
+import { getEnv, featureFlags } from "../../../lib/env";
+import { getDbPool, initDbPool } from "../../../lib/db";
+import { getRedis, getRedisStats } from "../../../lib/redis";
+import { getVectorEngineChatUrl } from "../../../lib/vectorengine";
+import {
+  createStandardHeaders,
+  CACHE_CONTROL,
+  generateRequestId,
+} from "../../../lib/apiResponse";
+import { getMetrics } from "../../../lib/tieredCache";
+import { generatePerformanceReport } from "../../../lib/performance";
+
+const env = getEnv();
 /**
  * Enhanced Health Check Endpoint
  *
@@ -9,21 +24,6 @@
  * - 503: Degraded (non-critical systems down)
  * - 503: Unhealthy (critical systems down)
  */
-
-import "server-only";
-
-import { getDbPool } from "@/lib/db";
-import { getRedis, getRedisStats } from "@/lib/redis";
-import { getVectorEngineChatUrl } from "@/lib/vectorengine";
-import { featureFlags } from "@/lib/env";
-import {
-  createStandardHeaders,
-  CACHE_CONTROL,
-  generateRequestId,
-} from "@/lib/apiResponse";
-import { getMetrics } from "@/lib/tieredCache";
-import { generatePerformanceReport } from "@/lib/performance";
-
 /* -------------------------------------------------------------------------------------------------
  * Health Check Types
  * ------------------------------------------------------------------------------------------------- */
@@ -127,12 +127,17 @@ async function checkDatabaseHealth(): Promise<ComponentHealth> {
     };
   }
 
-  const db = getDbPool();
+  // Try to get existing pool, or initialize if not yet done
+  let db = getDbPool();
   if (!db) {
-    return {
-      status: "unhealthy",
-      error: "Database pool not initialized",
-    };
+    try {
+      db = await initDbPool();
+    } catch (initError) {
+      return {
+        status: "unhealthy",
+        error: `Failed to initialize: ${initError instanceof Error ? initError.message : String(initError)}`,
+      };
+    }
   }
 
   const startTime = performance.now();
@@ -191,8 +196,7 @@ async function checkRedisHealth(): Promise<ComponentHealth> {
   const startTime = performance.now();
 
   try {
-    // Ping Redis
-    await redis.connect();
+    // Ping Redis (ioredis auto-connects, no need to call connect())
     const result = await redis.ping();
 
     const latency = Math.round(performance.now() - startTime);
@@ -264,10 +268,10 @@ async function checkVectorEngineHealth(): Promise<ComponentHealth> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.VECTORENGINE_API_KEY ?? ""}`,
+        Authorization: `Bearer ${env.VECTORENGINE_API_KEY ?? ""}`,
       },
       body: JSON.stringify({
-        model: process.env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning",
+        model: env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning",
         messages: [{ role: "user", content: "ping" }],
         max_tokens: 1,
       }),
@@ -296,9 +300,8 @@ async function checkVectorEngineHealth(): Promise<ComponentHealth> {
       status,
       latency,
       details: {
-        model: process.env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning",
-        baseUrl:
-          process.env.VECTORENGINE_BASE_URL ?? "https://api.vectorengine.ai",
+        model: env.VECTORENGINE_MODEL ?? "grok-4-fast-non-reasoning",
+        baseUrl: env.VECTORENGINE_BASE_URL ?? "https://api.vectorengine.ai",
       },
     };
   } catch (error) {
@@ -458,8 +461,7 @@ export async function GET() {
   const body: HealthCheckResponse = {
     status,
     timestamp: new Date().toISOString(),
-    version:
-      process.env.npm_package_version ?? process.env.APP_VERSION ?? "0.1.0",
+    version: env.npm_package_version ?? env.APP_VERSION ?? "0.1.0",
     components,
     metrics,
     checks,

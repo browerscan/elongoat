@@ -1,14 +1,17 @@
 import type { MetadataRoute } from "next";
 
-import { listCustomQaSlugs } from "@/lib/customQa";
-import { getPaaIndex } from "@/lib/indexes";
+import { listCustomQaSlugs } from "../../../lib/customQa";
+import { getPaaIndex } from "../../../lib/indexes";
+import { getPublicEnv } from "../../../lib/env";
 
+const env = getPublicEnv();
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io"
-  ).replace(/\/$/, "");
+  const siteUrl = (env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
+    /\/$/,
+    "",
+  );
   const [paa, customSlugs] = await Promise.all([
     getPaaIndex(),
     listCustomQaSlugs(5000),

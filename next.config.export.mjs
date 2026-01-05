@@ -16,6 +16,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+
+  serverExternalPackages: ["drizzle-kit", "esbuild", "pg-native"],
 };
 
 export default nextConfig;

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getChatConfig } from "@/lib/chatConfig";
+import { getChatConfig } from "../../src/lib/chatConfig";
 
 // Mock dependencies
-vi.mock("@/lib/db", () => ({
+vi.mock("../../src/lib/db", () => ({
   getDbPool: vi.fn(),
 }));
 
-vi.mock("@/lib/redis", () => ({
+vi.mock("../../src/lib/redis", () => ({
   getRedis: vi.fn(),
 }));
 
@@ -25,8 +25,8 @@ const mockRedis = {
   set: mockRedisSet,
 };
 
-import { getDbPool } from "@/lib/db";
-import { getRedis } from "@/lib/redis";
+import { getDbPool } from "../../src/lib/db";
+import { getRedis } from "../../src/lib/redis";
 
 describe("chatConfig", () => {
   let originalEnv: NodeJS.ProcessEnv;

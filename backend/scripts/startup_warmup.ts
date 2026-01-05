@@ -13,9 +13,13 @@
 
 import "dotenv/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-const WARMUP_DELAY_MS = parseInt(process.env.WARMUP_DELAY_MS || "5000", 10);
-const WARMUP_CONCURRENCY = parseInt(process.env.WARMUP_CONCURRENCY || "3", 10);
+import { getEnv } from "../lib/env";
+
+const env = getEnv();
+const API_URL =
+  env.NEXT_PUBLIC_API_URL || env.API_URL || "http://localhost:3000";
+const WARMUP_DELAY_MS = env.WARMUP_DELAY_MS;
+const WARMUP_CONCURRENCY = env.WARMUP_CONCURRENCY;
 
 interface WarmupResult {
   endpoint: string;

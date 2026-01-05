@@ -2,21 +2,24 @@ import {
   calculateFreshness,
   getFreshnessLabel,
   getFreshnessColor,
-} from "@/lib/contentFreshness";
+} from "./contentFreshness";
+import { getEnv } from "./env";
 
 // Compression utilities for large payloads
-import { compressForStorage, decompressFromStorage } from "@/lib/compression";
+import { compressForStorage, decompressFromStorage } from "./compression";
+
+const env = getEnv();
 
 // Lazy imports for backend-only dependencies
-let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
-let tieredGet: typeof import("@/lib/tieredCache").get | undefined;
-let tieredSet: typeof import("@/lib/tieredCache").set | undefined;
-let buildKey: typeof import("@/lib/tieredCache").buildKey | undefined;
+let getDbPool: typeof import("./db").getDbPool | undefined;
+let tieredGet: typeof import("./tieredCache").get | undefined;
+let tieredSet: typeof import("./tieredCache").set | undefined;
+let buildKey: typeof import("./tieredCache").buildKey | undefined;
 
 async function getBackendModules() {
   try {
-    const dbModule = await import("@/lib/db");
-    const cacheModule = await import("@/lib/tieredCache");
+    const dbModule = await import("./db");
+    const cacheModule = await import("./tieredCache");
     getDbPool = dbModule.getDbPool;
     tieredGet = cacheModule.get;
     tieredSet = cacheModule.set;
@@ -55,14 +58,8 @@ export interface ContentCacheResult {
 // Configuration
 // ============================================================================
 
-const L1_TTL_MS = Number.parseInt(
-  process.env.CONTENT_CACHE_L1_TTL_MS ?? "300000",
-  10,
-); // 5 minutes
-const L2_TTL_MS = Number.parseInt(
-  process.env.CONTENT_CACHE_L2_TTL_MS ?? "3600000",
-  10,
-); // 1 hour
+const L1_TTL_MS = env.CONTENT_CACHE_L1_TTL_MS; // 5 minutes
+const L2_TTL_MS = env.CONTENT_CACHE_L2_TTL_MS; // 1 hour
 
 // Compression threshold: compress payloads larger than 1KB
 const COMPRESSION_THRESHOLD_BYTES = 1024;
@@ -190,7 +187,7 @@ export async function getCachedContent(params: {
       },
     );
 
-    if (process.env.NODE_ENV === "development" && !result.hit) {
+    if (env.NODE_ENV === "development" && !result.hit) {
       console.log(
         "[ContentCache] Cache miss for",
         params.kind,
@@ -359,7 +356,7 @@ export async function setCachedContent(params: {
         contentToStore = compressionResult.data;
         compressed = true;
         compressionMethod = compressionResult.method;
-        if (process.env.NODE_ENV === "development") {
+        if (env.NODE_ENV === "development") {
           console.log("[ContentCache] Compressed content:", {
             kind: params.kind,
             slug: params.slug,
@@ -421,7 +418,7 @@ export async function invalidateCachedContent(
   slug: string,
 ): Promise<void> {
   const cacheKey = buildContentCacheKey(kind, slug);
-  const { del } = await import("@/lib/tieredCache");
+  const { del } = await import("./tieredCache");
   await del(cacheKey);
 }
 
@@ -431,6 +428,39 @@ export async function invalidateCachedContent(
 export async function invalidateContentPattern(
   pattern: string,
 ): Promise<number> {
-  const { invalidatePattern } = await import("@/lib/tieredCache");
+  const { invalidatePattern } = await import("./tieredCache");
   return await invalidatePattern("cc:" + pattern);
+}
+
+/**
+ * Gets a set of slugs that have AI-generated content in the cache.
+ * Used to prioritize displaying pages with actual AI content.
+ */
+export async function getSlugsWithAiContent(
+  kind: "cluster_page" | "paa_question",
+): Promise<Set<string>> {
+  await getBackendModules();
+  const db = getDbPool?.();
+  if (!db) return new Set();
+
+  try {
+    const res = await db.query<{ slug: string }>(
+      `
+      SELECT DISTINCT slug
+      FROM elongoat.content_cache
+      WHERE kind = $1
+        AND (expires_at IS NULL OR expires_at > NOW())
+        AND content_md IS NOT NULL
+        AND LENGTH(content_md) > 500
+      `,
+      [kind],
+    );
+    return new Set(res.rows.map((r) => r.slug));
+  } catch (error) {
+    console.error("[ContentCache] Error fetching AI content slugs:", {
+      kind,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return new Set();
+  }
 }

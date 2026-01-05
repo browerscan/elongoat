@@ -1,11 +1,11 @@
 import "server-only";
 
-import { getDynamicVariables } from "@/lib/variables";
+import { getDynamicVariables } from "../../../lib/variables";
 import {
   cachedResponse,
   CachePolicies,
   generateSimpleETag,
-} from "@/lib/httpCache";
+} from "../../../lib/httpCache";
 
 export async function GET() {
   const variables = await getDynamicVariables();

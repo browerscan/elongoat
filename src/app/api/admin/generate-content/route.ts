@@ -2,11 +2,11 @@ import "server-only";
 
 import { z } from "zod";
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
+import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
 import {
   generateClusterPageContent,
   generatePaaAnswer,
-} from "@/lib/contentGen";
+} from "../../../../lib/contentGen";
 
 const BodySchema = z
   .object({

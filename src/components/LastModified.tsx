@@ -70,7 +70,7 @@ export async function getContentLastModified(
   fallbackDate: Date | string,
 ): Promise<Date> {
   try {
-    const { getDbPool } = await import("@/lib/db");
+    const { getDbPool } = await import("../lib/db");
     const pool = getDbPool();
 
     if (pool) {

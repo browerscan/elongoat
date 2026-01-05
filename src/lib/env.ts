@@ -7,6 +7,14 @@
 
 import { z } from "zod";
 
+const emptyToUndefined = (value: unknown) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+};
+
+const optionalString = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(emptyToUndefined, schema.optional());
+
 /* -------------------------------------------------------------------------------------------------
  * Environment Variable Schemas
  * ------------------------------------------------------------------------------------------------- */
@@ -16,9 +24,13 @@ import { z } from "zod";
  * These start with NEXT_PUBLIC_ and can be used in both server and client code.
  */
 const PublicEnvSchema = z.object({
-  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_SITE_URL: z.string().url().default("https://elongoat.io"),
+  NEXT_PUBLIC_API_URL: optionalString(z.string().url()),
+  NEXT_PUBLIC_SUPABASE_URL: optionalString(z.string().url()),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString(z.string().min(1)),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
 });
 
 /**
@@ -26,40 +38,96 @@ const PublicEnvSchema = z.object({
  * These are never exposed to the client.
  */
 const ServerEnvSchema = z.object({
+  // App metadata
+  APP_VERSION: optionalString(z.string()),
+  npm_package_version: optionalString(z.string()),
+  API_URL: optionalString(z.string().url()),
+
   // Database
-  DATABASE_URL: z
+  DATABASE_URL: optionalString(
+    z
+      .string()
+      .url()
+      .refine(
+        (url) => url.includes("postgres") || url.includes("postgresql"),
+        "DATABASE_URL must be a PostgreSQL connection string",
+      ),
+  ),
+  PGPOOL_MAX: z
     .string()
-    .url()
-    .refine(
-      (url) => url.includes("postgres") || url.includes("postgresql"),
-      "DATABASE_URL must be a PostgreSQL connection string",
-    )
-    .optional(),
+    .default("10")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive().max(100)),
+  PGPOOL_IDLE_TIMEOUT_MS: z
+    .string()
+    .default("30000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  PGPOOL_CONNECT_TIMEOUT_MS: z
+    .string()
+    .default("10000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  PG_STATEMENT_TIMEOUT_MS: z
+    .string()
+    .default("60000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
 
   // Supabase
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
 
   // Redis
-  REDIS_URL: z
+  REDIS_URL: optionalString(
+    z
+      .string()
+      .url()
+      .refine(
+        (url) => url.startsWith("redis://") || url.startsWith("rediss://"),
+        "REDIS_URL must use redis:// or rediss:// protocol",
+      ),
+  ),
+  REDIS_MAX_RETRIES: z
     .string()
-    .url()
-    .refine(
-      (url) => url.startsWith("redis://") || url.startsWith("rediss://"),
-      "REDIS_URL must use redis:// or rediss:// protocol",
-    )
-    .optional(),
+    .default("3")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().nonnegative().max(20)),
+  REDIS_RETRY_DELAY_MS: z
+    .string()
+    .default("100")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().nonnegative()),
+  REDIS_CONNECT_TIMEOUT_MS: z
+    .string()
+    .default("5000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  REDIS_KEEP_ALIVE_MS: z
+    .string()
+    .default("30000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  REDIS_POOL_SIZE: z
+    .string()
+    .default("5")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
 
   // VectorEngine / AI
-  VECTORENGINE_API_KEY: z
-    .string()
-    .min(1)
-    .startsWith("ve_", "VECTORENGINE_API_KEY must start with 've_'")
-    .optional(),
+  VECTORENGINE_API_KEY: optionalString(
+    z
+      .string()
+      .min(1)
+      .refine(
+        (key) => key.startsWith("ve_") || key.startsWith("sk-"),
+        "VECTORENGINE_API_KEY must start with 've_' or 'sk-'",
+      ),
+  ),
   VECTORENGINE_BASE_URL: z
     .string()
     .url()
     .default("https://api.vectorengine.ai"),
-  VECTORENGINE_API_URL: z.string().url().optional(),
+  VECTORENGINE_API_URL: optionalString(z.string().url()),
   VECTORENGINE_MODEL: z.string().min(1).default("grok-4-fast-non-reasoning"),
   VECTORENGINE_CONTENT_MODEL: z
     .string()
@@ -67,14 +135,24 @@ const ServerEnvSchema = z.object({
     .default("claude-sonnet-4-5-20250929"),
 
   // xAI/Grok (optional alternative)
-  XAI_API_KEY: z.string().min(1).optional(),
-  GROK_API_URL: z.string().url().optional(),
+  XAI_API_KEY: optionalString(z.string().min(1)),
+  GROK_API_URL: optionalString(z.string().url()),
 
   // Admin
-  ELONGOAT_ADMIN_TOKEN: z
-    .string()
-    .min(32, "ELONGOAT_ADMIN_TOKEN must be at least 32 characters")
-    .optional(),
+  ELONGOAT_ADMIN_TOKEN: optionalString(
+    z.string().min(32, "ELONGOAT_ADMIN_TOKEN must be at least 32 characters"),
+  ),
+  ELONGOAT_ADMIN_SESSION_SECRET: optionalString(
+    z
+      .string()
+      .min(32, "ELONGOAT_ADMIN_SESSION_SECRET must be at least 32 characters"),
+  ),
+  ELONGOAT_RAG_API_KEY: optionalString(
+    z.string().min(32, "ELONGOAT_RAG_API_KEY must be at least 32 characters"),
+  ),
+  RATE_LIMIT_IP_SECRET: optionalString(
+    z.string().min(16, "RATE_LIMIT_IP_SECRET must be at least 16 characters"),
+  ),
 
   // Dynamic variables (Elon Goat specific)
   ELON_DOB: z
@@ -103,29 +181,64 @@ const ServerEnvSchema = z.object({
     .default("0")
     .transform((val) => val === "1" || val === "true"),
 
-  // PostgreSQL pool settings
-  PGPOOL_MAX: z
+  // Rate limiting
+  RATE_LIMIT_ENABLED: z
     .string()
-    .default("10")
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+  RATE_LIMIT_WHITELIST: z.string().default(""),
+  RATE_LIMIT_API: z
+    .string()
+    .default("100")
     .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().positive().max(100)),
-  PG_STATEMENT_TIMEOUT_MS: z
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_API_WINDOW: z
     .string()
-    .default("30000")
+    .default("60")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_CHAT: z
+    .string()
+    .default("20")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_CHAT_WINDOW: z
+    .string()
+    .default("3600")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_ADMIN: z
+    .string()
+    .default("60")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_ADMIN_WINDOW: z
+    .string()
+    .default("60")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_HEALTH: z
+    .string()
+    .default("300")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_HEALTH_WINDOW: z
+    .string()
+    .default("60")
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive()),
 
   // Keywords Everywhere API
-  KEYWORDS_EVERYWHERE_API_KEY: z.string().min(1).optional(),
+  KEYWORDS_EVERYWHERE_API_KEY: optionalString(z.string().min(1)),
 
   // SOAX scraping service
-  SOAX_BASE_URL: z.string().url().optional(),
-  SOAX_API_SECRET: z.string().min(1).optional(),
+  SOAX_BASE_URL: optionalString(z.string().url()),
+  SOAX_API_SECRET: optionalString(z.string().min(1)),
   SOAX_COUNTRY: z
     .string()
     .length(2, "SOAX_COUNTRY must be a 2-letter ISO country code")
     .default("us"),
-  SOAX_LOCATION: z.string().min(1).optional(),
+  SOAX_LOCATION: optionalString(z.string().min(1)),
 
   // Transcript worker settings
   TRANSCRIPT_BATCH_LIMIT: z
@@ -177,6 +290,180 @@ const ServerEnvSchema = z.object({
     .default("false")
     .transform((val) => val === "1" || val === "true"),
 
+  // Backend workers / scripts
+  USER_AGENT: z
+    .string()
+    .default("Mozilla/5.0 (compatible; ElonGoatBot/1.0; +https://elongoat.io)"),
+  SEED_PAA: z
+    .string()
+    .default("false")
+    .transform((val) => val === "1" || val === "true"),
+  SEED_VIDEOS: z
+    .string()
+    .default("false")
+    .transform((val) => val === "1" || val === "true"),
+  SEED_TWEETS: z
+    .string()
+    .default("false")
+    .transform((val) => val === "1" || val === "true"),
+  SEED_LIMIT: z
+    .string()
+    .default("50")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  TEST_LIMIT: z
+    .string()
+    .default("5")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  BATCH_MODE: z
+    .string()
+    .default("false")
+    .transform((val) => val === "1" || val === "true"),
+  DELAY_MS: z.preprocess(
+    (val) => (val === undefined ? undefined : parseInt(String(val), 10)),
+    z.number().int().nonnegative().optional(),
+  ),
+  CONCURRENCY: z
+    .string()
+    .default("6")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RESUME: z
+    .string()
+    .default("true")
+    .transform((val) => val === "1" || val === "true"),
+  START_FROM: z
+    .string()
+    .default("0")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().nonnegative()),
+  WARM_CLUSTER_COUNT: z
+    .string()
+    .default("20")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  WARM_PAA_COUNT: z
+    .string()
+    .default("20")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  WARMUP_DELAY_MS: z
+    .string()
+    .default("5000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  WARMUP_CONCURRENCY: z
+    .string()
+    .default("3")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Query cache configuration
+  QUERY_CACHE_ENABLED: z
+    .string()
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+  QUERY_CACHE_TTL_MS: z
+    .string()
+    .default("60000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  QUERY_CACHE_MAX_SIZE: z
+    .string()
+    .default("500")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Tiered cache configuration
+  TIERED_CACHE_L1_TTL_MS: z
+    .string()
+    .default("300000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  TIERED_CACHE_L2_TTL_MS: z
+    .string()
+    .default("3600000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  TIERED_CACHE_L1_MAX_ENTRIES: z
+    .string()
+    .default("1000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  TIERED_CACHE_L1_CLEANUP_MS: z
+    .string()
+    .default("60000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  TIERED_CACHE_STAMP_TIMEOUT_MS: z
+    .string()
+    .default("5000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Content cache configuration
+  CONTENT_CACHE_L1_TTL_MS: z
+    .string()
+    .default("300000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  CONTENT_CACHE_L2_TTL_MS: z
+    .string()
+    .default("3600000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Circuit breaker configuration
+  CIRCUIT_BREAKER_TTL_MS: z
+    .string()
+    .default("3600000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  CIRCUIT_BREAKER_CLEANUP_INTERVAL_MS: z
+    .string()
+    .default("300000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  MAX_CIRCUIT_BREAKERS: z
+    .string()
+    .default("1000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // RAG cache configuration
+  RAG_CACHE_ENABLED: z
+    .string()
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+  RAG_CACHE_TTL_SECONDS: z
+    .string()
+    .default("3600")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Embeddings
+  OPENAI_API_KEY: optionalString(z.string().min(1)),
+  OPENAI_BASE_URL: optionalString(z.string().url()),
+  EMBEDDING_BASE_URL: optionalString(z.string().url()),
+  EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  EMBEDDING_DIMENSIONS: z
+    .string()
+    .default("1536")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+
+  // Security headers / monitoring
+  HSTS_PRELOAD: z
+    .string()
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+  METRICS_TOKEN: optionalString(z.string().min(1)),
+  VALIDATE_ENV_ON_STARTUP: z
+    .string()
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+
   // Node environment
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -221,6 +508,24 @@ export type RawEnv = Record<string, string | undefined>;
  */
 let validatedEnv: Env | null = null;
 let validationError: Error | null = null;
+let validatedPublicEnv: PublicEnv | null = null;
+let publicValidationError: Error | null = null;
+let liveEnvProxy: Env | null = null;
+let livePublicEnvProxy: PublicEnv | null = null;
+
+function isTestEnv(): boolean {
+  return typeof process !== "undefined" && process.env.NODE_ENV === "test";
+}
+
+function createLiveEnvProxy<T extends object>(schema: z.ZodType<T>): T {
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      if (typeof prop === "symbol") return undefined;
+      const parsed = schema.parse(process.env);
+      return (parsed as Record<string, unknown>)[prop as string];
+    },
+  });
+}
 
 /**
  * Validation result type.
@@ -289,6 +594,13 @@ export function validateEnv(input: RawEnv = process.env): EnvValidationResult {
  * This function should be used instead of accessing process.env directly.
  */
 export function getEnv(): Env {
+  if (isTestEnv()) {
+    if (!liveEnvProxy) {
+      liveEnvProxy = createLiveEnvProxy(EnvSchema);
+    }
+    return liveEnvProxy;
+  }
+
   if (validationError) {
     throw validationError;
   }
@@ -311,18 +623,39 @@ export function getEnv(): Env {
  * Gets public environment variables (safe to expose to client).
  */
 export function getPublicEnv(): PublicEnv {
-  const env = getEnv();
-  return {
-    NEXT_PUBLIC_SITE_URL: env.NEXT_PUBLIC_SITE_URL,
-    NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  };
+  if (isTestEnv()) {
+    if (!livePublicEnvProxy) {
+      livePublicEnvProxy = createLiveEnvProxy(PublicEnvSchema);
+    }
+    return livePublicEnvProxy;
+  }
+
+  if (publicValidationError) {
+    throw publicValidationError;
+  }
+
+  if (!validatedPublicEnv) {
+    try {
+      validatedPublicEnv = PublicEnvSchema.parse(process.env);
+    } catch (error) {
+      publicValidationError = new Error(
+        `Public environment validation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw publicValidationError;
+    }
+  }
+
+  return validatedPublicEnv;
 }
 
 /**
  * Checks if a specific environment variable is set and valid.
  */
 export function hasEnvKey(key: keyof Env): boolean {
+  if (typeof process !== "undefined" && process.env) {
+    return Object.prototype.hasOwnProperty.call(process.env, key);
+  }
+
   try {
     const env = getEnv();
     return env[key] !== undefined && env[key] !== null;

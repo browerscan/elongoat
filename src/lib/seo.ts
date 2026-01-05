@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { getPublicEnv } from "./env";
 
+const env = getPublicEnv();
 // Define types that match Next.js metadata expectations
 export interface OpenGraph {
   type?: string;
@@ -35,10 +37,7 @@ const SITE_CONFIG = {
   title: "ElonGoat — Digital Elon (AI)",
   description:
     "A sci-fi knowledge base + streaming AI chat inspired by Elon Musk (not affiliated). Browse topic hubs and keyword pages built from real search demand.",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
-    /\/$/,
-    "",
-  ),
+  url: (env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(/\/$/, ""),
   ogImage: "/og-image.svg",
   twitterHandle: "@elongoat",
   twitterCard: "summary_large_image" as const,
@@ -188,7 +187,7 @@ export function generateMetadata(params: SeoMetadata): Metadata {
  */
 export async function generateHomeMetadata(): Promise<Metadata> {
   // Dynamically get counts from cluster index
-  const getClusterIndex = (await import("@/lib/indexes")).getClusterIndex;
+  const getClusterIndex = (await import("./indexes")).getClusterIndex;
   let topicCount = 0;
   let pageCount = 0;
   try {
@@ -218,18 +217,18 @@ export function generateTopicMetadata(params: {
   topic: string;
   topicSlug: string;
   pageCount: number;
-  totalVolume: number;
+  totalVolume?: number;
 }): Metadata {
-  const { topic, topicSlug, pageCount, totalVolume } = params;
+  const { topic, topicSlug, pageCount } = params;
   const title = `${topic} — Topic Hub`;
-  const description = `Browse ${pageCount.toLocaleString()} pages in the "${topic}" topic hub. Total search volume: ${totalVolume.toLocaleString()}. Explore keyword clusters and AI-generated answers.`;
+  const description = `Browse ${pageCount.toLocaleString()} pages in the "${topic}" topic hub. Explore keyword clusters and AI-generated answers about Elon Musk.`;
 
   return generateMetadata({
     title,
     description,
     path: `/${topicSlug}`,
     ogImage: `/og/topic/${topicSlug}`,
-    keywords: [topic, "topic hub", "Elon Musk", "keyword research"],
+    keywords: [topic, "topic hub", "Elon Musk"],
     section: "Topics",
   });
 }
@@ -240,11 +239,11 @@ export function generateTopicMetadata(params: {
 export function generateTopicsIndexMetadata(params: {
   topicCount: number;
   totalPages: number;
-  totalVolume: number;
+  totalVolume?: number;
 }): Metadata {
-  const { topicCount, totalPages, totalVolume } = params;
+  const { topicCount, totalPages } = params;
   const title = "Topics — Browse Elon Musk Knowledge Hubs";
-  const description = `Explore ${topicCount} topic hubs with ${totalPages.toLocaleString()} keyword pages about Elon Musk. Total search volume: ${totalVolume.toLocaleString()}. Covering Tesla, SpaceX, X/Twitter, and more.`;
+  const description = `Explore ${topicCount} topic hubs with ${totalPages.toLocaleString()} keyword pages about Elon Musk. Covering Tesla, SpaceX, X/Twitter, and more.`;
 
   return generateMetadata({
     title,
@@ -346,23 +345,23 @@ export function generateVideosIndexMetadata(params: {
 export function generateClusterPageMetadata(params: {
   page: string;
   topic: string;
-  maxVolume: number;
+  maxVolume?: number;
   keywordCount: number;
   topicSlug: string;
   pageSlug: string;
 }): Metadata {
-  const { page, topic, maxVolume, keywordCount, topicSlug, pageSlug } = params;
+  const { page, topic, keywordCount, topicSlug, pageSlug } = params;
   const title = `${page} — ${topic}`;
-  const description = `Explore "${page}" in ${topic}. Peak search volume: ${maxVolume.toLocaleString()}. ${keywordCount.toLocaleString()} keywords with search intent analysis and AI chat.`;
+  const description = `Explore "${page}" in ${topic}. ${keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`;
 
   return generateMetadata({
     title,
     description,
     path: `/${topicSlug}/${pageSlug}`,
     ogType: "article",
-    keywords: [page, topic, "keywords", "search volume", "SEO"],
+    keywords: [page, topic, "Elon Musk"],
     section: topic,
-    tags: [page, topic, "keyword analysis"],
+    tags: [page, topic],
   });
 }
 
@@ -375,11 +374,11 @@ export function generateQaMetadata(params: {
   slug: string;
   volume?: number;
 }): Metadata {
-  const { question, answer, slug, volume } = params;
+  const { question, answer, slug } = params;
   const title = question;
   const description =
     answer?.slice(0, 140) ??
-    `Get answers to "${question}" on ElonGoat. AI-generated responses with sources and verification notes. ${volume ? `Search volume: ${volume.toLocaleString()}.` : ""}`;
+    `Get answers to "${question}" on ElonGoat. AI-generated responses with sources and verification notes.`;
 
   return generateMetadata({
     title,

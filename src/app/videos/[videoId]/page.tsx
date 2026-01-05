@@ -3,17 +3,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/JsonLd";
-import { Markdown } from "@/components/Markdown";
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { AuthorInfo } from "@/components/AuthorInfo";
-import { getTranscript, getVideo } from "@/lib/videos";
-import { generateVideoMetadata } from "@/lib/seo";
+import { JsonLd } from "../../../components/JsonLd";
+import { Markdown } from "../../../components/Markdown";
+import { OpenChatButton } from "../../../components/OpenChatButton";
+import { AuthorInfo } from "../../../components/AuthorInfo";
+import { getTranscript, getVideo } from "../../../lib/videos";
+import { generateVideoMetadata } from "../../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateVideoObjectSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../../lib/structuredData";
 
 export const revalidate = 3600;
 

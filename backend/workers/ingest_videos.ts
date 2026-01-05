@@ -1,6 +1,9 @@
 import "dotenv/config";
 
 import { getDb, withTransaction } from "../lib/db";
+import { getEnv, requireEnv } from "../lib/env";
+
+const env = getEnv();
 
 type VideoResult = {
   title?: string;
@@ -13,12 +16,6 @@ type VideoResult = {
   thumbnail?: string;
   date?: string;
 };
-
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env: ${name}`);
-  return v;
-}
 
 function parseYoutubeId(url: string): string | null {
   try {
@@ -245,12 +242,12 @@ async function withRetry<T>(
 
 async function soaxGoogleVideos(query: string): Promise<unknown> {
   const secret = requireEnv("SOAX_API_SECRET");
-  const baseUrl = (
-    process.env.SOAX_BASE_URL ?? "https://scraping.soax.com"
-  ).replace(/\/$/, "");
+  const baseUrl = (env.SOAX_BASE_URL ?? "https://scraping.soax.com").replace(
+    /\/$/,
+    "",
+  );
   // Support both SOAX_LOCATION (legacy) and SOAX_COUNTRY (unified)
-  const location =
-    process.env.SOAX_LOCATION ?? process.env.SOAX_COUNTRY ?? "United States";
+  const location = env.SOAX_LOCATION ?? env.SOAX_COUNTRY ?? "United States";
 
   const url = new URL(`${baseUrl}/v1/serp/google_videos`);
   url.searchParams.set("q", query);
@@ -276,8 +273,7 @@ async function soaxGoogleVideos(query: string): Promise<unknown> {
 
 async function main() {
   const queries = (
-    process.env.VIDEO_QUERIES ??
-    "elon musk interview,elon musk spacex,elon musk tesla"
+    env.VIDEO_QUERIES ?? "elon musk interview,elon musk spacex,elon musk tesla"
   )
     .split(",")
     .map((s) => s.trim())
@@ -285,10 +281,7 @@ async function main() {
 
   if (!queries.length) throw new Error("No VIDEO_QUERIES provided");
 
-  const limitPerQuery = Number.parseInt(
-    process.env.VIDEO_LIMIT_PER_QUERY ?? "10",
-    10,
-  );
+  const limitPerQuery = env.VIDEO_LIMIT_PER_QUERY;
 
   const all: Array<{
     video_id: string;

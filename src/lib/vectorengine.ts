@@ -1,7 +1,9 @@
 // Server-only module (import removed for backend compatibility)
-
 import { getCircuitBreaker } from "./circuitBreaker";
 import { withRetry } from "./retry";
+import { getEnv } from "./env";
+
+const env = getEnv();
 
 export type LlmMessage = {
   role: "system" | "user" | "assistant";
@@ -45,11 +47,10 @@ function isRetryableError(error: unknown): boolean {
 }
 
 export function getVectorEngineChatUrl(): string | null {
-  if (!process.env.VECTORENGINE_API_KEY) return null;
-  const baseUrl =
-    process.env.VECTORENGINE_BASE_URL ?? "https://api.vectorengine.ai";
+  if (!env.VECTORENGINE_API_KEY) return null;
+  const baseUrl = env.VECTORENGINE_BASE_URL;
   const url =
-    process.env.VECTORENGINE_API_URL ??
+    env.VECTORENGINE_API_URL ??
     `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
   return url;
 }
@@ -89,7 +90,7 @@ export async function vectorEngineChatComplete(params: {
   maxTokens?: number;
   timeout?: number;
 }): Promise<{ text: string; usage?: { totalTokens?: number } }> {
-  const key = process.env.VECTORENGINE_API_KEY;
+  const key = env.VECTORENGINE_API_KEY;
   const url = getVectorEngineChatUrl();
   if (!key || !url) {
     throw new Error(
@@ -160,7 +161,7 @@ export async function vectorEngineChatStream(params: {
   maxTokens?: number;
   timeout?: number;
 }): Promise<ReadableStream<Uint8Array>> {
-  const key = process.env.VECTORENGINE_API_KEY;
+  const key = env.VECTORENGINE_API_KEY;
   const url = getVectorEngineChatUrl();
   if (!key || !url) {
     throw new Error(

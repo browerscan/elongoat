@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateAge } from "@/lib/variables";
+import { calculateAge } from "../src/lib/variables";
 
 describe("calculateAge", () => {
   it("calculates age after birthday (UTC)", () => {

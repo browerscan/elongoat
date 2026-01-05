@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/JsonLd";
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { getDynamicVariables } from "@/lib/variables";
-import { generateFactMetadata } from "@/lib/seo";
+import { JsonLd } from "../../../components/JsonLd";
+import { OpenChatButton } from "../../../components/OpenChatButton";
+import { getDynamicVariables } from "../../../lib/variables";
+import { generateFactMetadata } from "../../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../../lib/structuredData";
 
 export const revalidate = 3600;
 

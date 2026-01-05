@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
+import { checkAdminAuth, unauthorized } from "../../src/lib/adminAuth";
 
 describe("adminAuth", () => {
   let originalEnv: NodeJS.ProcessEnv;

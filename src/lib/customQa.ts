@@ -1,16 +1,18 @@
-import { getDynamicVariables } from "@/lib/variables";
-import { slugify } from "@/lib/slugify";
+import { getDynamicVariables } from "./variables";
+import { slugify } from "./slugify";
+import { getEnv } from "./env";
 
+const env = getEnv();
 // Lazy imports for backend-only dependencies
-let getDbPool: typeof import("@/lib/db").getDbPool | undefined;
+let getDbPool: typeof import("./db").getDbPool | undefined;
 let vectorEngineChatComplete:
-  | typeof import("@/lib/vectorengine").vectorEngineChatComplete
+  | typeof import("./vectorengine").vectorEngineChatComplete
   | undefined;
 
 async function getBackendModules() {
   try {
-    const dbModule = await import("@/lib/db");
-    const veModule = await import("@/lib/vectorengine");
+    const dbModule = await import("./db");
+    const veModule = await import("./vectorengine");
     getDbPool = dbModule.getDbPool;
     vectorEngineChatComplete = veModule.vectorEngineChatComplete;
   } catch {
@@ -18,11 +20,9 @@ async function getBackendModules() {
   }
 }
 
-const DEFAULT_CONTENT_MODEL = "claude-sonnet-4-5-20250929";
-
 function getContentModel(): string | null {
-  if (!process.env.VECTORENGINE_API_KEY) return null;
-  return process.env.VECTORENGINE_CONTENT_MODEL ?? DEFAULT_CONTENT_MODEL;
+  if (!env.VECTORENGINE_API_KEY) return null;
+  return env.VECTORENGINE_CONTENT_MODEL;
 }
 
 export type CustomQaRow = {

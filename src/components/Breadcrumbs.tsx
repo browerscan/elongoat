@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
-import { JsonLd } from "@/components/JsonLd";
+import { JsonLd } from "./JsonLd";
 
 export interface BreadcrumbItem {
   name: string;

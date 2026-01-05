@@ -3,7 +3,9 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 import type { ComponentType, ErrorInfo, ReactNode } from "react";
 import { PureComponent } from "react";
+import { getPublicEnv } from "../lib/env";
 
+const env = getPublicEnv();
 export interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ComponentType<{ error: Error; retry: () => void }>;
@@ -56,7 +58,7 @@ export class ErrorBoundary extends PureComponent<
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log to console in development
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
 
@@ -64,7 +66,7 @@ export class ErrorBoundary extends PureComponent<
     this.props.onError?.(error, errorInfo);
 
     // Log to error reporting service in production
-    if (process.env.NODE_ENV === "production") {
+    if (env.NODE_ENV === "production") {
       // Integration point for error reporting services like Sentry
       // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
       this.logToService(error, errorInfo);
@@ -157,7 +159,7 @@ function DefaultErrorFallback({
           Try Again
         </button>
 
-        {process.env.NODE_ENV === "development" && error.stack && (
+        {env.NODE_ENV === "development" && error.stack && (
           <details className="w-full text-left">
             <summary className="cursor-pointer text-xs text-white/40 hover:text-white/60">
               Error details

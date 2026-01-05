@@ -6,22 +6,22 @@ import {
   listLatestCustomQas,
   upsertCustomQa,
   generateCustomQa,
-} from "@/lib/customQa";
+} from "../../src/lib/customQa";
 
 // Mock dependencies
-vi.mock("@/lib/db", () => ({
+vi.mock("../../src/lib/db", () => ({
   getDbPool: vi.fn(),
 }));
 
-vi.mock("@/lib/variables", () => ({
+vi.mock("../../src/lib/variables", () => ({
   getDynamicVariables: vi.fn(),
 }));
 
-vi.mock("@/lib/slugify", () => ({
+vi.mock("../../src/lib/slugify", () => ({
   slugify: vi.fn((s: string) => s.toLowerCase().replace(/\s+/g, "-")),
 }));
 
-vi.mock("@/lib/vectorengine", () => ({
+vi.mock("../../src/lib/vectorengine", () => ({
   vectorEngineChatComplete: vi.fn(),
 }));
 
@@ -30,10 +30,10 @@ const mockDbPool = {
   query: mockDbQuery,
 };
 
-import { getDbPool } from "@/lib/db";
-import { getDynamicVariables } from "@/lib/variables";
-import { slugify } from "@/lib/slugify";
-import { vectorEngineChatComplete } from "@/lib/vectorengine";
+import { getDbPool } from "../../src/lib/db";
+import { getDynamicVariables } from "../../src/lib/variables";
+import { slugify } from "../../src/lib/slugify";
+import { vectorEngineChatComplete } from "../../src/lib/vectorengine";
 
 describe("customQa", () => {
   beforeEach(() => {

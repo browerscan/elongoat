@@ -1,15 +1,16 @@
+import "server-only";
+
+import { NextResponse } from "next/server";
+import { apiUnauthorized, apiForbidden } from "./apiResponse";
+import { getEnv } from "./env";
+
+const env = getEnv();
 /**
  * RAG API Authentication Middleware
  *
  * Validates X-API-Key header against ELONGOAT_RAG_API_KEY environment variable.
  * Used for external API access to RAG search endpoints.
  */
-
-import "server-only";
-
-import { NextResponse } from "next/server";
-import { apiUnauthorized, apiForbidden } from "@/lib/apiResponse";
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -34,7 +35,7 @@ const RAG_API_KEY_HEADER_ALT = "x-api-key"; // case-insensitive fallback
  * Get the configured RAG API key from environment
  */
 function getRagApiKey(): string | null {
-  return process.env.ELONGOAT_RAG_API_KEY || null;
+  return env.ELONGOAT_RAG_API_KEY || null;
 }
 
 /**
@@ -56,7 +57,7 @@ export function validateRagAuth(request: Request): RagAuthResult {
 
   // If no key is configured, allow access (development mode)
   if (!configuredKey) {
-    if (process.env.NODE_ENV === "production") {
+    if (env.NODE_ENV === "production") {
       console.warn(
         "[RAG Auth] No ELONGOAT_RAG_API_KEY configured in production",
       );

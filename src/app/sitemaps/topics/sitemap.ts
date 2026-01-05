@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { getClusterIndex } from "@/lib/indexes";
+import { getClusterIndex } from "../../../lib/indexes";
+import { getPublicEnv } from "../../../lib/env";
 
+const env = getPublicEnv();
 export const revalidate = 3600;
 
 // Google recommends max 50,000 URLs per sitemap
@@ -29,9 +31,10 @@ export default async function sitemap({
 }: {
   id: number;
 }): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io"
-  ).replace(/\/$/, "");
+  const siteUrl = (env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io").replace(
+    /\/$/,
+    "",
+  );
   const cluster = await getClusterIndex();
   const clusterUpdated = new Date(cluster.generatedAt);
 

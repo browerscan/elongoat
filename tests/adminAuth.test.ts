@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { timingSafeEqual } from "node:crypto";
 
 // Mock the server-only import
-vi.mock("@/lib/redis", () => ({
+vi.mock("../src/lib/redis", () => ({
   getRedis: () => null,
 }));
 
@@ -38,7 +38,7 @@ describe("AdminAuth", () => {
 
   describe("validateSecurityConfig", () => {
     it("should pass with valid configuration", async () => {
-      const { validateSecurityConfig } = await import("@/lib/adminAuth");
+      const { validateSecurityConfig } = await import("../src/lib/adminAuth");
       const result = validateSecurityConfig();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -46,7 +46,7 @@ describe("AdminAuth", () => {
 
     it("should fail when admin token is too short", async () => {
       vi.stubEnv("ELONGOAT_ADMIN_TOKEN", "short");
-      const { validateSecurityConfig } = await import("@/lib/adminAuth");
+      const { validateSecurityConfig } = await import("../src/lib/adminAuth");
       const result = validateSecurityConfig();
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("32"))).toBe(true);
@@ -54,7 +54,7 @@ describe("AdminAuth", () => {
 
     it("should fail when session secret is missing", async () => {
       vi.stubEnv("ELONGOAT_ADMIN_SESSION_SECRET", "");
-      const { validateSecurityConfig } = await import("@/lib/adminAuth");
+      const { validateSecurityConfig } = await import("../src/lib/adminAuth");
       const result = validateSecurityConfig();
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("SESSION_SECRET"))).toBe(
@@ -65,7 +65,7 @@ describe("AdminAuth", () => {
 
   describe("generateSecureToken", () => {
     it("should generate a token of specified length", async () => {
-      const { generateSecureToken } = await import("@/lib/adminAuth");
+      const { generateSecureToken } = await import("../src/lib/adminAuth");
       const token = generateSecureToken(32);
       expect(token).toBeTruthy();
       // base64url encoding means length may vary slightly, just check it's close
@@ -73,7 +73,7 @@ describe("AdminAuth", () => {
     });
 
     it("should generate different tokens each time", async () => {
-      const { generateSecureToken } = await import("@/lib/adminAuth");
+      const { generateSecureToken } = await import("../src/lib/adminAuth");
       const token1 = generateSecureToken(48);
       const token2 = generateSecureToken(48);
       expect(token1).not.toBe(token2);

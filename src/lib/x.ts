@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getDbPool } from "@/lib/db";
+import { getDbPool } from "./db";
 
 export type XTweetRow = {
   handle: string;

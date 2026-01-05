@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { JsonLd } from "@/components/JsonLd";
-import { generateFactsIndexMetadata } from "@/lib/seo";
-import { getDynamicVariables } from "@/lib/variables";
+import { JsonLd } from "../../components/JsonLd";
+import { generateFactsIndexMetadata } from "../../lib/seo";
+import { getDynamicVariables } from "../../lib/variables";
 import {
   generateBreadcrumbSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../lib/structuredData";
 
 export const revalidate = 3600;
 

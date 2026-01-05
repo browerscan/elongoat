@@ -2,13 +2,15 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-import { BackgroundFX } from "@/components/BackgroundFX";
-import { ChatWidget } from "@/components/ChatWidget";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SearchProvider } from "@/components/SearchProvider";
-import { SearchModal } from "@/components/SearchModal";
+import { BackgroundFX } from "../components/BackgroundFX";
+import { ChatWidget } from "../components/ChatWidget";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import { SiteHeader } from "../components/SiteHeader";
+import { SearchProvider } from "../components/SearchProvider";
+import { SearchModal } from "../components/SearchModal";
+import { getPublicEnv } from "../lib/env";
 
+const env = getPublicEnv();
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -25,9 +27,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io",
-  ),
+  metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL ?? "https://elongoat.io"),
   title: {
     default: "ElonGoat — Digital Elon (AI)",
     template: "%s — ElonGoat",

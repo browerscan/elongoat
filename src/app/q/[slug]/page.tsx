@@ -3,22 +3,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/JsonLd";
-import { LastModified } from "@/components/LastModified";
-import { Markdown } from "@/components/Markdown";
-import { OpenChatButton } from "@/components/OpenChatButton";
-import { RelatedContent } from "@/components/RelatedContent";
-import { SeeAlso } from "@/components/SeeAlso";
-import { AuthorInfo } from "@/components/AuthorInfo";
-import { getPaaAnswerContent } from "@/lib/contentGen";
-import { getCustomQa } from "@/lib/customQa";
+import { JsonLd } from "../../../components/JsonLd";
+import { LastModified } from "../../../components/LastModified";
+import { Markdown } from "../../../components/Markdown";
+import { OpenChatButton } from "../../../components/OpenChatButton";
+import { RelatedContent } from "../../../components/RelatedContent";
+import { RelatedTweets } from "../../../components/RelatedTweets";
+import { SeeAlso } from "../../../components/SeeAlso";
+import { AuthorInfo } from "../../../components/AuthorInfo";
+import { getPaaAnswerContent } from "../../../lib/contentGen";
+import { getCustomQa } from "../../../lib/customQa";
 import {
   getPaaIndex,
   getTopQuestionSlugs,
   findPaaQuestion,
   getClusterIndex,
-} from "@/lib/indexes";
-import { generateQaMetadata } from "@/lib/seo";
+} from "../../../lib/indexes";
+import { generateQaMetadata } from "../../../lib/seo";
 import {
   generateBreadcrumbSchema,
   generateFaqPageSchema,
@@ -27,8 +28,8 @@ import {
   generateHowToSchema,
   extractHowToStepsFromMarkdown,
   isHowToContent,
-} from "@/lib/structuredData";
-import { getDynamicVariables } from "@/lib/variables";
+} from "../../../lib/structuredData";
+import { getDynamicVariables } from "../../../lib/variables";
 
 export const revalidate = 3600;
 
@@ -151,6 +152,15 @@ export default async function QuestionPage({
               <Markdown content={custom.answerMd} />
             </div>
           </section>
+
+          <RelatedTweets
+            keywords={keywords
+              .split(" ")
+              .filter((w) => w.length > 3)
+              .slice(0, 5)}
+            limit={3}
+            title="What Elon said about this"
+          />
 
           <RelatedContent
             type="qa"
@@ -340,11 +350,6 @@ export default async function QuestionPage({
                   <div className="text-sm font-semibold text-white">
                     {s.question}
                   </div>
-                  {s.volume ? (
-                    <div className="mt-1 text-xs text-white/60">
-                      Volume: {s.volume.toLocaleString()}
-                    </div>
-                  ) : null}
                 </Link>
               ))}
             </div>
@@ -376,6 +381,15 @@ export default async function QuestionPage({
             </div>
           </section>
         )}
+
+        <RelatedTweets
+          keywords={keywords
+            .split(" ")
+            .filter((w) => w.length > 3)
+            .slice(0, 5)}
+          limit={3}
+          title="What Elon said about this"
+        />
 
         <RelatedContent
           type="qa"

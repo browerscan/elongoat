@@ -2,10 +2,12 @@ import "server-only";
 
 import { z } from "zod";
 
-import type { ChatConfig, ChatMood } from "@/lib/buildSystemPrompt";
-import { getDbPool } from "@/lib/db";
-import { getRedis } from "@/lib/redis";
+import type { ChatConfig, ChatMood } from "./buildSystemPrompt";
+import { getDbPool } from "./db";
+import { getRedis } from "./redis";
+import { getEnv } from "./env";
 
+const env = getEnv();
 const MoodSchema = z.enum(["confident", "neutral", "defensive"]);
 
 function parseBool(value: string | undefined, fallback: boolean): boolean {
@@ -26,8 +28,8 @@ type ChatConfigResult = { config: ChatConfig; updatedAt: string };
 
 export async function getChatConfig(): Promise<ChatConfigResult> {
   const envConfig: ChatConfig = {
-    mood: parseMood(process.env.CHAT_MOOD, "confident"),
-    typingQuirk: parseBool(process.env.CHAT_TYPING_QUIRK, true),
+    mood: parseMood(env.CHAT_MOOD, "confident"),
+    typingQuirk: env.CHAT_TYPING_QUIRK,
   };
 
   const redis = getRedis();

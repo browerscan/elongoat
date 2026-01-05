@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { ClusterTopic, PaaQuestion } from "@/lib/indexes";
-import { SemanticRelatedContent } from "@/components/SemanticRelatedContent";
+import type { ClusterTopic, PaaQuestion } from "../lib/indexes";
+import { SemanticRelatedContent } from "./SemanticRelatedContent";
 
 export interface RelatedContentProps {
   /**
@@ -66,8 +66,8 @@ export async function RelatedContent({
   if (useSemantic) {
     try {
       const { getSemanticRelatedContent, buildSemanticQuery } =
-        await import("@/lib/semanticRelated");
-      const { isEmbeddingEnabled } = await import("@/lib/embeddings");
+        await import("../lib/semanticRelated");
+      const { isEmbeddingEnabled } = await import("../lib/embeddings");
 
       if (isEmbeddingEnabled()) {
         const query = buildSemanticQuery({
@@ -107,7 +107,7 @@ export async function RelatedContent({
 
   // Fall back to keyword-based matching
   const { getClusterIndex, getPaaIndex, listTopicPages } =
-    await import("@/lib/indexes");
+    await import("../lib/indexes");
 
   const [cluster, paa] = await Promise.all([getClusterIndex(), getPaaIndex()]);
 

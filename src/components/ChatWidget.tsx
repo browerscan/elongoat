@@ -18,8 +18,11 @@ import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
+import { getPublicEnv } from "../lib/env";
 
-import { deriveChatUx, shouldGlitchText } from "@/lib/chatUi";
+import { deriveChatUx, shouldGlitchText } from "../lib/chatUi";
+
+const env = getPublicEnv();
 
 const MAX_INPUT_CHARS = 2000;
 const SEND_DEBOUNCE_MS = 300;
@@ -487,8 +490,8 @@ export function ChatWidget() {
       }
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/chat`
+        const apiUrl = env.NEXT_PUBLIC_API_URL
+          ? `${env.NEXT_PUBLIC_API_URL}/api/chat`
           : "/api/chat";
         const res = await fetch(apiUrl, {
           method: "POST",

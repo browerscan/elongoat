@@ -1,3 +1,6 @@
+import { getEnv } from "./env";
+
+const env = getEnv();
 // ============================================================================
 // Environment Validation - P0 Security
 // ============================================================================
@@ -42,7 +45,7 @@ function validateSecret(
   const { requiredInProduction = true, minLength = 32 } = options;
 
   if (!value) {
-    if (requiredInProduction && process.env.NODE_ENV === "production") {
+    if (requiredInProduction && env.NODE_ENV === "production") {
       return {
         valid: false,
         error: `${name} is required in production`,
@@ -80,27 +83,27 @@ export function validateRequiredSecrets(): ValidationResult {
   const criticalSecrets = [
     {
       name: "VECTORENGINE_API_KEY",
-      value: process.env.VECTORENGINE_API_KEY,
+      value: env.VECTORENGINE_API_KEY,
       options: { requiredInProduction: true, minLength: 10 },
     },
     {
       name: "ELONGOAT_ADMIN_TOKEN",
-      value: process.env.ELONGOAT_ADMIN_TOKEN,
+      value: env.ELONGOAT_ADMIN_TOKEN,
       options: { requiredInProduction: true, minLength: 32 },
     },
     {
       name: "ELONGOAT_ADMIN_SESSION_SECRET",
-      value: process.env.ELONGOAT_ADMIN_SESSION_SECRET,
+      value: env.ELONGOAT_ADMIN_SESSION_SECRET,
       options: { requiredInProduction: true, minLength: 32 },
     },
     {
       name: "RATE_LIMIT_IP_SECRET",
-      value: process.env.RATE_LIMIT_IP_SECRET,
+      value: env.RATE_LIMIT_IP_SECRET,
       options: { requiredInProduction: true, minLength: 16 },
     },
     {
       name: "DATABASE_URL",
-      value: process.env.DATABASE_URL,
+      value: env.DATABASE_URL,
       options: { requiredInProduction: true, minLength: 20 },
     },
   ];
@@ -116,12 +119,12 @@ export function validateRequiredSecrets(): ValidationResult {
   const optionalSecrets = [
     {
       name: "ELONGOAT_RAG_API_KEY",
-      value: process.env.ELONGOAT_RAG_API_KEY,
+      value: env.ELONGOAT_RAG_API_KEY,
       minLength: 32,
     },
     {
       name: "REDIS_URL",
-      value: process.env.REDIS_URL,
+      value: env.REDIS_URL,
       minLength: 10,
     },
   ];
@@ -141,16 +144,16 @@ export function validateRequiredSecrets(): ValidationResult {
   }
 
   // Check for dangerous configurations
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     // Ensure HTTPS URLs in production
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const siteUrl = env.NEXT_PUBLIC_SITE_URL;
     if (siteUrl && !siteUrl.startsWith("https://")) {
       errors.push(
         `NEXT_PUBLIC_SITE_URL must use HTTPS in production (got: ${siteUrl})`,
       );
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = env.NEXT_PUBLIC_API_URL;
     if (apiUrl && !apiUrl.startsWith("https://")) {
       errors.push(
         `NEXT_PUBLIC_API_URL must use HTTPS in production (got: ${apiUrl})`,
@@ -158,10 +161,7 @@ export function validateRequiredSecrets(): ValidationResult {
     }
 
     // Warn about RATE_LIMIT_ENABLED
-    if (
-      process.env.RATE_LIMIT_ENABLED !== "1" &&
-      process.env.RATE_LIMIT_ENABLED !== "true"
-    ) {
+    if (!env.RATE_LIMIT_ENABLED) {
       warnings.push("RATE_LIMIT_ENABLED is not enabled in production");
     }
   }
@@ -209,10 +209,7 @@ export function validateOrExit(): void {
 }
 
 // Auto-validate on module import in production
-if (
-  process.env.NODE_ENV === "production" &&
-  process.env.VALIDATE_ENV_ON_STARTUP !== "0"
-) {
+if (env.NODE_ENV === "production" && env.VALIDATE_ENV_ON_STARTUP) {
   // Defer to next tick to allow other modules to initialize
   process.nextTick(() => {
     validateOrExit();

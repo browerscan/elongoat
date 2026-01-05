@@ -1,11 +1,11 @@
 import "server-only";
 
-import { checkAdminAuth, unauthorized } from "@/lib/adminAuth";
+import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
 import {
   AdminVariablesUpdateSchema,
   getAdminVariablesSnapshot,
   updateAdminVariables,
-} from "@/lib/adminVariables";
+} from "../../../../lib/adminVariables";
 
 export async function GET(req: Request) {
   if (!checkAdminAuth(req)) return unauthorized();

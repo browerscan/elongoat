@@ -1,41 +1,29 @@
 // Server-only module (import removed for backend compatibility)
-
 import Redis from "ioredis";
 export type { Redis } from "ioredis";
+import { getEnv } from "./env";
+
+const env = getEnv();
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const REDIS_ENABLED = process.env.REDIS_URL !== undefined;
-
 /**
  * Check if Redis is enabled (REDIS_URL is set).
  */
 export function isRedisEnabled(): boolean {
-  return REDIS_ENABLED;
+  return !!env.REDIS_URL;
 }
-const REDIS_MAX_RETRIES = Number.parseInt(
-  process.env.REDIS_MAX_RETRIES ?? "3",
-  10,
-);
-const REDIS_RETRY_DELAY_MS = Number.parseInt(
-  process.env.REDIS_RETRY_DELAY_MS ?? "100",
-  10,
-);
-const REDIS_CONNECT_TIMEOUT_MS = Number.parseInt(
-  process.env.REDIS_CONNECT_TIMEOUT_MS ?? "5000",
-  10,
-);
+const REDIS_MAX_RETRIES = env.REDIS_MAX_RETRIES;
+const REDIS_RETRY_DELAY_MS = env.REDIS_RETRY_DELAY_MS;
+const REDIS_CONNECT_TIMEOUT_MS = env.REDIS_CONNECT_TIMEOUT_MS;
 // Reserved for future command-level timeout implementation
 // const REDIS_COMMAND_TIMEOUT_MS = Number.parseInt(
-//   process.env.REDIS_COMMAND_TIMEOUT_MS ?? "3000",
+//   env.REDIS_COMMAND_TIMEOUT_MS ?? "3000",
 //   10,
 // );
-const REDIS_KEEP_ALIVE_MS = Number.parseInt(
-  process.env.REDIS_KEEP_ALIVE_MS ?? "30000",
-  10,
-);
+const REDIS_KEEP_ALIVE_MS = env.REDIS_KEEP_ALIVE_MS;
 
 // ============================================================================
 // Redis Client Singleton with Connection Pooling
@@ -43,7 +31,7 @@ const REDIS_KEEP_ALIVE_MS = Number.parseInt(
 
 let redisClient: Redis | null = null;
 let redisPool: Redis[] | null = null;
-const MAX_POOL_SIZE = Number.parseInt(process.env.REDIS_POOL_SIZE ?? "5", 10);
+const MAX_POOL_SIZE = env.REDIS_POOL_SIZE;
 let poolIndex = 0;
 
 interface RedisHealthStatus {
@@ -64,7 +52,7 @@ let redisHealth: RedisHealthStatus = {
  * Creates a new Redis instance with optimized configuration.
  */
 function createRedisInstance(): Redis {
-  const url = process.env.REDIS_URL;
+  const url = env.REDIS_URL;
   if (!url) {
     throw new Error("REDIS_URL is not defined");
   }
@@ -114,7 +102,7 @@ async function ensureRedisConnected(redis: Redis): Promise<void> {
  * Gets or creates the primary Redis client instance.
  */
 export function getRedis(): Redis | null {
-  if (!REDIS_ENABLED) return null;
+  if (!isRedisEnabled()) return null;
 
   if (!redisClient) {
     redisClient = createRedisInstance();
@@ -129,7 +117,7 @@ export function getRedis(): Redis | null {
  * Connection is established lazily on first use.
  */
 export function getRedisFromPool(): Redis | null {
-  if (!REDIS_ENABLED) return null;
+  if (!isRedisEnabled()) return null;
 
   const primary = getRedis();
   if (!primary) return null;
@@ -198,7 +186,7 @@ export async function executePipeline(
   try {
     return await pipeline.exec();
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[Redis] Pipeline error:", error);
     }
     return null;
@@ -222,7 +210,7 @@ export async function mget(keys: string[]): Promise<(string | null)[] | null> {
     await ensureRedisConnected(redis);
     return await redis.mget(...keys);
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[Redis] MGET error:", error);
     }
     return null;
@@ -243,7 +231,7 @@ export async function mset(
     await redis.mset(keyValuePairs);
     return true;
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[Redis] MSET error:", error);
     }
     return false;
@@ -263,7 +251,7 @@ export async function mdel(keys: string[]): Promise<number> {
     await ensureRedisConnected(redis);
     return await redis.del(...keys);
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.error("[Redis] DEL error:", error);
     }
     return 0;
@@ -392,7 +380,7 @@ interface RedisStats {
  */
 export function getRedisStats(): RedisStats {
   return {
-    enabled: REDIS_ENABLED,
+    enabled: isRedisEnabled(),
     poolSize: redisPool?.length ?? 0,
     health: redisHealth,
   };

@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { JsonLd } from "@/components/JsonLd";
-import { generateVideosIndexMetadata } from "@/lib/seo";
-import { listVideos } from "@/lib/videos";
+import { JsonLd } from "../../components/JsonLd";
+import { generateVideosIndexMetadata } from "../../lib/seo";
+import { listVideos } from "../../lib/videos";
 import {
   generateBreadcrumbSchema,
   generateWebPageSchema,
-} from "@/lib/structuredData";
+} from "../../lib/structuredData";
 
 export const revalidate = 3600;
 

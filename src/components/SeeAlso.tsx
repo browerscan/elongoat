@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, HelpCircle, FolderTree, Lightbulb } from "lucide-react";
-import type { ClusterTopic, PaaQuestion } from "@/lib/indexes";
+import type { ClusterTopic, PaaQuestion } from "../lib/indexes";
 
 export interface SeeAlsoProps {
   /**
@@ -36,7 +36,7 @@ export async function SeeAlso({
   currentSlug,
   limit = 4,
 }: SeeAlsoProps) {
-  const { getClusterIndex, getPaaIndex } = await import("@/lib/indexes");
+  const { getClusterIndex, getPaaIndex } = await import("../lib/indexes");
 
   const [cluster, paa] = await Promise.all([getClusterIndex(), getPaaIndex()]);
 

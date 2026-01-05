@@ -1,5 +1,5 @@
-import { ContentSkeleton } from "@/components/ContentSkeleton";
-import { Skeleton } from "@/components/Skeleton";
+import { ContentSkeleton } from "../../../components/ContentSkeleton";
+import { Skeleton } from "../../../components/Skeleton";
 
 /**
  * Loading skeleton for cluster pages.

@@ -7,8 +7,8 @@ import {
   getPaaIndex,
   getTopPageSlugs,
   getTopQuestionSlugs,
-} from "@/lib/indexes";
-import { getDynamicVariables } from "@/lib/variables";
+} from "../../../../lib/indexes";
+import { getDynamicVariables } from "../../../../lib/variables";
 
 export const revalidate = 3600;
 

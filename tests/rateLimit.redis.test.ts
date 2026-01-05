@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import { getRedis } from "@/lib/redis";
-import { rateLimit } from "@/lib/rateLimit";
+import { getRedis } from "../src/lib/redis";
+import { rateLimit } from "../src/lib/rateLimit";
 
 const RUN_REDIS_TESTS = process.env.RUN_REDIS_TESTS === "1";
 

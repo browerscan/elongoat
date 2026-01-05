@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AdminVariablesUpdateSchema } from "@/lib/adminVariables";
+import { AdminVariablesUpdateSchema } from "../src/lib/adminVariables";
 
 describe("AdminVariablesUpdateSchema", () => {
   it("rejects empty payload", () => {
