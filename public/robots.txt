@@ -10,8 +10,7 @@ Disallow: /api/
 Disallow: /_next/
 Disallow: /static/
 
-# Polite crawl delay for all crawlers
-Crawl-delay: 1
+# Note: Crawl-delay removed as Google/Bing ignore it
 
 # Block OpenAI crawlers (content protection)
 User-agent: GPTBot

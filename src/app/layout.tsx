@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import dynamic from "next/dynamic";
 import "./globals.css";
 
 import { BackgroundFX } from "../components/BackgroundFX";
-import { ChatWidget } from "../components/ChatWidget";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { SiteHeader } from "../components/SiteHeader";
 import { SearchProvider } from "../components/SearchProvider";
 import { SearchModal } from "../components/SearchModal";
 import { getPublicEnv } from "../lib/env";
+
+// Lazy load ChatWidget for better initial page load performance
+const ChatWidget = dynamic(
+  () => import("../components/ChatWidget").then((mod) => mod.ChatWidget),
+  { ssr: false },
+);
 
 const env = getPublicEnv();
 const geistSans = localFont({
