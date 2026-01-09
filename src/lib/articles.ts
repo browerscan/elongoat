@@ -42,25 +42,37 @@ export interface ArticleDetail extends Article {
 
 /**
  * Extract title from markdown content or slug
- * First tries to find # heading, falls back to slug parsing
+ * Skips generic headings like "TL;DR", falls back to slug parsing
  */
 function extractTitle(contentMd: string | null, slug: string): string {
-  if (contentMd) {
-    // Try to find first H1 or H2 heading
-    const h1Match = contentMd.match(/^#\s+(.+?)$/m);
-    if (h1Match) return h1Match[1].trim();
+  // Skip headings that are generic/not useful as titles
+  const skipHeadings = ["tl;dr", "tldr", "summary", "overview", "introduction"];
 
-    const h2Match = contentMd.match(/^##\s+(.+?)$/m);
-    if (h2Match) return h2Match[1].trim();
+  if (contentMd) {
+    // Try to find all H1 or H2 headings and pick a good one
+    const headings = contentMd.match(/^#{1,2}\s+(.+?)$/gm) || [];
+    for (const heading of headings) {
+      const text = heading.replace(/^#{1,2}\s+/, "").trim();
+      if (text && !skipHeadings.includes(text.toLowerCase())) {
+        return text;
+      }
+    }
   }
 
-  // Fallback: parse slug
+  // Fallback: parse slug to generate a readable title
   // "elon-musk-ai/ai-quotes" -> "AI Quotes"
+  // "x-formerly-twitter-updates/what-is-twitter-called-now" -> "What Is Twitter Called Now"
   const parts = slug.split("/");
   const pagePart = parts[parts.length - 1] || parts[0];
   return pagePart
     .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => {
+      // Keep common acronyms uppercase
+      if (["ai", "x", "ev", "ceo", "us", "uk"].includes(w.toLowerCase())) {
+        return w.toUpperCase();
+      }
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
     .join(" ");
 }
 

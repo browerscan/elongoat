@@ -43,6 +43,32 @@ import { getDynamicVariables } from "../../../lib/variables";
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
+  // Try to fetch all article slugs from API (for full static generation)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.elongoat.io";
+  try {
+    const res = await fetch(`${apiUrl}/api/articles/slugs`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.slugs && data.slugs.length > 0) {
+        console.log(
+          `[generateStaticParams] Fetched ${data.slugs.length} slugs from API`,
+        );
+        return data.slugs.map((s: string) => {
+          const [topic, page] = s.split("/");
+          return { topic, page };
+        });
+      }
+    }
+  } catch (e) {
+    console.warn(
+      "[generateStaticParams] API fetch failed, falling back to top pages:",
+      e,
+    );
+  }
+
+  // Fallback to top pages from JSON index
   const slugs = await getTopPageSlugs();
   return slugs.map((s) => {
     const [topic, page] = s.split("/");
