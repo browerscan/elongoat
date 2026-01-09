@@ -13,7 +13,7 @@ import { JsonLd } from "../components/JsonLd";
 import { OpenChatButton } from "../components/OpenChatButton";
 import { getClusterIndex } from "../lib/indexes";
 import { getDynamicVariables } from "../lib/variables";
-import { getFeaturedArticles, getArticleCount } from "../lib/articles";
+import { fetchFeaturedArticles, fetchArticleCount } from "../lib/apiClient";
 import { generateHomeMetadata } from "../lib/seo";
 import {
   generateOrganizationSchema,
@@ -43,15 +43,17 @@ function formatDate(iso: string): string {
 }
 
 export default async function Home() {
-  const [cluster, vars, featuredArticles, articleCount, tweetStats, tweets] =
+  const [cluster, vars, featuredResult, articleCount, tweetStats, tweets] =
     await Promise.all([
       getClusterIndex(),
       getDynamicVariables(),
-      getFeaturedArticles(8),
-      getArticleCount(),
+      fetchFeaturedArticles(8),
+      fetchArticleCount(),
       getTweetStats(),
       getTimelineTweets({ limit: 6, includeReplies: false }),
     ]);
+
+  const featuredArticles = featuredResult.articles;
 
   const jsonLd = [
     generateWebSiteSchema(),

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, FileText, Search, BookOpen } from "lucide-react";
 
 import { JsonLd } from "../../components/JsonLd";
-import { listArticles, getArticleCount } from "../../lib/articles";
+import { fetchArticles, fetchArticleCount } from "../../lib/apiClient";
 import { getTweetStats } from "../../lib/muskTweets";
 import {
   generateBreadcrumbSchema,
@@ -42,8 +42,8 @@ export default async function WritingPage({
   const offset = (page - 1) * limit;
 
   const [articlesResult, articleCount, tweetStats] = await Promise.all([
-    listArticles({ limit, offset, search, sort: "updated" }),
-    getArticleCount(),
+    fetchArticles({ limit, offset, search, sort: "updated" }),
+    fetchArticleCount(),
     getTweetStats(),
   ]);
 

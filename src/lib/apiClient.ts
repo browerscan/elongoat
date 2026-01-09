@@ -185,6 +185,28 @@ export type QaDetailResponse =
       totalQuestions: number;
     };
 
+// Article types
+export type Article = {
+  slug: string;
+  kind: string;
+  title: string;
+  snippet: string;
+  wordCount: number;
+  updatedAt: string;
+  generatedAt: string;
+  url: string;
+};
+
+export type ArticleListResponse = {
+  articles: Article[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+};
+
 // API functions
 export async function fetchClusterData(): Promise<ClusterDataResponse> {
   return apiFetch<ClusterDataResponse>("/api/data/cluster", {
@@ -241,4 +263,46 @@ export async function fetchQaDetail(
   } catch {
     return null;
   }
+}
+
+// Article API functions
+export async function fetchArticles(params?: {
+  kind?: "cluster" | "paa";
+  sort?: "updated" | "title";
+  limit?: number;
+  offset?: number;
+  search?: string;
+}): Promise<ArticleListResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.kind) searchParams.set("kind", params.kind);
+  if (params?.sort) searchParams.set("sort", params.sort);
+  if (params?.limit) searchParams.set("limit", params.limit.toString());
+  if (params?.offset) searchParams.set("offset", params.offset.toString());
+  if (params?.search) searchParams.set("search", params.search);
+
+  const query = searchParams.toString();
+  const endpoint = `/api/articles${query ? `?${query}` : ""}`;
+
+  try {
+    return await apiFetch<ArticleListResponse>(endpoint, {
+      revalidate: 3600,
+      tags: ["articles"],
+    });
+  } catch {
+    return {
+      articles: [],
+      pagination: { total: 0, limit: 24, offset: 0, hasMore: false },
+    };
+  }
+}
+
+export async function fetchFeaturedArticles(
+  limit = 8,
+): Promise<ArticleListResponse> {
+  return fetchArticles({ limit, sort: "updated" });
+}
+
+export async function fetchArticleCount(): Promise<number> {
+  const result = await fetchArticles({ limit: 1 });
+  return result.pagination.total;
 }
