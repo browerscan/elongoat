@@ -5,12 +5,19 @@
 import { NextResponse } from "next/server";
 import { getDbPool } from "../../../../lib/db";
 
-export const revalidate = 3600;
+// Force dynamic - must query database each time
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   const pool = getDbPool();
+  console.log(
+    "[API /articles/slugs] Pool status:",
+    pool ? "connected" : "null",
+  );
   if (!pool) {
-    return NextResponse.json({ slugs: [] });
+    console.error("[API /articles/slugs] Database pool not available");
+    return NextResponse.json({ slugs: [], error: "Database not connected" });
   }
 
   try {
