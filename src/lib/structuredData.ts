@@ -396,6 +396,87 @@ export function generateWebPageSchema(params: {
 }
 
 /**
+ * Generate SocialMediaPosting schema for tweet pages
+ */
+export function generateSocialMediaPostingSchema(params: {
+  text: string;
+  url: string;
+  sourceUrl?: string;
+  datePublished?: string;
+  authorName?: string;
+  likeCount?: number;
+  replyCount?: number;
+  retweetCount?: number;
+  viewCount?: number;
+}) {
+  const {
+    text,
+    url,
+    sourceUrl,
+    datePublished,
+    authorName = "Elon Musk",
+    likeCount,
+    replyCount,
+    retweetCount,
+    viewCount,
+  } = params;
+
+  const interactions: Array<Record<string, unknown>> = [];
+
+  if (typeof likeCount === "number" && likeCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "LikeAction" },
+      userInteractionCount: likeCount,
+    });
+  }
+
+  if (typeof replyCount === "number" && replyCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "CommentAction" },
+      userInteractionCount: replyCount,
+    });
+  }
+
+  if (typeof retweetCount === "number" && retweetCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "ShareAction" },
+      userInteractionCount: retweetCount,
+    });
+  }
+
+  if (typeof viewCount === "number" && viewCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "ViewAction" },
+      userInteractionCount: viewCount,
+    });
+  }
+
+  const post: Record<string, unknown> = {
+    "@context": BASE_CONTEXT,
+    "@type": "SocialMediaPosting",
+    url: `${SITE_URL}${url}`,
+    headline: text.replace(/\s+/g, " ").slice(0, 110),
+    articleBody: text,
+    datePublished,
+    author: {
+      "@type": "Person",
+      name: authorName,
+    },
+    ...(sourceUrl && { sameAs: sourceUrl }),
+  };
+
+  if (interactions.length > 0) {
+    post.interactionStatistic = interactions;
+  }
+
+  return post;
+}
+
+/**
  * Generate Person schema for Elon Musk
  */
 export function generatePersonSchema() {

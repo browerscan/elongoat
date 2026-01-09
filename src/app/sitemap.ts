@@ -41,22 +41,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
     },
     {
+      url: `${siteUrl}/writing`,
+      lastModified: now,
+      priority: 0.85,
+      changeFrequency: "weekly",
+    },
+    {
+      url: `${siteUrl}/tweets`,
+      lastModified: now,
+      priority: 0.85,
+      changeFrequency: "daily",
+    },
+    {
       url: `${siteUrl}/videos`,
       lastModified: now,
       priority: 0.7,
       changeFrequency: "daily",
     },
     {
-      url: `${siteUrl}/x`,
-      lastModified: now,
-      priority: 0.5,
-      changeFrequency: "hourly",
-    },
-    {
-      url: `${siteUrl}/x/following`,
-      lastModified: now,
-      priority: 0.4,
-      changeFrequency: "daily",
+      url: `${siteUrl}/about`,
+      lastModified: clusterUpdated,
+      priority: 0.6,
+      changeFrequency: "monthly",
     },
     {
       url: `${siteUrl}/facts`,

@@ -124,6 +124,31 @@ function countWords(contentMd: string | null): number {
 }
 
 /**
+ * Estimate word count from a truncated sample and full length.
+ * This avoids undercounting when list queries only fetch a snippet.
+ */
+function estimateWordCountFromLength(
+  contentSample: string | null,
+  contentLength?: number | null,
+): number {
+  if (!contentLength || contentLength <= 0) {
+    return countWords(contentSample);
+  }
+
+  if (contentSample) {
+    const sampleLength = contentSample.length;
+    const sampleWords = countWords(contentSample);
+    if (sampleLength > 0 && sampleWords > 0) {
+      const ratio = contentLength / sampleLength;
+      return Math.max(1, Math.round(sampleWords * ratio));
+    }
+  }
+
+  // Fallback heuristic: average ~5.5 chars per word including spaces.
+  return Math.max(1, Math.round(contentLength / 5.5));
+}
+
+/**
  * Build URL from slug and kind
  */
 function buildUrl(slug: string, kind: string): string {
@@ -209,11 +234,18 @@ export async function listArticles(params: {
       slug: string;
       kind: string;
       content_md: string;
+      content_length: number;
       updated_at: Date | null;
       generated_at: Date;
     }>(
       `
-      SELECT slug, kind, LEFT(content_md, 1000) as content_md, updated_at, generated_at
+      SELECT
+        slug,
+        kind,
+        LEFT(content_md, 1000) as content_md,
+        LENGTH(content_md) as content_length,
+        updated_at,
+        generated_at
       FROM elongoat.content_cache
       WHERE ${conditions.join(" AND ")}
       ORDER BY ${orderBy}
@@ -227,7 +259,10 @@ export async function listArticles(params: {
       kind: row.kind,
       title: extractTitle(row.content_md, row.slug),
       snippet: extractSnippet(row.content_md),
-      wordCount: countWords(row.content_md),
+      wordCount: estimateWordCountFromLength(
+        row.content_md,
+        row.content_length,
+      ),
       updatedAt: (row.updated_at || row.generated_at).toISOString(),
       generatedAt: row.generated_at.toISOString(),
       url: buildUrl(row.slug, row.kind),

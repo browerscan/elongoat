@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description:
     "Search through 67,000+ tweets from Elon Musk. Find his thoughts on any topic from 2010 to 2025.",
   alternates: { canonical: "/x/search" },
+  robots: { index: false, follow: true },
 };
 
 function formatNumber(n: number): string {

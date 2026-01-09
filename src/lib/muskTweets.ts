@@ -491,6 +491,45 @@ export async function getTweetCountsByYear(): Promise<
 }
 
 /**
+ * List tweet IDs + dates for sitemap generation
+ */
+export async function listTweetSitemapEntries(params: {
+  limit?: number;
+  offset?: number;
+}): Promise<Array<{ tweetId: string; createdAt: string }>> {
+  const pool = getDbPool();
+  if (!pool) return [];
+
+  const limit = Math.max(1, Math.min(50_000, params.limit ?? 45_000));
+  const offset = Math.max(0, params.offset ?? 0);
+
+  try {
+    const result = await pool.query<{
+      tweet_id: string;
+      created_at: Date;
+    }>(
+      `
+      SELECT tweet_id, created_at
+      FROM elongoat.musk_tweets
+      ORDER BY created_at DESC
+      LIMIT $1 OFFSET $2
+      `,
+      [limit, offset],
+    );
+
+    return result.rows
+      .filter((row) => Boolean(row.tweet_id) && Boolean(row.created_at))
+      .map((row) => ({
+        tweetId: row.tweet_id,
+        createdAt: row.created_at.toISOString(),
+      }));
+  } catch (error) {
+    console.error("[muskTweets] Sitemap list error:", error);
+    return [];
+  }
+}
+
+/**
  * Find related tweets for an article/topic (for RelatedTweets component)
  */
 export async function findRelatedTweets(params: {
