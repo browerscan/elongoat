@@ -37,6 +37,7 @@ jobs:
           mv src/app/admin .api-backup/ || true
           mv src/app/tweets .api-backup/ || true
           mv src/app/writing .api-backup/ || true
+          mv src/app/sitemaps/tweets .api-backup/sitemaps-tweets || true
 
       - name: Build static export
         run: npm run build
@@ -54,6 +55,7 @@ jobs:
           mv .api-backup/admin src/app/ || true
           mv .api-backup/tweets src/app/ || true
           mv .api-backup/writing src/app/ || true
+          mkdir -p src/app/sitemaps && mv .api-backup/sitemaps-tweets src/app/sitemaps/tweets || true
           rm -rf .api-backup || true
 
       - name: Deploy to Cloudflare Pages
