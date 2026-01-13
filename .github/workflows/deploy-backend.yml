@@ -14,13 +14,16 @@ on:
       - "next.config.backend.mjs"
       - "Dockerfile"
       - "docker-compose.yml"
+      - "entrypoint.sh"
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: vps-backend
+      url: https://api.elongoat.io
 
     steps:
       - name: Checkout code
@@ -29,14 +32,9 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Prepare backend config
-        run: |
-          # Use backend config for VPS deployment
-          cp next.config.backend.mjs next.config.mjs
 
       - name: Sync code to VPS
         run: |
@@ -46,17 +44,38 @@ jobs:
             --exclude '.git' \
             --exclude '.env' \
             --exclude '.env.local' \
+            --exclude '.env.*.local' \
             --exclude 'data/generated' \
             --exclude 'out' \
-            --exclude 'next.config.mjs' \
+            --exclude 'wrangler.toml' \
+            --exclude '.wrangler' \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}/
 
       - name: Deploy on VPS
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && cp next.config.backend.mjs next.config.mjs && make deploy"
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            cd ${{ secrets.VPS_PATH }}
 
-      - name: Health check
+            # Use backend config
+            cp next.config.backend.mjs next.config.mjs
+
+            # Build and deploy
+            make deploy
+
+            # Wait for health check
+            echo "Waiting for container startup..."
+            sleep 15
+
+            # Health check
+            if curl -sf http://localhost:3000/api/healthz > /dev/null; then
+              echo "✅ Backend deployment successful"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
+          ENDSSH
+
+      - name: Health check (external)
         run: |
-          echo "Waiting for container to start..."
-          sleep 30
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "curl -sf http://localhost:3000/api/healthz || echo 'Health check failed'"
+          sleep 5
+          curl -sf https://api.elongoat.io/api/health || echo "⚠️ External health check failed (may be DNS propagation)"
