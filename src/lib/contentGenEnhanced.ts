@@ -6,6 +6,7 @@ import { getDynamicVariables } from "./variables";
 import { buildRagContext, formatRagContexts } from "./rag";
 import { vectorEngineChatComplete } from "./vectorengine";
 import { getEnv } from "./env";
+import { analyzeContent, type ContentQualityReport } from "./contentQuality";
 
 const env = getEnv();
 
@@ -91,16 +92,26 @@ async function generateWithRetry(params: {
 
 /**
  * Generate cluster page content using RAG + Codex
+ * Supports optional enrichment from external sources (web, YouTube)
  */
 export async function generateClusterPageContentEnhanced(params: {
   topicSlug: string;
   pageSlug: string;
   ttlSeconds?: number;
+  enrichmentOptions?: {
+    includeEnrichedWeb?: boolean;
+    includeEnrichedYouTube?: boolean;
+    enrichedWebUrls?: string[];
+    enrichedYouTubeIds?: string[];
+  };
+  analyzeQuality?: boolean;
 }): Promise<{
   contentMd: string;
   model: string;
   wordCount: number;
   ragContextsUsed: number;
+  qualityReport?: ContentQualityReport;
+  qualityScore?: number;
 }> {
   const slug = `${params.topicSlug}/${params.pageSlug}`;
   const page = await findPage(params.topicSlug, params.pageSlug);
@@ -108,7 +119,7 @@ export async function generateClusterPageContentEnhanced(params: {
 
   const vars = await getDynamicVariables();
 
-  // Build RAG context
+  // Build RAG context with optional enrichment
   const ragQuery = `${page.page} ${page.topic} ${page.topKeywords
     .slice(0, 5)
     .map((k) => k.keyword)
@@ -118,6 +129,10 @@ export async function generateClusterPageContentEnhanced(params: {
     includePaa: true,
     includeContentCache: true,
     includeClusters: false, // Don't include cluster context for cluster generation
+    includeEnrichedWeb: params.enrichmentOptions?.includeEnrichedWeb,
+    includeEnrichedYouTube: params.enrichmentOptions?.includeEnrichedYouTube,
+    enrichedWebUrls: params.enrichmentOptions?.enrichedWebUrls,
+    enrichedYouTubeIds: params.enrichmentOptions?.enrichedYouTubeIds,
   });
 
   const ragContextFormatted = formatRagContexts(ragResult.contexts);
@@ -246,6 +261,24 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
   contentMd = genResult.contentMd;
   wordCount = genResult.wordCount;
 
+  // Optional quality analysis
+  let qualityReport: ContentQualityReport | undefined;
+  let qualityScore: number | undefined;
+
+  if (params.analyzeQuality) {
+    qualityReport = analyzeContent(contentMd, {
+      primaryKeyword: page.page,
+      secondaryKeywords: page.topKeywords.slice(0, 5).map((k) => k.keyword),
+      targetWordCount: MIN_WORDS_CLUSTER,
+    });
+    qualityScore = qualityReport.overallScore;
+
+    // Log quality metrics
+    console.info(
+      `[contentGen] ${slug} quality score: ${qualityScore}/100, word count: ${wordCount}`,
+    );
+  }
+
   // Cache the result
   await setCachedContent({
     kind: "cluster_page",
@@ -259,6 +292,7 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
       generatedAt: new Date().toISOString(),
       ragContexts: ragResult.contexts.length,
       wordCount,
+      qualityScore,
     },
   });
 
@@ -267,32 +301,48 @@ Write ONLY the markdown content (no meta-commentary). Begin now:
     model: modelName,
     wordCount,
     ragContextsUsed: ragResult.contexts.length,
+    qualityReport,
+    qualityScore,
   };
 }
 
 /**
  * Generate PAA answer using RAG + VectorEngine
+ * Supports optional enrichment and quality analysis
  */
 export async function generatePaaAnswerEnhanced(params: {
   slug: string;
   ttlSeconds?: number;
+  enrichmentOptions?: {
+    includeEnrichedWeb?: boolean;
+    includeEnrichedYouTube?: boolean;
+    enrichedWebUrls?: string[];
+    enrichedYouTubeIds?: string[];
+  };
+  analyzeQuality?: boolean;
 }): Promise<{
   contentMd: string;
   model: string;
   wordCount: number;
   ragContextsUsed: number;
+  qualityReport?: ContentQualityReport;
+  qualityScore?: number;
 }> {
   const q = await findPaaQuestion(params.slug);
   if (!q) throw new Error("PAA question not found");
 
   const vars = await getDynamicVariables();
 
-  // Build RAG context
+  // Build RAG context with optional enrichment
   const ragResult = await buildRagContext({
     query: q.question,
     includePaa: true,
     includeContentCache: true,
     includeClusters: true,
+    includeEnrichedWeb: params.enrichmentOptions?.includeEnrichedWeb,
+    includeEnrichedYouTube: params.enrichmentOptions?.includeEnrichedYouTube,
+    enrichedWebUrls: params.enrichmentOptions?.enrichedWebUrls,
+    enrichedYouTubeIds: params.enrichmentOptions?.enrichedYouTubeIds,
   });
 
   const ragContextFormatted = formatRagContexts(ragResult.contexts);
@@ -381,6 +431,22 @@ Write ONLY the markdown content. Begin:
   contentMd = genResult.contentMd;
   wordCount = genResult.wordCount;
 
+  // Optional quality analysis
+  let qualityReport: ContentQualityReport | undefined;
+  let qualityScore: number | undefined;
+
+  if (params.analyzeQuality) {
+    qualityReport = analyzeContent(contentMd, {
+      primaryKeyword: q.question,
+      targetWordCount: MIN_WORDS_PAA,
+    });
+    qualityScore = qualityReport.overallScore;
+
+    console.info(
+      `[contentGen] PAA ${params.slug} quality score: ${qualityScore}/100, word count: ${wordCount}`,
+    );
+  }
+
   // Cache the result
   await setCachedContent({
     kind: "paa_question",
@@ -394,6 +460,7 @@ Write ONLY the markdown content. Begin:
       generatedAt: new Date().toISOString(),
       ragContexts: ragResult.contexts.length,
       wordCount,
+      qualityScore,
     },
   });
 
@@ -402,5 +469,7 @@ Write ONLY the markdown content. Begin:
     model: modelName,
     wordCount,
     ragContextsUsed: ragResult.contexts.length,
+    qualityReport,
+    qualityScore,
   };
 }

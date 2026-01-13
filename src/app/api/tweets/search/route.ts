@@ -4,10 +4,17 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { searchTweets, getTweetStats } from "../../../../lib/muskTweets";
+import { rateLimitApi, rateLimitResponse } from "../../../../lib/rateLimit";
+import { dynamicExport } from "../../../../lib/apiExport";
 
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 export async function GET(request: NextRequest) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q")?.trim();
   const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100);
@@ -17,12 +24,15 @@ export async function GET(request: NextRequest) {
   if (!query) {
     // Return stats if no query
     const stats = await getTweetStats();
-    return NextResponse.json({
-      error: null,
-      stats,
-      tweets: [],
-      message: "Provide a search query with ?q=keyword",
-    });
+    return NextResponse.json(
+      {
+        error: null,
+        stats,
+        tweets: [],
+        message: "Provide a search query with ?q=keyword",
+      },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 
   try {
@@ -33,12 +43,15 @@ export async function GET(request: NextRequest) {
       includeReplies,
     });
 
-    return NextResponse.json({
-      error: null,
-      query,
-      count: tweets.length,
-      tweets,
-    });
+    return NextResponse.json(
+      {
+        error: null,
+        query,
+        count: tweets.length,
+        tweets,
+      },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
   } catch (error) {
     console.error("[api/tweets/search] Error:", error);
     return NextResponse.json(
@@ -46,7 +59,7 @@ export async function GET(request: NextRequest) {
         error: "Search failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500, headers: rlHeaders as unknown as HeadersInit },
     );
   }
 }

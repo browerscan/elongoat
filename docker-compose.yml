@@ -3,6 +3,16 @@ services:
     build: .
     container_name: standalone-elongoat
     restart: unless-stopped
+    # Default to json-file for local builds; switch to awslogs by setting
+    # LOG_DRIVER=awslogs and providing AWS credentials/region variables.
+    logging:
+      driver: ${LOG_DRIVER:-json-file}
+      options:
+        max-size: "10m"
+        max-file: "3"
+        awslogs-region: ${AWS_REGION:-}
+        awslogs-group: ${AWS_LOG_GROUP:-}
+        awslogs-create-group: "true"
     # Resource limits for production stability
     deploy:
       resources:
@@ -61,6 +71,8 @@ services:
       # Cache warmup on startup (delay in seconds)
       - WARMUP_DELAY_MS=${WARMUP_DELAY_MS:-10}
       - SKIP_WARMUP=${SKIP_WARMUP:-0}
+      - VALIDATE_ENV_ON_STARTUP=${VALIDATE_ENV_ON_STARTUP:-0}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
 
     volumes:
       - ./data:/app/data:ro

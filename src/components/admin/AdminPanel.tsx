@@ -26,6 +26,12 @@ type AdminSnapshot = {
     net_worth: string;
     chat_mood: "confident" | "neutral" | "defensive";
     chat_typing_quirk: boolean;
+    chat_analytics_enabled: boolean;
+  };
+  chat?: {
+    mood: "confident" | "neutral" | "defensive";
+    typingQuirk: boolean;
+    analyticsEnabled: boolean;
   };
   updatedAt: { vars: string; chat: string };
 };
@@ -269,6 +275,8 @@ export function AdminPanel() {
       if (patch.chat_mood != null) body.chat_mood = patch.chat_mood;
       if (patch.chat_typing_quirk != null)
         body.chat_typing_quirk = patch.chat_typing_quirk;
+      if (patch.chat_analytics_enabled != null)
+        body.chat_analytics_enabled = patch.chat_analytics_enabled;
       if (patch.net_worth != null) body.net_worth = patch.net_worth;
       if (patch.children_count != null)
         body.children_count = patch.children_count;
@@ -582,6 +590,30 @@ export function AdminPanel() {
                     {snapshot.variables.chat_typing_quirk
                       ? "tweet-like lowercase/shorthand"
                       : "clean writing"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs text-white/55">Chat analytics</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={saveConfigBusy}
+                    className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                    onClick={() =>
+                      void saveConfig({
+                        chat_analytics_enabled:
+                          !snapshot.variables.chat_analytics_enabled,
+                      })
+                    }
+                  >
+                    {snapshot.variables.chat_analytics_enabled ? "ON" : "OFF"}
+                  </button>
+                  <span className="text-xs text-white/55">
+                    {snapshot.variables.chat_analytics_enabled
+                      ? "aggregate questions enabled"
+                      : "disabled (no question counts)"}
                   </span>
                 </div>
               </div>

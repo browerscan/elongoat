@@ -47,6 +47,7 @@ describe("chatConfig", () => {
 
   const defaultConfig = {
     config: { mood: "confident" as const, typingQuirk: true },
+    analyticsEnabled: false,
     updatedAt: expect.any(String),
   };
 
@@ -105,6 +106,7 @@ describe("chatConfig", () => {
     it("returns cached config from Redis", async () => {
       const cached = {
         config: { mood: "neutral" as const, typingQuirk: false },
+        analyticsEnabled: false,
         updatedAt: "2025-01-01T00:00:00.000Z",
       };
       vi.mocked(getRedis).mockReturnValue(mockRedis as never);

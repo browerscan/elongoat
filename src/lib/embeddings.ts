@@ -62,13 +62,59 @@ const MAX_BATCH_SIZE = 100;
 // Configuration
 // ============================================================================
 
+const PLACEHOLDER_KEY_PATTERNS = [
+  "sk-your_openai_key_here",
+  "ve_your_key_here",
+  "your_openai_key_here",
+  "your_key_here",
+];
+
+let warnedEmbeddingDisabled = false;
+let warnedEmbeddingMissingKey = false;
+
+function isBuildPhase(): boolean {
+  const phase = process.env.NEXT_PHASE;
+  return phase === "phase-production-build" || phase === "phase-export";
+}
+
+function isPlaceholderKey(value: string): boolean {
+  const lower = value.toLowerCase();
+  return PLACEHOLDER_KEY_PATTERNS.some((p) => lower.includes(p));
+}
+
+function logOnce(flag: "disabled" | "missing", message: string): void {
+  if (flag === "disabled" && warnedEmbeddingDisabled) return;
+  if (flag === "missing" && warnedEmbeddingMissingKey) return;
+  if (flag === "disabled") warnedEmbeddingDisabled = true;
+  if (flag === "missing") warnedEmbeddingMissingKey = true;
+  console.warn(message);
+}
+
 /**
  * Get embedding configuration from environment
  */
 export function getEmbeddingConfig(): EmbeddingConfig | null {
+  if (!env.EMBEDDINGS_ENABLED) {
+    logOnce("disabled", "[Embeddings] Disabled via EMBEDDINGS_ENABLED=0");
+    return null;
+  }
+
+  if (isBuildPhase() && env.EMBEDDINGS_SKIP_BUILD) {
+    return null;
+  }
+
   const apiKey = env.OPENAI_API_KEY || env.VECTORENGINE_API_KEY;
 
   if (!apiKey) {
+    logOnce("missing", "[Embeddings] No API key configured");
+    return null;
+  }
+
+  if (isPlaceholderKey(apiKey)) {
+    logOnce(
+      "missing",
+      "[Embeddings] Placeholder API key detected; skipping embeddings",
+    );
     return null;
   }
 
@@ -100,7 +146,6 @@ export async function generateEmbedding(
 ): Promise<EmbeddingResult | null> {
   const baseConfig = getEmbeddingConfig();
   if (!baseConfig) {
-    console.warn("[Embeddings] No API key configured");
     return null;
   }
 
@@ -156,7 +201,6 @@ export async function generateEmbeddingsBatch(
 ): Promise<BatchEmbeddingResult | null> {
   const baseConfig = getEmbeddingConfig();
   if (!baseConfig) {
-    console.warn("[Embeddings] No API key configured");
     return null;
   }
 
@@ -301,6 +345,33 @@ export function prepareClusterForEmbedding(
   return parts.join(" - ");
 }
 
+/**
+ * Prepare tweet for embedding
+ * Removes URLs, mentions, hashtags and normalizes text
+ */
+export function prepareTweetForEmbedding(tweetText: string): string {
+  let text = tweetText;
+
+  // Remove URLs
+  text = text.replace(/https?:\/\/\S+/g, "");
+
+  // Remove @mentions but keep the text
+  text = text.replace(/@\w+/g, "");
+
+  // Remove hashtag symbols but keep the text
+  text = text.replace(/#/g, "");
+
+  // Normalize whitespace
+  text = text.replace(/\s+/g, " ").trim();
+
+  // Limit to ~500 chars for embedding (focus on most relevant content)
+  if (text.length > 500) {
+    text = text.slice(0, 500);
+  }
+
+  return prepareTextForEmbedding(text);
+}
+
 // ============================================================================
 // Vector Format Helpers
 // ============================================================================
@@ -319,4 +390,45 @@ export function parseEmbeddingFromPg(pgVector: string): number[] {
   // Remove brackets and split
   const cleaned = pgVector.replace(/^\[|\]$/g, "");
   return cleaned.split(",").map(Number);
+}
+
+// ============================================================================
+// Embedding Statistics Helpers
+// ============================================================================
+
+/**
+ * Calculate cosine similarity between two embeddings
+ */
+export function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error("Embedding dimensions must match");
+  }
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/**
+ * Find the most similar embeddings from a set
+ */
+export function findMostSimilar(
+  queryEmbedding: number[],
+  candidates: Array<{ id: string; embedding: number[] }>,
+  topK = 5,
+): Array<{ id: string; similarity: number }> {
+  const results = candidates.map((candidate) => ({
+    id: candidate.id,
+    similarity: cosineSimilarity(queryEmbedding, candidate.embedding),
+  }));
+
+  return results.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
 }

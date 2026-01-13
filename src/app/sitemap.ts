@@ -43,14 +43,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${siteUrl}/writing`,
       lastModified: now,
-      priority: 0.85,
+      priority: 0.7,
       changeFrequency: "weekly",
     },
     {
       url: `${siteUrl}/tweets`,
       lastModified: now,
-      priority: 0.85,
+      priority: 0.75,
       changeFrequency: "daily",
+    },
+    {
+      url: `${siteUrl}/x/archive`,
+      lastModified: now,
+      priority: 0.7,
+      changeFrequency: "weekly",
+    },
+    {
+      url: `${siteUrl}/x/popular`,
+      lastModified: now,
+      priority: 0.72,
+      changeFrequency: "weekly",
     },
     {
       url: `${siteUrl}/videos`,
@@ -61,22 +73,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${siteUrl}/about`,
       lastModified: clusterUpdated,
-      priority: 0.6,
+      priority: 0.5,
       changeFrequency: "monthly",
     },
     {
       url: `${siteUrl}/facts`,
       lastModified: now,
-      priority: 0.6,
+      priority: 0.65,
       changeFrequency: "weekly",
     },
-    // Fact pages
-    ...FACT_SLUGS.map((slug) => ({
-      url: `${siteUrl}/facts/${slug}`,
-      lastModified: now,
-      priority: 0.55,
-      changeFrequency: "weekly" as const,
-    })),
+    // Fact pages with dynamic priorities based on search demand
+    ...FACT_SLUGS.map((slug) => {
+      const priorityMap: Record<typeof slug, number> = {
+        age: 0.7,
+        children: 0.68,
+        "net-worth": 0.72,
+        dob: 0.55,
+      };
+      return {
+        url: `${siteUrl}/facts/${slug}`,
+        lastModified: now,
+        priority: priorityMap[slug],
+        changeFrequency: "weekly" as const,
+      };
+    }),
   ];
   // Detail-heavy sitemaps are split into dedicated routes under /sitemaps/*.
 

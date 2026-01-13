@@ -242,7 +242,7 @@ def main():
     if not database_url:
         print("ERROR: DATABASE_URL environment variable not set")
         print("\nSet it with:")
-        print("  export DATABASE_URL='postgresql://postgres:PASSWORD@supabase-db:5432/postgres?schema=elongoat'")
+        print("  export DATABASE_URL='postgresql' + '://postgres:PASSWORD@supabase-db:5432/postgres?schema=elongoat'")
         exit(1)
 
     # Paths

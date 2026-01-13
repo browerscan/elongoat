@@ -1,6 +1,11 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+export const dynamic = "force-static";
+
+// Generate placeholder param for static export
+export function generateStaticParams() {
+  return [{ slug: "__placeholder__" }];
+}
 
 function titleize(slug: string): string {
   return slug

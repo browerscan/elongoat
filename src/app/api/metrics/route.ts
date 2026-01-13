@@ -7,6 +7,8 @@ import { getRedisStats } from "../../../lib/redis";
 import { getMetrics as getCacheMetrics } from "../../../lib/tieredCache";
 import { generatePerformanceReport } from "../../../lib/performance";
 import { createStandardHeaders, CACHE_CONTROL } from "../../../lib/apiResponse";
+import { rateLimitMetrics, rateLimitResponse } from "../../../lib/rateLimit";
+import { getAllCircuitBreakerStats } from "../../../lib/circuitBreaker";
 
 const env = getEnv();
 /**
@@ -303,14 +305,39 @@ function collectMetrics(): PrometheusMetric[] {
     });
   }
 
-  // Circuit breaker status (placeholder - can be extended)
-  metrics.push({
-    name: "circuit_breaker_state",
-    type: "gauge",
-    help: "Circuit breaker state: 0=closed (healthy), 1=half-open, 2=open (unhealthy)",
-    labels: { service: "vectorengine" },
-    value: 0, // Default to closed/healthy
-  });
+  // Circuit breaker status
+  const circuitBreakerStats = getAllCircuitBreakerStats();
+  for (const [name, stats] of Object.entries(circuitBreakerStats)) {
+    const safeName = name.replace(/[^a-zA-Z0-9_]/g, "_");
+
+    // State: 0=closed (healthy), 1=half-open, 2=open (unhealthy)
+    const stateValue =
+      stats.state === "closed" ? 0 : stats.state === "half-open" ? 1 : 2;
+
+    metrics.push({
+      name: "circuit_breaker_state",
+      type: "gauge",
+      help: "Circuit breaker state: 0=closed (healthy), 1=half-open, 2=open (unhealthy)",
+      labels: { service: safeName },
+      value: stateValue,
+    });
+
+    metrics.push({
+      name: "circuit_breaker_failure_count",
+      type: "counter",
+      help: "Total circuit breaker failures",
+      labels: { service: safeName },
+      value: stats.failureCount,
+    });
+
+    metrics.push({
+      name: "circuit_breaker_success_count",
+      type: "counter",
+      help: "Total circuit breaker successes",
+      labels: { service: safeName },
+      value: stats.successCount,
+    });
+  }
 
   metrics.push({
     name: "metrics_timestamp_ms",
@@ -355,6 +382,12 @@ function formatPrometheusMetrics(metrics: PrometheusMetric[]): string {
 // ============================================================================
 
 export async function GET(request: NextRequest) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitMetrics(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   // Optional authentication via token
   const metricsToken = env.METRICS_TOKEN;
   if (metricsToken) {
@@ -362,7 +395,10 @@ export async function GET(request: NextRequest) {
     const providedToken = authHeader?.replace("Bearer ", "");
 
     if (providedToken !== metricsToken) {
-      return new Response("Unauthorized", { status: 401 });
+      return new Response("Unauthorized", {
+        status: 401,
+        headers: rlHeaders as unknown as HeadersInit,
+      });
     }
   }
 
@@ -378,6 +414,9 @@ export async function GET(request: NextRequest) {
 
   return new Response(output, {
     status: 200,
-    headers,
+    headers: {
+      ...(headers as HeadersInit),
+      ...(rlHeaders as unknown as HeadersInit),
+    },
   });
 }

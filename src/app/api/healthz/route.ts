@@ -15,19 +15,40 @@
 
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+import { rateLimitHealth, rateLimitResponse } from "../../../lib/rateLimit";
+import { dynamicExport } from "../../../lib/apiExport";
 
-export async function GET() {
+export const dynamic = dynamicExport("force-dynamic");
+
+export async function GET(request: Request) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitHealth(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   return NextResponse.json(
     {
       status: "alive",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     },
-    { status: 200 },
+    { status: 200, headers: rlHeaders as unknown as HeadersInit },
   );
 }
 
-export async function HEAD() {
-  return new NextResponse(null, { status: 200 });
+export async function HEAD(request: Request) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitHealth(request);
+  if (!rlResult.ok) {
+    return new NextResponse(null, {
+      status: 429,
+      headers: rlHeaders as unknown as HeadersInit,
+    });
+  }
+
+  return new NextResponse(null, {
+    status: 200,
+    headers: rlHeaders as unknown as HeadersInit,
+  });
 }

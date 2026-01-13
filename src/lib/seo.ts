@@ -83,6 +83,7 @@ export interface SeoMetadata {
 /**
  * Generate production-grade metadata for a page
  * Follows Google SEO guidelines and best practices
+ * Enhanced with Open Graph article type and rich previews
  */
 export function generateMetadata(params: SeoMetadata): Metadata {
   const {
@@ -110,7 +111,7 @@ export function generateMetadata(params: SeoMetadata): Metadata {
   // Build canonical URL
   const canonicalUrl = `${SITE_CONFIG.url}${path}`;
 
-  // Build Open Graph metadata
+  // Build Open Graph metadata with enhanced properties
   const openGraph: OpenGraph = {
     type: ogType,
     url: canonicalUrl,
@@ -129,18 +130,29 @@ export function generateMetadata(params: SeoMetadata): Metadata {
     ],
   };
 
-  // Add article-specific OG tags
-  if (ogType === "article" || ogType === "video.other") {
+  // Add article-specific OG tags with section and tags
+  if (ogType === "article") {
     openGraph.article = {
       publishedTime: publishedTime,
-      modifiedTime: modifiedTime,
+      modifiedTime: modifiedTime ?? publishedTime,
       authors: [SITE_CONFIG.author],
       section: section,
       tags: tags ?? keywords,
     };
   }
 
-  // Build Twitter Card metadata
+  // Add video-specific OG tags
+  if (ogType === "video.other") {
+    openGraph.article = {
+      publishedTime,
+      modifiedTime,
+      authors: [SITE_CONFIG.author],
+      section: section ?? "Videos",
+      tags: tags ?? keywords,
+    };
+  }
+
+  // Build Twitter Card metadata with player URL for videos
   const twitter: TwitterCard = {
     card: SITE_CONFIG.twitterCard,
     title: fullTitle,
@@ -158,6 +170,7 @@ export function generateMetadata(params: SeoMetadata): Metadata {
     title: fullTitle,
     description: seoDescription,
     authors: [{ name: SITE_CONFIG.author }],
+    keywords: keywords?.join(", "),
     robots: {
       index: !noindex,
       follow: !nofollow,
@@ -179,6 +192,16 @@ export function generateMetadata(params: SeoMetadata): Metadata {
       //   'es': `${SITE_CONFIG.url}/es${path}`,
       // },
     },
+    verification: {
+      // Add verification codes as needed
+      // google: 'verification-code',
+      // yandex: 'verification-code',
+    },
+    ...(keywords && {
+      other: {
+        "article:tag": keywords.join(","),
+      },
+    }),
   };
 }
 

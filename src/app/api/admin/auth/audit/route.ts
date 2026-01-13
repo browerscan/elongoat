@@ -7,7 +7,6 @@ import {
   getAuditLogs,
   logAdminAction,
 } from "../../../../../lib/adminAuth";
-import { unauthorized } from "../../../../../lib/adminAuth";
 import { getAdminSecurityHeaders } from "../../../../../lib/securityHeaders";
 import { rateLimitAdmin } from "../../../../../lib/rateLimit";
 
@@ -28,6 +27,7 @@ export async function GET(req: Request) {
       {
         status: 429,
         headers: {
+          ...getAdminSecurityHeaders(),
           "X-RateLimit-Limit": rlHeaders["X-RateLimit-Limit"],
           "X-RateLimit-Remaining": rlHeaders["X-RateLimit-Remaining"],
           "X-RateLimit-Reset": rlHeaders["X-RateLimit-Reset"],
@@ -48,7 +48,22 @@ export async function GET(req: Request) {
       success: false,
       reason: "unauthorized",
     });
-    return unauthorized("Unauthorized");
+    return Response.json(
+      { error: "unauthorized" },
+      {
+        status: 401,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          "X-RateLimit-Limit": rlHeaders["X-RateLimit-Limit"],
+          "X-RateLimit-Remaining": rlHeaders["X-RateLimit-Remaining"],
+          "X-RateLimit-Reset": rlHeaders["X-RateLimit-Reset"],
+          ...(rlHeaders["Retry-After"]
+            ? { "Retry-After": rlHeaders["Retry-After"] }
+            : {}),
+          "WWW-Authenticate": 'Bearer realm="ElonGoat Admin"',
+        },
+      },
+    );
   }
 
   // Parse query params

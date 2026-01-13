@@ -170,6 +170,20 @@ export async function POST(req: Request) {
  * Check if already authenticated
  */
 export async function GET(req: Request) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitAdmin(req);
+  if (!rlResult.ok) {
+    return Response.json(
+      { error: "Rate limit exceeded" },
+      {
+        status: 429,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
+
   const result = await validateAdminSession(req);
 
   return Response.json(
@@ -179,7 +193,10 @@ export async function GET(req: Request) {
     },
     {
       status: result.valid ? 200 : 401,
-      headers: getAdminSecurityHeaders(),
+      headers: {
+        ...getAdminSecurityHeaders(),
+        ...(rlHeaders as unknown as HeadersInit),
+      },
     },
   );
 }

@@ -37,6 +37,11 @@ const DEFAULT_LIMITS = {
     limit: env.RATE_LIMIT_HEALTH,
     windowSeconds: env.RATE_LIMIT_HEALTH_WINDOW,
   },
+  // Metrics endpoint (monitoring)
+  metrics: {
+    limit: env.RATE_LIMIT_METRICS,
+    windowSeconds: env.RATE_LIMIT_METRICS_WINDOW,
+  },
 } as const;
 
 type LimitType = keyof typeof DEFAULT_LIMITS;
@@ -321,6 +326,40 @@ export async function rateLimitAdmin(
   const result = await rateLimit({
     identifier,
     type: "admin",
+  });
+  return {
+    result,
+    headers: buildRateLimitHeaders(result),
+  };
+}
+
+/**
+ * Rate limit for health endpoints
+ */
+export async function rateLimitHealth(
+  request: Request,
+): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  const identifier = getClientIdentifier(request);
+  const result = await rateLimit({
+    identifier,
+    type: "health",
+  });
+  return {
+    result,
+    headers: buildRateLimitHeaders(result),
+  };
+}
+
+/**
+ * Rate limit for metrics endpoint
+ */
+export async function rateLimitMetrics(
+  request: Request,
+): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  const identifier = getClientIdentifier(request);
+  const result = await rateLimit({
+    identifier,
+    type: "metrics",
   });
   return {
     result,

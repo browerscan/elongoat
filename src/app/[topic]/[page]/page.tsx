@@ -22,6 +22,8 @@ import { RelatedContent } from "../../../components/RelatedContent";
 import { RelatedTweets } from "../../../components/RelatedTweets";
 import { SeeAlso } from "../../../components/SeeAlso";
 import { AuthorInfo } from "../../../components/AuthorInfo";
+import { SerpInsightsServer } from "../../../components/SerpInsights";
+import { ErrorBoundary } from "../../../components/ErrorBoundary";
 import { getClusterPageContent } from "../../../lib/contentGen";
 import {
   findPage,
@@ -350,12 +352,8 @@ export default async function ClusterPage({
               <Search className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
-                Top Search Keywords
-              </h2>
-              <p className="text-xs text-white/50">
-                Highest-volume keywords in this cluster
-              </p>
+              <h2 className="text-lg font-semibold text-white">热门话题</h2>
+              <p className="text-xs text-white/50">该主题下最受关注的内容</p>
             </div>
           </div>
 
@@ -466,6 +464,17 @@ export default async function ClusterPage({
           pageTitle={page.page}
           keywords={keywordsList}
         />
+
+        <ErrorBoundary>
+          <SerpInsightsServer
+            query={page.page}
+            limit={5}
+            showPaa={true}
+            showRelated={true}
+            showResults={false}
+            className="mt-6"
+          />
+        </ErrorBoundary>
 
         <SeeAlso
           type="page"

@@ -10,10 +10,16 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { listArticles } from "../../../lib/articles";
+import { rateLimitApi, rateLimitResponse } from "../../../lib/rateLimit";
 
 export const revalidate = 3600; // 1 hour cache
 
 export async function GET(request: NextRequest) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const searchParams = request.nextUrl.searchParams;
 
   const kind = searchParams.get("kind") as "cluster" | "paa" | null;
@@ -31,13 +37,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        ...(rlHeaders as unknown as HeadersInit),
       },
     });
   } catch (error) {
     console.error("[API /articles] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch articles" },
-      { status: 500 },
+      { status: 500, headers: rlHeaders as unknown as HeadersInit },
     );
   }
 }

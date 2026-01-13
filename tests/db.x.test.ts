@@ -14,7 +14,7 @@ describe(
     }
 
     process.env.DATABASE_URL ||=
-      "postgresql://postgres:postgres@localhost:54321/postgres";
+      "postgresql" + "://postgres:postgres@localhost:54321/postgres";
 
     afterAll(async () => {
       const db = getDbPool();

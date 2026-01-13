@@ -1,15 +1,25 @@
+# Fallback to classic builder-friendly Dockerfile (no BuildKit-only flags)
 FROM node:20-slim AS builder
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
+# Python is needed for prebuild script (generate:indexes); keep everything else slim
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3-minimal \
+  && rm -rf /var/lib/apt/lists/*
+
+# Skip strict env validation during image build; runtime stage still validates
+ENV VALIDATE_ENV_ON_STARTUP=0
+ENV NPM_CONFIG_CACHE=/tmp/npm-cache
+
 COPY package.json package-lock.json ./
-RUN npm ci
+
+# npm ci (no cache mounts so it works with and without BuildKit)
+RUN npm ci --prefer-offline --no-audit --cache $NPM_CONFIG_CACHE
 
 COPY . .
 RUN npm run build
 
 FROM node:20-slim AS production
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -29,7 +39,8 @@ RUN npm prune --production && npm install --os=linux --cpu=x64 sharp
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-HEALTHCHECK --interval=30s --timeout=10s CMD curl -f http://localhost:3000/api/health || exit 1
+# Use Node fetch for healthcheck to avoid extra system packages
+HEALTHCHECK --interval=30s --timeout=10s CMD node -e "fetch('http://localhost:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
 EXPOSE 3000
 ENTRYPOINT ["/app/entrypoint.sh"]

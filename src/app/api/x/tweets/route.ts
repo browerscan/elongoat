@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { listXTweets } from "../../../../lib/x";
 import { getEnv } from "../../../../lib/env";
+import { rateLimitApi, rateLimitResponse } from "../../../../lib/rateLimit";
 
 const env = getEnv();
 const QuerySchema = z.object({
@@ -12,13 +13,21 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(req);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const url = new URL(req.url);
   const parsed = QuerySchema.safeParse({
     handle: url.searchParams.get("handle") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,
   });
   if (!parsed.success) {
-    return Response.json({ error: "invalid_query" }, { status: 400 });
+    return Response.json(
+      { error: "invalid_query" },
+      { status: 400, headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 
   const handle = (
@@ -34,6 +43,11 @@ export async function GET(req: Request) {
 
   return Response.json(
     { ok: true, handle, count: tweets.length, tweets },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+        ...(rlHeaders as unknown as HeadersInit),
+      },
+    },
   );
 }

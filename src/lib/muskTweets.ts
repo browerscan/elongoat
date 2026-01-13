@@ -626,3 +626,286 @@ function mapTweetRow(row: {
     inReplyToUsername: row.in_reply_to_username,
   };
 }
+
+// ============================================================================
+// Hybrid Search Functions (with vector support)
+// ============================================================================
+
+/**
+ * Hybrid search combining full-text and vector similarity
+ * Requires tweets to have embeddings generated
+ */
+export async function searchTweetsHybrid(params: {
+  query: string;
+  queryEmbedding?: number[];
+  fullTextWeight?: number;
+  vectorWeight?: number;
+  limit?: number;
+  minLikes?: number;
+  excludeReplies?: boolean;
+  excludeRetweets?: boolean;
+}): Promise<
+  Array<{
+    tweetId: string;
+    fullText: string;
+    url: string;
+    likes: number;
+    date: string;
+    combinedScore: number;
+    textRank: number;
+    vectorSimilarity?: number;
+  }>
+> {
+  const pool = getDbPool();
+  if (!pool) return [];
+
+  const {
+    query,
+    queryEmbedding,
+    fullTextWeight = 0.3,
+    vectorWeight = 0.7,
+    limit = 10,
+    minLikes = 0,
+    excludeReplies = true,
+    excludeRetweets = true,
+  } = params;
+
+  // If no embedding provided, fall back to full-text search
+  if (!queryEmbedding) {
+    const results = await getTweetsForRag({ query, limit });
+    return results.map((r) => ({
+      tweetId: "",
+      fullText: r.text,
+      url: r.url,
+      likes: r.likes,
+      date: r.date,
+      combinedScore: r.rank,
+      textRank: r.rank,
+    }));
+  }
+
+  try {
+    const result = await pool.query<{
+      tweet_id: string;
+      full_text: string;
+      url: string;
+      like_count: number;
+      created_at: Date;
+      combined_score: number;
+      text_rank: number;
+      vector_similarity: number;
+    }>(
+      `
+      SELECT * FROM elongoat.search_tweets_hybrid(
+        $1::text,
+        $2::vector,
+        $3::float,
+        $4::float,
+        $5::int,
+        $6::int,
+        $7::boolean,
+        $8::boolean
+      )
+      `,
+      [
+        query,
+        `[${queryEmbedding.join(",")}]`,
+        fullTextWeight,
+        vectorWeight,
+        limit,
+        minLikes,
+        excludeReplies,
+        excludeRetweets,
+      ],
+    );
+
+    return result.rows.map((row) => ({
+      tweetId: row.tweet_id,
+      fullText: row.full_text,
+      url: row.url || "",
+      likes: row.like_count,
+      date: row.created_at.toISOString().split("T")[0],
+      combinedScore: row.combined_score,
+      textRank: row.text_rank,
+      vectorSimilarity: row.vector_similarity,
+    }));
+  } catch (error) {
+    console.error("[muskTweets] Hybrid search error:", error);
+    return [];
+  }
+}
+
+/**
+ * Pure vector similarity search for tweets
+ * Finds semantically similar tweets without keyword matching
+ */
+export async function searchTweetsVector(params: {
+  queryEmbedding: number[];
+  threshold?: number;
+  limit?: number;
+  minLikes?: number;
+  excludeReplies?: boolean;
+  excludeRetweets?: boolean;
+}): Promise<
+  Array<{
+    tweetId: string;
+    fullText: string;
+    url: string;
+    likes: number;
+    date: string;
+    similarity: number;
+  }>
+> {
+  const pool = getDbPool();
+  if (!pool) return [];
+
+  const {
+    queryEmbedding,
+    threshold = 0.6,
+    limit = 10,
+    minLikes = 0,
+    excludeReplies = true,
+    excludeRetweets = true,
+  } = params;
+
+  try {
+    const result = await pool.query<{
+      tweet_id: string;
+      full_text: string;
+      url: string;
+      like_count: number;
+      created_at: Date;
+      similarity: number;
+    }>(
+      `
+      SELECT * FROM elongoat.search_tweets_vector(
+        $1::vector,
+        $2::float,
+        $3::int,
+        $4::int,
+        $5::boolean,
+        $6::boolean
+      )
+      `,
+      [
+        queryEmbedding,
+        threshold,
+        limit,
+        minLikes,
+        excludeReplies,
+        excludeRetweets,
+      ],
+    );
+
+    return result.rows.map((row) => ({
+      tweetId: row.tweet_id,
+      fullText: row.full_text,
+      url: row.url || "",
+      likes: row.like_count,
+      date: row.created_at.toISOString().split("T")[0],
+      similarity: row.similarity,
+    }));
+  } catch (error) {
+    console.error("[muskTweets] Vector search error:", error);
+    return [];
+  }
+}
+
+/**
+ * Find related tweets by keywords with engagement ranking
+ * Uses the database function for optimal performance
+ */
+export async function findTweetsByKeywords(params: {
+  keywords: string[];
+  limit?: number;
+  minLikes?: number;
+  excludeReplies?: boolean;
+}): Promise<MuskTweet[]> {
+  const pool = getDbPool();
+  if (!pool) return [];
+
+  const {
+    keywords,
+    limit = 10,
+    minLikes = 1000,
+    excludeReplies = true,
+  } = params;
+
+  if (keywords.length === 0) return [];
+
+  try {
+    const result = await pool.query<{
+      tweet_id: string;
+      full_text: string;
+      url: string;
+      twitter_url: string;
+      retweet_count: number;
+      reply_count: number;
+      like_count: number;
+      quote_count: number;
+      view_count: string;
+      bookmark_count: number;
+      created_at: Date;
+      is_reply: boolean;
+      is_retweet: boolean;
+      is_quote: boolean;
+      in_reply_to_username: string;
+    }>(
+      `
+      SELECT * FROM elongoat.find_tweets_by_keywords(
+        $1::text[],
+        $2::int,
+        $3::int,
+        $4::boolean
+      )
+      `,
+      [keywords, limit, minLikes, excludeReplies],
+    );
+
+    return result.rows.map(mapTweetRow);
+  } catch (error) {
+    console.error("[muskTweets] Find by keywords error:", error);
+    return [];
+  }
+}
+
+/**
+ * Check embedding generation coverage for tweets
+ */
+export async function getTweetEmbeddingStats(): Promise<{
+  total: number;
+  withEmbedding: number;
+  withoutEmbedding: number;
+  coveragePercent: number;
+} | null> {
+  const pool = getDbPool();
+  if (!pool) return null;
+
+  try {
+    const result = await pool.query<{
+      total_tweets: string;
+      tweets_with_embedding: string;
+      tweets_without_embedding: string;
+    }>(`
+      SELECT
+        COUNT(*) as total_tweets,
+        COUNT(*) FILTER (WHERE embedding IS NOT NULL) as tweets_with_embedding,
+        COUNT(*) FILTER (WHERE embedding IS NULL) as tweets_without_embedding
+      FROM elongoat.musk_tweets
+    `);
+
+    const row = result.rows[0];
+    const total = parseInt(row.total_tweets || "0", 10);
+    const withEmbedding = parseInt(row.tweets_with_embedding || "0", 10);
+
+    return {
+      total,
+      withEmbedding,
+      withoutEmbedding: parseInt(row.tweets_without_embedding || "0", 10),
+      coveragePercent: total > 0 ? (withEmbedding / total) * 100 : 0,
+    };
+  } catch (error) {
+    console.error("[muskTweets] Embedding stats error:", error);
+    return null;
+  }
+}

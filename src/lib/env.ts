@@ -228,9 +228,33 @@ const ServerEnvSchema = z.object({
     .default("60")
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive()),
+  RATE_LIMIT_METRICS: z
+    .string()
+    .default("1200")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  RATE_LIMIT_METRICS_WINDOW: z
+    .string()
+    .default("60")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
 
   // Keywords Everywhere API
   KEYWORDS_EVERYWHERE_API_KEY: optionalString(z.string().min(1)),
+
+  // Proxy-Grid API (SERP, web scraping, content enrichment)
+  PROXY_GRID_BASE_URL: z.string().url().default("http://google.savedimage.com"),
+  PROXY_GRID_API_SECRET: optionalString(z.string().min(1)),
+  PROXY_GRID_TIMEOUT_MS: z
+    .string()
+    .default("30000")
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive().max(120000)),
+  PROXY_GRID_CACHE_TTL_MS: z
+    .string()
+    .default("14400000") // 4 hours
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
 
   // SOAX scraping service
   SOAX_BASE_URL: optionalString(z.string().url()),
@@ -444,6 +468,14 @@ const ServerEnvSchema = z.object({
     .pipe(z.number().int().positive()),
 
   // Embeddings
+  EMBEDDINGS_ENABLED: z
+    .string()
+    .default("1")
+    .transform((val) => val === "1" || val === "true"),
+  EMBEDDINGS_SKIP_BUILD: z
+    .string()
+    .default("0")
+    .transform((val) => val === "1" || val === "true"),
   OPENAI_API_KEY: optionalString(z.string().min(1)),
   OPENAI_BASE_URL: optionalString(z.string().url()),
   EMBEDDING_BASE_URL: optionalString(z.string().url()),
@@ -860,7 +892,9 @@ export function validateEnvAtStartup(): void {
         "FATAL: Cannot start application with invalid environment in production mode.",
       );
       console.error("Please fix the above errors and restart.");
-      process.exit(1);
+      throw new Error(
+        "Environment validation failed in production. Aborting startup.",
+      );
     } else {
       console.warn(
         "WARNING: Continuing in development mode with invalid environment.",
@@ -1019,6 +1053,24 @@ export function getXConfig(): {
     maxTweets: env.X_MAX_TWEETS,
     includeNonAuthor: env.X_INCLUDE_NON_AUTHOR,
     fetchFollowing: env.X_FETCH_FOLLOWING,
+  };
+}
+
+/**
+ * Proxy-Grid configuration getter.
+ */
+export function getProxyGridConfig(): {
+  baseUrl: string;
+  apiSecret: string | undefined;
+  timeout: number;
+  cacheTtl: number;
+} {
+  const env = getEnv();
+  return {
+    baseUrl: env.PROXY_GRID_BASE_URL,
+    apiSecret: env.PROXY_GRID_API_SECRET,
+    timeout: env.PROXY_GRID_TIMEOUT_MS,
+    cacheTtl: env.PROXY_GRID_CACHE_TTL_MS,
   };
 }
 

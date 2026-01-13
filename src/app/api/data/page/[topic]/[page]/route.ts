@@ -2,51 +2,70 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  findPage,
-  findTopic,
-  listTopicPages,
-  getClusterIndex,
-} from "../../../../../../lib/indexes";
+import { findPage } from "../../../../../../lib/indexes";
 import { getClusterPageContent } from "../../../../../../lib/contentGen";
 import { getDynamicVariables } from "../../../../../../lib/variables";
+import {
+  rateLimitApi,
+  rateLimitResponse,
+} from "../../../../../../lib/rateLimit";
 
-export const revalidate = 3600;
+// API routes are backend-only - skip during static export
+export function generateStaticParams() {
+  return [{ topic: "__placeholder__", page: "__placeholder__" }];
+}
+
+export const dynamic = "error";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ topic: string; page: string }> },
 ) {
-  try {
-    const { topic: topicSlug, page: pageSlug } = await params;
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
 
-    const page = await findPage(topicSlug, pageSlug);
-    if (!page) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  try {
+    const { topic, page } = await params;
+
+    const pageData = await findPage(topic, page);
+    if (!pageData) {
+      return NextResponse.json(
+        { found: false, error: "Page not found" },
+        { status: 404, headers: rlHeaders as unknown as HeadersInit },
+      );
     }
 
-    const [topic, siblingPages, content, variables, clusterIndex] =
-      await Promise.all([
-        findTopic(topicSlug),
-        listTopicPages(topicSlug),
-        getClusterPageContent({ topicSlug, pageSlug }),
-        getDynamicVariables(),
-        getClusterIndex(),
-      ]);
+    const vars = await getDynamicVariables();
 
-    return NextResponse.json({
-      page,
-      topic,
-      siblingPages,
-      content,
-      variables,
-      allTopics: clusterIndex.topics,
+    const content = await getClusterPageContent({
+      topicSlug: topic,
+      pageSlug: page,
     });
-  } catch (error) {
-    console.error("Error fetching page:", error);
+
     return NextResponse.json(
-      { error: "Failed to fetch page" },
-      { status: 500 },
+      {
+        found: true,
+        page: {
+          topic: pageData.topic,
+          page: pageData.page,
+          topicSlug: pageData.topicSlug,
+          pageSlug: pageData.pageSlug,
+          maxVolume: pageData.maxVolume,
+          keywordCount: pageData.keywordCount,
+          content: content.contentMd,
+          model: content.model,
+        },
+        variables: vars,
+      },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
+  } catch (error) {
+    console.error("[API /data/page] Error:", error);
+    return NextResponse.json(
+      { found: false, error: "Internal server error" },
+      { status: 500, headers: rlHeaders as unknown as HeadersInit },
     );
   }
 }

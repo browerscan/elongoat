@@ -462,6 +462,53 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  .line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Fade-in animation for content */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Staggered fade-in for lists */
+  .stagger-in > * {
+    animation: fadeIn 0.3s ease-out both;
+  }
+
+  .stagger-in > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-in > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  .stagger-in > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .stagger-in > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  .stagger-in > *:nth-child(5) {
+    animation-delay: 200ms;
+  }
+  .stagger-in > *:nth-child(6) {
+    animation-delay: 250ms;
+  }
 }
 
 /* Mobile-specific optimizations */

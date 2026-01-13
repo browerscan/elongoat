@@ -17,7 +17,13 @@ export async function POST(req: Request) {
   if (!rlResult.ok) {
     return Response.json(
       { error: "Rate limit exceeded" },
-      { status: 429, headers: rlHeaders as unknown as HeadersInit },
+      {
+        status: 429,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
     );
   }
 

@@ -2,39 +2,61 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  findTopic,
-  listTopicPages,
-  getClusterIndex,
-} from "../../../../../lib/indexes";
+import { findTopic, listTopicPages } from "../../../../../lib/indexes";
+import { rateLimitApi, rateLimitResponse } from "../../../../../lib/rateLimit";
 
-export const revalidate = 3600;
+// API routes are backend-only - skip during static export
+export function generateStaticParams() {
+  return [{ slug: "__placeholder__" }];
+}
+
+// API routes are backend-only
+export const dynamic = "error";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   try {
     const { slug } = await params;
-    const topic = await findTopic(slug);
 
+    const topic = await findTopic(slug);
     if (!topic) {
-      return NextResponse.json({ error: "Topic not found" }, { status: 404 });
+      return NextResponse.json(
+        { found: false, error: "Topic not found" },
+        { status: 404, headers: rlHeaders as unknown as HeadersInit },
+      );
     }
 
-    const pages = await listTopicPages(slug);
-    const clusterIndex = await getClusterIndex();
+    const pages = (await listTopicPages(slug)).slice(0, 100);
 
-    return NextResponse.json({
-      topic,
-      pages,
-      allTopics: clusterIndex.topics,
-    });
-  } catch (error) {
-    console.error("Error fetching topic:", error);
     return NextResponse.json(
-      { error: "Failed to fetch topic" },
-      { status: 500 },
+      {
+        found: true,
+        topic: {
+          slug: topic.slug,
+          topic: topic.topic,
+          pageCount: pages.length,
+          pages: pages.map((p) => ({
+            pageSlug: p.pageSlug,
+            page: p.page,
+            maxVolume: p.maxVolume,
+            keywordCount: p.keywordCount,
+          })),
+        },
+      },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
+  } catch (error) {
+    console.error("[API /data/topic] Error:", error);
+    return NextResponse.json(
+      { found: false, error: "Internal server error" },
+      { status: 500, headers: rlHeaders as unknown as HeadersInit },
     );
   }
 }

@@ -45,9 +45,15 @@ import {
   CACHE_CONTROL,
   generateRequestId,
 } from "../../../../../lib/apiResponse";
+import { dynamicExport } from "../../../../../lib/apiExport";
+
+// API routes are backend-only - skip during static export
+export function generateStaticParams() {
+  return [{ slug: "__placeholder__" }];
+}
 
 // Skip static export
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("error");
 
 interface RouteParams {
   params: Promise<{ slug: string }>;

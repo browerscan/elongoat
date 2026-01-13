@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
+import { checkAdminAuthEither } from "../../../../lib/adminAuth";
 import {
   getChatQuestionByHash,
   markQuestionPromoted,
@@ -14,6 +14,8 @@ import {
 } from "../../../../lib/customQa";
 import { findPaaQuestion } from "../../../../lib/indexes";
 import { slugify } from "../../../../lib/slugify";
+import { getAdminSecurityHeaders } from "../../../../lib/securityHeaders";
+import { rateLimitAdmin } from "../../../../lib/rateLimit";
 
 const BodySchema = z
   .object({
@@ -26,12 +28,48 @@ const BodySchema = z
   .strict();
 
 export async function POST(req: Request) {
-  if (!checkAdminAuth(req)) return unauthorized();
+  const { result: rlResult, headers: rlHeaders } = await rateLimitAdmin(req);
+  if (!rlResult.ok) {
+    return Response.json(
+      { error: "rate_limit_exceeded" },
+      {
+        status: 429,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
+
+  const isAuth = await checkAdminAuthEither(req);
+  if (!isAuth) {
+    return Response.json(
+      { error: "unauthorized" },
+      {
+        status: 401,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const parsed = BodySchema.safeParse(body);
-  if (!parsed.success)
-    return Response.json({ error: "invalid_request" }, { status: 400 });
+  if (!parsed.success) {
+    return Response.json(
+      { error: "invalid_request" },
+      {
+        status: 400,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
 
   const fromBody = (parsed.data.question ?? "").trim();
   const fromHash = parsed.data.questionHash
@@ -40,7 +78,16 @@ export async function POST(req: Request) {
   const question = (fromBody || fromHash).trim();
 
   if (!question) {
-    return Response.json({ error: "missing_question" }, { status: 400 });
+    return Response.json(
+      { error: "missing_question" },
+      {
+        status: 400,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
   }
 
   const slug = slugify(parsed.data.slug ?? question);
@@ -50,13 +97,28 @@ export async function POST(req: Request) {
   if (existingPaa) {
     return Response.json(
       { error: "slug_conflict_paa", slug, existing: `/q/${existingPaa.slug}` },
-      { status: 409 },
+      {
+        status: 409,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
     );
   }
 
   const existingCustom = await getCustomQa(slug);
   if (existingCustom && !parsed.data.overwrite) {
-    return Response.json({ error: "slug_exists", slug }, { status: 409 });
+    return Response.json(
+      { error: "slug_exists", slug },
+      {
+        status: 409,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
   }
 
   if (parsed.data.answerMd) {
@@ -80,6 +142,11 @@ export async function POST(req: Request) {
 
   return Response.json(
     { ok: true, slug, url: `/q/${slug}` },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        ...getAdminSecurityHeaders(),
+        ...(rlHeaders as unknown as HeadersInit),
+      },
+    },
   );
 }

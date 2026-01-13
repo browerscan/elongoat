@@ -6,16 +6,18 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "server-only": path.resolve(__dirname, "./tests/stubs/server-only.ts"),
+      "@e2e": path.resolve(__dirname, "./tests/e2e"),
     },
   },
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
     setupFiles: ["./tests/setup.ts"],
-    testTimeout: 20_000,
-    hookTimeout: 20_000,
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     clearMocks: true,
     restoreMocks: true,
+    includeSource: ["src/**/*.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

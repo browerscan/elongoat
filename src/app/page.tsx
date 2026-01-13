@@ -1,19 +1,11 @@
 import Link from "next/link";
-
-import {
-  ArrowRight,
-  BookOpen,
-  FileText,
-  Search,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
+import { Suspense } from "react";
+import { BookOpen, FileText, Search, UserRound } from "lucide-react";
 
 import { JsonLd } from "../components/JsonLd";
 import { OpenChatButton } from "../components/OpenChatButton";
 import { getClusterIndex } from "../lib/indexes";
 import { getDynamicVariables } from "../lib/variables";
-import { fetchFeaturedArticles, fetchArticleCount } from "../lib/apiClient";
 import { generateHomeMetadata } from "../lib/seo";
 import {
   generateOrganizationSchema,
@@ -21,39 +13,23 @@ import {
   generateWebPageSchema,
   generateWebSiteSchema,
 } from "../lib/structuredData";
-import { getRecommendations } from "../lib/recommendations";
-import { getTimelineTweets, getTweetStats } from "../lib/muskTweets";
+
+import { HomeMetrics } from "../components/home/HomeMetrics";
+import { LatestTweets } from "../components/home/LatestTweets";
+import { FeaturedWriting } from "../components/home/FeaturedWriting";
+import { RecommendedContent } from "../components/home/RecommendedContent";
 
 export const revalidate = 3600;
 
 export const metadata = generateHomeMetadata();
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export default async function Home() {
-  const [cluster, vars, featuredResult, articleCount, tweetStats, tweets] =
-    await Promise.all([
-      getClusterIndex(),
-      getDynamicVariables(),
-      fetchFeaturedArticles(8),
-      fetchArticleCount(),
-      getTweetStats(),
-      getTimelineTweets({ limit: 6, includeReplies: false }),
-    ]);
-
-  const featuredArticles = featuredResult.articles;
+  // Only lightweight fetches here for metadata/schema
+  // The heavy lifting is now distributed to components
+  const [cluster, vars] = await Promise.all([
+    getClusterIndex(),
+    getDynamicVariables(),
+  ]);
 
   const jsonLd = [
     generateWebSiteSchema(),
@@ -68,21 +44,6 @@ export default async function Home() {
       breadcrumbs: [{ name: "Home", url: "/" }],
     }),
   ];
-
-  const seedQuery = cluster.topics
-    .slice()
-    .sort((a, b) => b.totalVolume - a.totalVolume)
-    .slice(0, 4)
-    .map((t) => t.topic)
-    .join(" ");
-
-  const recommendations = await getRecommendations({
-    query: seedQuery || "Tesla SpaceX Starship AI",
-    limitArticles: 8,
-    limitTweets: 4,
-    minLikes: 1000,
-    minScore: 0.12,
-  });
 
   return (
     <>
@@ -142,236 +103,38 @@ export default async function Home() {
                   Age <span className="text-white/90">{vars.age}</span> • Net
                   worth <span className="text-white/90">{vars.net_worth}</span>
                 </div>
-                <div className="mt-1 text-xs text-white/50">
-                  {tweetStats?.totalTweets
-                    ? `${tweetStats.totalTweets.toLocaleString()} archived tweets`
-                    : "Tweets archive (DB optional)"}
-                </div>
+                <div className="mt-1 text-xs text-white/50">Live updates</div>
               </div>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <MetricCard
-            label="Articles"
-            value={articleCount.toLocaleString()}
-            hint="AI-generated content"
-          />
-          <MetricCard
-            label="Tweets"
-            value={tweetStats?.totalTweets.toLocaleString() || "55K+"}
-            hint="2010-2025 archive"
-          />
-          <MetricCard
-            label="Topics"
-            value={cluster.topics.length.toLocaleString()}
-            hint="Knowledge graph hubs"
-          />
-        </section>
+        <Suspense
+          fallback={
+            <div className="grid gap-4 md:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 rounded-3xl bg-white/5" />
+              ))}
+            </div>
+          }
+        >
+          <HomeMetrics />
+        </Suspense>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="glass-premium rounded-3xl p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Latest tweets
-                </h2>
-                <p className="mt-1 text-xs text-white/50">
-                  From the local 2010–2025 archive
-                </p>
-              </div>
-              <Link href="/tweets" className="badge-x">
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <div className="mt-5 space-y-3">
-              {tweets.length ? (
-                tweets.map((t) => (
-                  <Link
-                    key={t.tweetId}
-                    href={`/tweets/${t.tweetId}`}
-                    className="group block rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-xs text-white/55">
-                        {formatDate(t.createdAt)}
-                      </div>
-                      {t.likeCount > 0 ? (
-                        <div className="text-xs text-white/45">
-                          ❤️ {formatNumber(t.likeCount)}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-3">
-                      {t.fullText}
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
-                  No tweets found. If you want the archive, ingest `musk_tweets`
-                  into Postgres.
-                </div>
-              )}
-            </div>
-          </div>
+          <Suspense fallback={<div className="h-96 rounded-3xl bg-white/5" />}>
+            <LatestTweets />
+          </Suspense>
 
-          <div className="glass-premium rounded-3xl p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Featured writing
-                </h2>
-                <p className="mt-1 text-xs text-white/50">
-                  AI-generated articles from {articleCount.toLocaleString()}{" "}
-                  pieces
-                </p>
-              </div>
-              <Link href="/writing" className="badge-x">
-                Browse <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {featuredArticles.length > 0 ? (
-                featuredArticles.map((article) => (
-                  <Link
-                    key={article.slug}
-                    href={article.url}
-                    className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                  >
-                    <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
-                      {article.title}
-                    </div>
-                    {article.snippet && (
-                      <div className="mt-1 text-xs text-white/60 line-clamp-2">
-                        {article.snippet}
-                      </div>
-                    )}
-                    <div className="mt-3 text-[11px] text-white/45">
-                      {formatDate(article.updatedAt)} •{" "}
-                      {article.wordCount.toLocaleString()} words
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
-                  No articles found. Check database connection.
-                </div>
-              )}
-            </div>
-          </div>
+          <Suspense fallback={<div className="h-96 rounded-3xl bg-white/5" />}>
+            <FeaturedWriting />
+          </Suspense>
         </section>
 
-        <section className="glass-premium rounded-3xl p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-accent" />
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Recommended
-                </h2>
-                <p className="mt-1 text-xs text-white/50">
-                  Related content seeded by top topics
-                </p>
-              </div>
-            </div>
-            <Link href="/discover" className="badge-x">
-              Tune it <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
-                Articles
-              </div>
-              <div className="mt-3 space-y-2">
-                {recommendations.articles.slice(0, 6).map((a) => (
-                  <Link
-                    key={a.url}
-                    href={a.url}
-                    className="group flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
-                        {a.title}
-                      </div>
-                      {a.snippet ? (
-                        <div className="mt-1 text-xs text-white/60 line-clamp-2">
-                          {a.snippet}
-                        </div>
-                      ) : null}
-                      <div className="mt-2 text-[11px] text-white/45">
-                        {a.source.replace("_", " ")} •{" "}
-                        {Math.round(
-                          Math.min(1, Math.max(0, a.relevance_score)) * 100,
-                        )}
-                        % match
-                      </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-white/25 group-hover:text-white/60 transition-colors shrink-0 mt-0.5" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
-                Tweets
-              </div>
-              <div className="mt-3 space-y-2">
-                {recommendations.tweets.length ? (
-                  recommendations.tweets.slice(0, 4).map((t) => (
-                    <a
-                      key={t.tweetId}
-                      href={t.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group block rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10"
-                    >
-                      <div className="flex items-center justify-between gap-3 text-xs text-white/55">
-                        <span>{formatDate(t.createdAt)}</span>
-                        <span>❤️ {formatNumber(t.likeCount)}</span>
-                      </div>
-                      <div className="mt-2 text-sm text-white/80 line-clamp-3">
-                        {t.text}
-                      </div>
-                    </a>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
-                    No tweet matches yet. (Tweets require the archive DB.)
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        <Suspense fallback={<div className="h-80 rounded-3xl bg-white/5" />}>
+          <RecommendedContent />
+        </Suspense>
       </div>
     </>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <div className="glass-premium rounded-3xl p-6">
-      <div className="text-xs font-semibold uppercase tracking-wider text-white/55">
-        {label}
-      </div>
-      <div className="mt-3 text-3xl font-semibold tracking-tight text-white">
-        {value}
-      </div>
-      <div className="mt-2 text-sm text-white/55">{hint}</div>
-    </div>
   );
 }

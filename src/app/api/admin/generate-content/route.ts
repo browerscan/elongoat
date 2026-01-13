@@ -2,11 +2,13 @@ import "server-only";
 
 import { z } from "zod";
 
-import { checkAdminAuth, unauthorized } from "../../../../lib/adminAuth";
+import { checkAdminAuthEither } from "../../../../lib/adminAuth";
 import {
   generateClusterPageContent,
   generatePaaAnswer,
 } from "../../../../lib/contentGen";
+import { getAdminSecurityHeaders } from "../../../../lib/securityHeaders";
+import { rateLimitAdmin } from "../../../../lib/rateLimit";
 
 const BodySchema = z
   .object({
@@ -17,12 +19,48 @@ const BodySchema = z
   .strict();
 
 export async function POST(req: Request) {
-  if (!checkAdminAuth(req)) return unauthorized();
+  const { result: rlResult, headers: rlHeaders } = await rateLimitAdmin(req);
+  if (!rlResult.ok) {
+    return Response.json(
+      { error: "rate_limit_exceeded" },
+      {
+        status: 429,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
+
+  const isAuth = await checkAdminAuthEither(req);
+  if (!isAuth) {
+    return Response.json(
+      { error: "unauthorized" },
+      {
+        status: 401,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const parsed = BodySchema.safeParse(body);
-  if (!parsed.success)
-    return Response.json({ error: "invalid_request" }, { status: 400 });
+  if (!parsed.success) {
+    return Response.json(
+      { error: "invalid_request" },
+      {
+        status: 400,
+        headers: {
+          ...getAdminSecurityHeaders(),
+          ...(rlHeaders as unknown as HeadersInit),
+        },
+      },
+    );
+  }
 
   const { kind, slugs, ttlSeconds } = parsed.data;
 
@@ -61,6 +99,11 @@ export async function POST(req: Request) {
   const okCount = results.filter((r) => r.ok).length;
   return Response.json(
     { ok: true, kind, generated: okCount, total: results.length, results },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        ...getAdminSecurityHeaders(),
+        ...(rlHeaders as unknown as HeadersInit),
+      },
+    },
   );
 }

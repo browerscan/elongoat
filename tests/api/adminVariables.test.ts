@@ -4,8 +4,7 @@ import { GET, POST } from "../../src/app/api/admin/variables/route";
 
 // Mock dependencies
 vi.mock("../../src/lib/adminAuth", () => ({
-  checkAdminAuth: vi.fn(),
-  unauthorized: vi.fn(),
+  checkAdminAuthEither: vi.fn(),
 }));
 
 vi.mock("../../src/lib/adminVariables", () => ({
@@ -16,7 +15,12 @@ vi.mock("../../src/lib/adminVariables", () => ({
   },
 }));
 
-import { checkAdminAuth, unauthorized } from "../../src/lib/adminAuth";
+vi.mock("../../src/lib/rateLimit", () => ({
+  rateLimitAdmin: vi.fn(),
+}));
+
+import { checkAdminAuthEither } from "../../src/lib/adminAuth";
+import { rateLimitAdmin } from "../../src/lib/rateLimit";
 import {
   getAdminVariablesSnapshot,
   updateAdminVariables,
@@ -38,31 +42,41 @@ describe("API /admin/variables", () => {
       net_worth: "$400B",
       chat_mood: "confident",
       chat_typing_quirk: true,
+      chat_analytics_enabled: false,
+    },
+    chat: {
+      mood: "confident",
+      typingQuirk: true,
+      analyticsEnabled: false,
     },
     updatedAt: {
       vars: "2025-01-01T00:00:00.000Z",
       chat: "2025-01-01T00:00:00.000Z",
     },
   };
-
-  const mockUnauthorizedResponse = Response.json(
-    { error: "unauthorized" },
-    { status: 401 },
-  );
+  const mockRateLimit = {
+    result: { ok: true, remaining: 10, resetSeconds: 60, limit: 60 },
+    headers: {
+      "X-RateLimit-Limit": "60",
+      "X-RateLimit-Remaining": "10",
+      "X-RateLimit-Reset": "60",
+    },
+  };
 
   describe("GET", () => {
     it("returns 401 when not authenticated", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(false);
-      vi.mocked(unauthorized).mockReturnValue(mockUnauthorizedResponse);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(false);
 
       const request = new Request("https://example.com/api/admin/variables");
       const response = await GET(request);
 
-      expect(unauthorized).toHaveBeenCalled();
+      expect(response.status).toBe(401);
     });
 
     it("returns variables snapshot when authenticated", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(getAdminVariablesSnapshot).mockResolvedValue(mockSnapshot);
 
       const request = new Request("https://example.com/api/admin/variables");
@@ -73,31 +87,33 @@ describe("API /admin/variables", () => {
     });
 
     it("sets Cache-Control to no-store", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(getAdminVariablesSnapshot).mockResolvedValue(mockSnapshot);
 
       const request = new Request("https://example.com/api/admin/variables");
       const response = await GET(request);
 
-      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("Cache-Control")).toContain("no-store");
     });
   });
 
   describe("POST", () => {
     it("returns 401 when not authenticated", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(false);
-      vi.mocked(unauthorized).mockReturnValue(mockUnauthorizedResponse);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(false);
 
       const request = new Request("https://example.com/api/admin/variables", {
         method: "POST",
       });
       const response = await POST(request);
 
-      expect(unauthorized).toHaveBeenCalled();
+      expect(response.status).toBe(401);
     });
 
     it("returns 400 for invalid request body", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: false,
         error: {
@@ -118,7 +134,8 @@ describe("API /admin/variables", () => {
     });
 
     it("limits issues to 3 items", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: false,
         error: {
@@ -150,7 +167,8 @@ describe("API /admin/variables", () => {
         updatedKeys: ["chat_mood"],
       };
 
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: true,
         data: updateData,
@@ -169,7 +187,8 @@ describe("API /admin/variables", () => {
     });
 
     it("returns 500 when update fails", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: true,
         data: { chat_mood: "neutral" },
@@ -191,7 +210,8 @@ describe("API /admin/variables", () => {
     });
 
     it("handles non-Error exceptions", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: true,
         data: { chat_mood: "neutral" },
@@ -210,7 +230,8 @@ describe("API /admin/variables", () => {
     });
 
     it("sets Cache-Control to no-store on success", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
       vi.mocked(AdminVariablesUpdateSchema.safeParse).mockReturnValue({
         success: true,
         data: { dob: "1971-06-28" },
@@ -226,11 +247,12 @@ describe("API /admin/variables", () => {
       });
       const response = await POST(request);
 
-      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("Cache-Control")).toContain("no-store");
     });
 
     it("handles invalid JSON gracefully", async () => {
-      vi.mocked(checkAdminAuth).mockReturnValue(true);
+      vi.mocked(rateLimitAdmin).mockResolvedValue(mockRateLimit);
+      vi.mocked(checkAdminAuthEither).mockResolvedValue(true);
 
       // Mock Request with invalid JSON
       const request = new Request("https://example.com/api/admin/variables", {

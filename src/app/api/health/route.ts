@@ -11,6 +11,7 @@ import {
 } from "../../../lib/apiResponse";
 import { getMetrics } from "../../../lib/tieredCache";
 import { generatePerformanceReport } from "../../../lib/performance";
+import { rateLimitHealth, rateLimitResponse } from "../../../lib/rateLimit";
 
 const env = getEnv();
 /**
@@ -432,7 +433,13 @@ function summarizeChecks(components: {
  * GET Handler
  * ------------------------------------------------------------------------------------------------- */
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitHealth(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const requestId = generateRequestId();
   const startTime = performance.now();
 
@@ -501,7 +508,10 @@ export async function GET() {
 
   return Response.json(body, {
     status: httpStatus,
-    headers,
+    headers: {
+      ...(headers as HeadersInit),
+      ...(rlHeaders as unknown as HeadersInit),
+    },
   });
 }
 
@@ -509,7 +519,16 @@ export async function GET() {
  * HEAD Handler (for simple liveness checks)
  * ------------------------------------------------------------------------------------------------- */
 
-export async function HEAD() {
+export async function HEAD(request: Request) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitHealth(request);
+  if (!rlResult.ok) {
+    return new Response(null, {
+      status: 429,
+      headers: rlHeaders as unknown as HeadersInit,
+    });
+  }
+
   // Quick liveness check - just check if the process is running
   const headers = createStandardHeaders({
     cacheControl: CACHE_CONTROL.NO_STORE,
@@ -517,6 +536,9 @@ export async function HEAD() {
 
   return new Response(null, {
     status: 200,
-    headers,
+    headers: {
+      ...(headers as HeadersInit),
+      ...(rlHeaders as unknown as HeadersInit),
+    },
   });
 }

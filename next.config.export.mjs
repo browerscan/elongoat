@@ -17,7 +17,21 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  serverExternalPackages: ["drizzle-kit", "esbuild", "pg-native"],
+  // Exclude API routes from static export
+  exportPathMap: async function (
+    defaultPathMap,
+    { dev, dir, outDir, distDir, buildId },
+  ) {
+    // Filter out API routes from the path map
+    const pathMap = {};
+    for (const [path, page] of Object.entries(defaultPathMap)) {
+      // Skip API routes
+      if (!path.startsWith("/api/")) {
+        pathMap[path] = page;
+      }
+    }
+    return pathMap;
+  },
 };
 
 export default nextConfig;

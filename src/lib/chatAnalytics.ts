@@ -62,8 +62,13 @@ export type ChatQuestionStat = {
 export async function recordChatQuestionStat(params: {
   message: string;
   currentPage?: string;
+  analyticsEnabled?: boolean;
 }): Promise<void> {
-  if (!analyticsEnabled()) return;
+  const enabled =
+    typeof params.analyticsEnabled === "boolean"
+      ? params.analyticsEnabled
+      : analyticsEnabled();
+  if (!enabled) return;
   if (!shouldStoreQuestion(params.message)) return;
 
   const db = getDbPool();

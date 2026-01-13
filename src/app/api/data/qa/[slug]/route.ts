@@ -2,66 +2,73 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { findPaaQuestion, getPaaIndex } from "../../../../../lib/indexes";
+import { findPaaQuestion } from "../../../../../lib/indexes";
 import { getCustomQa } from "../../../../../lib/customQa";
 import { getPaaAnswerContent } from "../../../../../lib/contentGen";
 import { getDynamicVariables } from "../../../../../lib/variables";
+import { rateLimitApi, rateLimitResponse } from "../../../../../lib/rateLimit";
 
-export const revalidate = 3600;
+// API routes are backend-only - skip during static export
+export function generateStaticParams() {
+  return [{ slug: "__placeholder__" }];
+}
+
+// API routes are backend-only
+export const dynamic = "error";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   try {
     const { slug } = await params;
 
-    // Check for custom Q&A first
     const customQa = await getCustomQa(slug);
     if (customQa) {
       const variables = await getDynamicVariables();
-      return NextResponse.json({
-        kind: "custom",
-        slug: customQa.slug,
-        question: customQa.question,
-        contentMd: customQa.answerMd,
-        model: customQa.model,
-        sources: customQa.sources,
-        createdAt: customQa.createdAt,
-        updatedAt: customQa.updatedAt,
-        variables,
-      });
-    }
-
-    // Check PAA index
-    const paaQuestion = await findPaaQuestion(slug);
-    if (!paaQuestion) {
       return NextResponse.json(
-        { error: "Question not found" },
-        { status: 404 },
+        {
+          found: true,
+          question: customQa.question,
+          answer: customQa.answerMd
+            .replace(/\{age\}/g, String(variables.age))
+            .replace(/\{net_worth\}/g, String(variables.net_worth)),
+          variables,
+        },
+        { headers: rlHeaders as unknown as HeadersInit },
       );
     }
 
-    const [content, variables, paaIndex] = await Promise.all([
-      getPaaAnswerContent({ slug }),
-      getDynamicVariables(),
-      getPaaIndex(),
-    ]);
+    const paaQuestion = await findPaaQuestion(slug);
+    if (!paaQuestion) {
+      return NextResponse.json(
+        { found: false, error: "Question not found" },
+        { status: 404, headers: rlHeaders as unknown as HeadersInit },
+      );
+    }
 
-    return NextResponse.json({
-      kind: "paa",
-      slug: paaQuestion.slug,
-      question: paaQuestion.question,
-      parent: paaQuestion.parent,
-      sourceUrl: paaQuestion.sourceUrl,
-      sourceTitle: paaQuestion.sourceTitle,
-      volume: paaQuestion.volume,
-      content,
-      variables,
-      totalQuestions: paaIndex.questions.length,
-    });
+    const variables = await getDynamicVariables();
+    const content = await getPaaAnswerContent({ slug });
+
+    return NextResponse.json(
+      {
+        found: true,
+        question: paaQuestion.question,
+        answer: content.contentMd,
+        variables,
+      },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
   } catch (error) {
-    console.error("Error fetching Q&A:", error);
-    return NextResponse.json({ error: "Failed to fetch Q&A" }, { status: 500 });
+    console.error("[API /data/qa] Error:", error);
+    return NextResponse.json(
+      { found: false, error: "Internal server error" },
+      { status: 500, headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 }

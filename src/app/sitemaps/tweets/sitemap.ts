@@ -24,7 +24,8 @@ export async function generateTweetSitemapIds(): Promise<number[]> {
   return Array.from({ length: numSitemaps }, (_, i) => i);
 }
 
-export async function generateSitemaps() {
+// For static export, generate params at build time
+export async function generateStaticParams() {
   const ids = await generateTweetSitemapIds();
   return ids.map((id) => ({ id }));
 }

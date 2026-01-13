@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEnv } from "../../../lib/env";
+import { rateLimitApi, rateLimitResponse } from "../../../lib/rateLimit";
 
 const env = getEnv();
 /**
@@ -21,6 +22,11 @@ const env = getEnv();
  * }
  */
 export async function POST(request: NextRequest) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   try {
     const errorData = await request.json();
 
@@ -38,9 +44,15 @@ export async function POST(request: NextRequest) {
 
     // Return success regardless of whether we logged successfully
     // We don't want error logging to break the app
-    return NextResponse.json({ success: true }, { status: 202 });
+    return NextResponse.json(
+      { success: true },
+      { status: 202, headers: rlHeaders as unknown as HeadersInit },
+    );
   } catch {
     // Silently fail - error logging should never cause more errors
-    return NextResponse.json({ success: true }, { status: 202 });
+    return NextResponse.json(
+      { success: true },
+      { status: 202, headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 }

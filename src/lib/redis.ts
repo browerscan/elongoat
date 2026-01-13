@@ -2,6 +2,7 @@
 import Redis from "ioredis";
 export type { Redis } from "ioredis";
 import { getEnv } from "./env";
+import { logger } from "./logger";
 
 const env = getEnv();
 
@@ -187,7 +188,7 @@ export async function executePipeline(
     return await pipeline.exec();
   } catch (error) {
     if (env.NODE_ENV === "development") {
-      console.error("[Redis] Pipeline error:", error);
+      logger.error({ error }, "[Redis] Pipeline error");
     }
     return null;
   }
@@ -211,7 +212,7 @@ export async function mget(keys: string[]): Promise<(string | null)[] | null> {
     return await redis.mget(...keys);
   } catch (error) {
     if (env.NODE_ENV === "development") {
-      console.error("[Redis] MGET error:", error);
+      logger.error({ error }, "[Redis] MGET error");
     }
     return null;
   }
@@ -232,7 +233,7 @@ export async function mset(
     return true;
   } catch (error) {
     if (env.NODE_ENV === "development") {
-      console.error("[Redis] MSET error:", error);
+      logger.error({ error }, "[Redis] MSET error");
     }
     return false;
   }
@@ -252,7 +253,7 @@ export async function mdel(keys: string[]): Promise<number> {
     return await redis.del(...keys);
   } catch (error) {
     if (env.NODE_ENV === "development") {
-      console.error("[Redis] DEL error:", error);
+      logger.error({ error }, "[Redis] DEL error");
     }
     return 0;
   }
@@ -330,7 +331,7 @@ export async function closeRedis(): Promise<void> {
   if (redisClient) {
     closePromises.push(
       redisClient.quit().catch((err) => {
-        console.error("[Redis] Error closing primary connection:", err);
+        logger.error({ err }, "[Redis] Error closing primary connection");
       }),
     );
   }
@@ -340,7 +341,7 @@ export async function closeRedis(): Promise<void> {
       if (client !== redisClient) {
         closePromises.push(
           client.quit().catch((err) => {
-            console.error("[Redis] Error closing pool connection:", err);
+            logger.error({ err }, "[Redis] Error closing pool connection");
           }),
         );
       }

@@ -17,6 +17,11 @@ import {
 
 export const revalidate = 3600;
 
+// Generate placeholder params for static export
+export function generateStaticParams() {
+  return [{ tweetId: "1234567890" }];
+}
+
 function tweetUrl(tweetId: string): string {
   return `https://x.com/elonmusk/status/${encodeURIComponent(tweetId)}`;
 }

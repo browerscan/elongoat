@@ -42,10 +42,14 @@ export function generateWebSiteSchema() {
 }
 
 /**
- * Generate Organization schema
+ * Generate Organization schema with full social links
  */
 export function generateOrganizationSchema() {
-  const socialUrls = ["https://twitter.com/elongoat", "https://x.com/elongoat"];
+  const socialUrls = [
+    "https://twitter.com/elongoat",
+    "https://x.com/elongoat",
+    "https://github.com/elongoat",
+  ];
 
   return {
     "@context": BASE_CONTEXT,
@@ -62,6 +66,16 @@ export function generateOrganizationSchema() {
       caption: getSiteConfig().name,
     },
     sameAs: socialUrls,
+    foundingDate: "2024",
+    areaServed: "Worldwide",
+    knowsAbout: [
+      "Elon Musk",
+      "Tesla",
+      "SpaceX",
+      "X/Twitter",
+      "Artificial Intelligence",
+      "Knowledge Base",
+    ],
   };
 }
 
@@ -265,7 +279,7 @@ export function generateQaPageSchema(params: {
 }
 
 /**
- * Generate VideoObject schema
+ * Generate VideoObject schema with full metadata
  * Helps videos appear in video rich results
  */
 export function generateVideoObjectSchema(params: {
@@ -278,6 +292,11 @@ export function generateVideoObjectSchema(params: {
   duration?: string;
   channelName?: string;
   transcript?: string;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  familyFriendly?: boolean;
+  regionsAllowed?: string[];
 }) {
   const {
     name,
@@ -289,6 +308,11 @@ export function generateVideoObjectSchema(params: {
     duration,
     channelName,
     transcript,
+    viewCount,
+    likeCount,
+    commentCount,
+    familyFriendly = true,
+    regionsAllowed = ["US", "GB", "CA", "AU"],
   } = params;
 
   const video: Record<string, unknown> = {
@@ -299,10 +323,12 @@ export function generateVideoObjectSchema(params: {
     thumbnailUrl: [
       thumbnailUrl ?? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
     ],
     uploadDate,
     embedUrl,
     contentUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    familyFriendly,
   };
 
   if (duration) {
@@ -314,10 +340,46 @@ export function generateVideoObjectSchema(params: {
       "@type": "Organization",
       name: channelName,
     };
+    video.publisher = {
+      "@type": "Organization",
+      name: channelName,
+      url: `https://www.youtube.com/@${channelName}`,
+    };
   }
 
   if (transcript) {
     video.transcript = transcript.slice(0, 2000);
+  }
+
+  // Add interaction statistics
+  const interactions: Array<Record<string, unknown>> = [];
+  if (typeof viewCount === "number" && viewCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "WatchAction" },
+      userInteractionCount: viewCount,
+    });
+  }
+  if (typeof likeCount === "number" && likeCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "LikeAction" },
+      userInteractionCount: likeCount,
+    });
+  }
+  if (typeof commentCount === "number" && commentCount > 0) {
+    interactions.push({
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "CommentAction" },
+      userInteractionCount: commentCount,
+    });
+  }
+  if (interactions.length > 0) {
+    video.interactionStatistic = interactions;
+  }
+
+  if (regionsAllowed.length > 0) {
+    video.regionsAllowed = regionsAllowed;
   }
 
   return video;
@@ -477,7 +539,7 @@ export function generateSocialMediaPostingSchema(params: {
 }
 
 /**
- * Generate Person schema for Elon Musk
+ * Generate Person schema for Elon Musk with full details
  */
 export function generatePersonSchema() {
   return {
@@ -488,40 +550,79 @@ export function generatePersonSchema() {
     url: `${SITE_URL}`,
     sameAs: [
       "https://twitter.com/elonmusk",
+      "https://x.com/elonmusk",
       "https://www.wikipedia.org/wiki/Elon_Musk",
+      "https://www.linkedin.com/in/elonmusk",
     ],
     jobTitle: "CEO",
     worksFor: [
       {
         "@type": "Organization",
         name: "Tesla",
+        url: "https://www.tesla.com",
       },
       {
         "@type": "Organization",
         name: "SpaceX",
+        url: "https://www.spacex.com",
       },
       {
         "@type": "Organization",
         name: "X Corp",
+        url: "https://x.com",
       },
+      {
+        "@type": "Organization",
+        name: "Neuralink",
+        url: "https://neuralink.com",
+      },
+      {
+        "@type": "Organization",
+        name: "The Boring Company",
+        url: "https://www.boringcompany.com",
+      },
+    ],
+    birthDate: "1971-06-28",
+    birthPlace: {
+      "@type": "Place",
+      name: "Pretoria, South Africa",
+    },
+    description:
+      "Entrepreneur and business magnate. Founder, CEO, and CTO of SpaceX; CEO and product architect of Tesla, Inc.; owner and CTO of X (formerly Twitter); founder of the Boring Company; co-founder of Neuralink and OpenAI.",
+    knowsAbout: [
+      "Electric Vehicles",
+      "Space Exploration",
+      "Artificial Intelligence",
+      "Renewable Energy",
+      "Social Media",
+      "Neurotechnology",
     ],
   };
 }
 
 /**
- * Generate ProfilePage schema for topic hubs
+ * Generate ProfilePage schema for topic hubs and profile pages
+ * Enhanced with about entity and subject reference
  */
 export function generateProfilePageSchema(params: {
   topic: string;
   description: string;
   url: string;
   pageCount?: number;
+  subjectOf?: string;
+  mainEntity?: {
+    "@type": string;
+    name: string;
+    description?: string;
+    sameAs?: string[];
+  };
 }) {
-  const { topic, description, url, pageCount } = params;
+  const { topic, description, url, pageCount, subjectOf, mainEntity } = params;
 
-  return {
+  const schema: Record<string, unknown> = {
     "@context": BASE_CONTEXT,
     "@type": "CollectionPage",
+    "@id": `${SITE_URL}${url}#collectionpage`,
     name: `${topic} — Topic Hub`,
     description: description.slice(0, 160),
     url: `${SITE_URL}${url}`,
@@ -530,6 +631,74 @@ export function generateProfilePageSchema(params: {
       name: topic,
     },
     numberOfItems: pageCount ?? 0,
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: getSiteConfig().name,
+    },
+  };
+
+  if (subjectOf) {
+    schema.subjectOf = {
+      "@type": "Event",
+      name: subjectOf,
+    };
+  }
+
+  if (mainEntity) {
+    schema.mainEntity = mainEntity;
+  }
+
+  return schema;
+}
+
+/**
+ * Generate AboutPage schema for /facts/ pages
+ * Specifically for pages about Elon Musk's personal information
+ */
+export function generateAboutPageSchema(params: {
+  title: string;
+  description: string;
+  url: string;
+  subject: "Elon Musk";
+  facts: Array<{
+    name: string;
+    value: string | number;
+    dateVerified?: string;
+  }>;
+}) {
+  const { title, description, url, subject, facts } = params;
+
+  return {
+    "@context": BASE_CONTEXT,
+    "@type": "AboutPage",
+    "@id": `${SITE_URL}${url}#aboutpage`,
+    url: `${SITE_URL}${url}`,
+    name: title,
+    description: description.slice(0, 160),
+    about: {
+      "@type": "Person",
+      name: subject,
+      "@id": `${SITE_URL}/#person`,
+    },
+    mainEntity: {
+      "@type": "Person",
+      name: subject,
+      description: facts.map((f) => `${f.name}: ${f.value}`).join("; "),
+    },
+    subjectOf: facts.map((fact) => ({
+      "@type": "PropertyValue",
+      name: fact.name,
+      value: String(fact.value),
+      ...(fact.dateVerified && {
+        propertyID: "dateVerified",
+        value: fact.dateVerified,
+      }),
+    })),
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+    },
   };
 }
 

@@ -13,8 +13,9 @@ import {
   getRecommendations,
   resolveRecommendationQuery,
 } from "../../../lib/recommendations";
+import { dynamicExport } from "../../../lib/apiExport";
 
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 export async function GET(request: NextRequest) {
   const requestId = generateRequestId();

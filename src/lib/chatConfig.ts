@@ -24,30 +24,51 @@ function parseMood(value: string | undefined, fallback: ChatMood): ChatMood {
   return parsed.success ? parsed.data : fallback;
 }
 
-type ChatConfigResult = { config: ChatConfig; updatedAt: string };
+type ChatConfigResult = {
+  config: ChatConfig;
+  analyticsEnabled: boolean;
+  updatedAt: string;
+};
 
 export async function getChatConfig(): Promise<ChatConfigResult> {
   const envConfig: ChatConfig = {
     mood: parseMood(env.CHAT_MOOD, "confident"),
     typingQuirk: env.CHAT_TYPING_QUIRK,
   };
+  const envAnalyticsEnabled = env.CHAT_ANALYTICS_ENABLED;
 
   const redis = getRedis();
   if (redis) {
     try {
       await redis.connect();
       const cached = await redis.get("vars:chat-config");
-      if (cached) return JSON.parse(cached) as ChatConfigResult;
+      if (cached) {
+        const parsed = JSON.parse(cached) as Partial<ChatConfigResult>;
+        if (parsed?.config) {
+          return {
+            config: parsed.config,
+            analyticsEnabled: parsed.analyticsEnabled ?? envAnalyticsEnabled,
+            updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+          };
+        }
+      }
     } catch {
       // ignore cache errors
     }
   }
 
   const db = getDbPool();
-  if (!db) return { config: envConfig, updatedAt: new Date().toISOString() };
+  if (!db) {
+    return {
+      config: envConfig,
+      analyticsEnabled: envAnalyticsEnabled,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 
   let mood = envConfig.mood;
   let typingQuirk = envConfig.typingQuirk;
+  let analyticsEnabled = envAnalyticsEnabled;
   let updatedAt = new Date().toISOString();
 
   try {
@@ -61,13 +82,15 @@ export async function getChatConfig(): Promise<ChatConfigResult> {
       from elongoat.variables
       where key = any($1::text[])
       `,
-      [["chat_mood", "chat_typing_quirk"]],
+      [["chat_mood", "chat_typing_quirk", "chat_analytics_enabled"]],
     );
 
     for (const row of res.rows) {
       if (row.key === "chat_mood") mood = parseMood(row.value, mood);
       if (row.key === "chat_typing_quirk")
         typingQuirk = parseBool(row.value, typingQuirk);
+      if (row.key === "chat_analytics_enabled")
+        analyticsEnabled = parseBool(row.value, analyticsEnabled);
     }
 
     const maxUpdated = res.rows
@@ -79,7 +102,11 @@ export async function getChatConfig(): Promise<ChatConfigResult> {
     // ignore DB errors
   }
 
-  const result: ChatConfigResult = { config: { mood, typingQuirk }, updatedAt };
+  const result: ChatConfigResult = {
+    config: { mood, typingQuirk },
+    analyticsEnabled,
+    updatedAt,
+  };
 
   if (redis) {
     try {

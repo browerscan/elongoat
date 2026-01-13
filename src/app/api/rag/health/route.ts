@@ -32,9 +32,11 @@ import {
   CACHE_CONTROL,
   generateRequestId,
 } from "../../../../lib/apiResponse";
+import { rateLimitHealth, rateLimitResponse } from "../../../../lib/rateLimit";
+import { dynamicExport } from "../../../../lib/apiExport";
 
 // Skip static export
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 type HealthStatus = "healthy" | "degraded" | "unhealthy";
 
@@ -200,7 +202,13 @@ function calculateOverallStatus(
   return "healthy";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { result: rlResult, headers: rlHeaders } =
+    await rateLimitHealth(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const requestId = generateRequestId();
   const startTime = performance.now();
 
@@ -243,6 +251,7 @@ export async function GET() {
           "X-Health-Status": status,
         },
       }),
+      ...(rlHeaders as unknown as HeadersInit),
       // CORS for health checks
       "Access-Control-Allow-Origin": "*",
     },

@@ -19,6 +19,7 @@ export const AdminVariablesUpdateSchema = z
     net_worth: z.string().min(1).max(240).optional(),
     chat_mood: MoodSchema.optional(),
     chat_typing_quirk: z.boolean().optional(),
+    chat_analytics_enabled: z.boolean().optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: "No updates provided" });
@@ -34,6 +35,12 @@ export type AdminVariablesSnapshot = {
     net_worth: string;
     chat_mood: "confident" | "neutral" | "defensive";
     chat_typing_quirk: boolean;
+    chat_analytics_enabled: boolean;
+  };
+  chat: {
+    mood: "confident" | "neutral" | "defensive";
+    typingQuirk: boolean;
+    analyticsEnabled: boolean;
   };
   updatedAt: { vars: string; chat: string };
 };
@@ -50,6 +57,12 @@ export async function getAdminVariablesSnapshot(): Promise<AdminVariablesSnapsho
       net_worth: vars.net_worth,
       chat_mood: chat.config.mood,
       chat_typing_quirk: chat.config.typingQuirk,
+      chat_analytics_enabled: chat.analyticsEnabled,
+    },
+    chat: {
+      mood: chat.config.mood,
+      typingQuirk: chat.config.typingQuirk,
+      analyticsEnabled: chat.analyticsEnabled,
     },
     updatedAt: {
       vars: vars.updatedAt,
@@ -81,6 +94,12 @@ export async function updateAdminVariables(
     rows.push({
       key: "chat_typing_quirk",
       value: update.chat_typing_quirk ? "1" : "0",
+      type: "boolean",
+    });
+  if (update.chat_analytics_enabled != null)
+    rows.push({
+      key: "chat_analytics_enabled",
+      value: update.chat_analytics_enabled ? "1" : "0",
       type: "boolean",
     });
 

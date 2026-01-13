@@ -13,6 +13,7 @@ const ADMIN_SESSION_COOKIE_NAME = "elongoat_admin_session";
 const ADMIN_CSRF_COOKIE_NAME = "elongoat_admin_csrf";
 const SESSION_EXPIRY_SECONDS = 60 * 60 * 8; // 8 hours
 const CSRF_EXPIRY_SECONDS = 60 * 60 * 24; // 24 hours
+const ADMIN_COOKIE_PATH = "/"; // Cover both /admin UI and /api/admin endpoints
 
 // ============================================================================
 // Types
@@ -175,7 +176,7 @@ export async function createAdminSession(): Promise<{
     httpOnly: true,
     secure: isProduction(),
     sameSite: "lax",
-    path: "/admin",
+    path: ADMIN_COOKIE_PATH,
   });
 
   // Set CSRF token (accessible to client for XHR requests)
@@ -186,7 +187,7 @@ export async function createAdminSession(): Promise<{
     httpOnly: false,
     secure: isProduction(),
     sameSite: "lax",
-    path: "/admin",
+    path: ADMIN_COOKIE_PATH,
   });
 
   return {
@@ -268,7 +269,7 @@ export function clearAdminSession(): string {
       httpOnly: true,
       secure: isProduction(),
       sameSite: "lax",
-      path: "/admin",
+      path: ADMIN_COOKIE_PATH,
     }),
     buildSetCookieHeader({
       name: ADMIN_CSRF_COOKIE_NAME,
@@ -277,7 +278,7 @@ export function clearAdminSession(): string {
       httpOnly: false,
       secure: isProduction(),
       sameSite: "lax",
-      path: "/admin",
+      path: ADMIN_COOKIE_PATH,
     }),
   ];
 

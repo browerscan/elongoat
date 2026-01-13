@@ -41,9 +41,10 @@ import {
   CACHE_CONTROL,
   generateRequestId,
 } from "../../../../lib/apiResponse";
+import { dynamicExport } from "../../../../lib/apiExport";
 
 // Skip static export
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 export async function GET(request: Request) {
   const requestId = generateRequestId();

@@ -2,6 +2,9 @@ import "server-only";
 
 import { Pool } from "pg";
 import { getEnv } from "./env";
+import { logger } from "./logger";
+import { getRedis, isRedisEnabled } from "./redis";
+
 const env = getEnv();
 // ============================================================================
 // Configuration
@@ -9,10 +12,9 @@ const env = getEnv();
 
 const QUERY_CACHE_ENABLED = env.QUERY_CACHE_ENABLED;
 const QUERY_CACHE_TTL_MS = env.QUERY_CACHE_TTL_MS;
-const QUERY_CACHE_MAX_SIZE = env.QUERY_CACHE_MAX_SIZE;
 
 // ============================================================================
-// Query Result Cache (L1 - In-Memory)
+// Query Result Cache (L2 - Redis)
 // ============================================================================
 
 interface CachedQueryResult {
@@ -23,99 +25,176 @@ interface CachedQueryResult {
   rowCount: number;
 }
 
-const queryCache = new Map<string, CachedQueryResult>();
+// Prefix for all DB cache keys to avoid collisions
+const CACHE_PREFIX = "db:q:";
 
 /**
- * Generates a cache key for a query.
+ * Generates a consistent cache key for a query.
  */
 function getQueryCacheKey(query: string, params: unknown[]): string {
   const paramString = JSON.stringify(params);
   const baseStr = query + paramString;
   const encoded = Buffer.from(baseStr).toString("base64").slice(0, 64);
-  return "query:" + encoded;
+  return CACHE_PREFIX + encoded;
 }
 
 /**
- * Gets a cached query result.
+ * Gets a cached query result from Redis.
  */
-function getCachedQuery(
+async function getCachedQuery(
   query: string,
   params: unknown[],
-): CachedQueryResult | null {
-  if (!QUERY_CACHE_ENABLED) return null;
+): Promise<CachedQueryResult | null> {
+  if (!QUERY_CACHE_ENABLED || !isRedisEnabled()) return null;
+
+  const redis = getRedis();
+  if (!redis) return null;
 
   const key = getQueryCacheKey(query, params);
-  const cached = queryCache.get(key);
 
-  if (!cached) return null;
+  try {
+    const cachedStr = await redis.get(key);
+    if (!cachedStr) return null;
 
-  // Check if expired
-  if (Date.now() - cached.timestamp > QUERY_CACHE_TTL_MS) {
-    queryCache.delete(key);
+    const cached = JSON.parse(cachedStr) as CachedQueryResult;
+
+    if (env.NODE_ENV === "development") {
+      logger.info(
+        { query: query.slice(0, 50) },
+        "[DbOptimized] Redis cache hit",
+      );
+    }
+
+    return cached;
+  } catch (err) {
+    if (env.NODE_ENV === "development") {
+      logger.error({ err }, "[DbOptimized] Redis get error");
+    }
     return null;
   }
-
-  if (env.NODE_ENV === "development") {
-    console.log("[DbOptimized] Query cache hit for:", query.slice(0, 50));
-  }
-
-  return cached;
 }
 
 /**
- * Caches a query result.
+ * Caches a query result in Redis.
  */
-function setCachedQuery(
+async function setCachedQuery(
   query: string,
   params: unknown[],
   data: unknown[],
   rowCount: number,
-): void {
-  if (!QUERY_CACHE_ENABLED) return;
+  ttlMs: number = QUERY_CACHE_TTL_MS,
+): Promise<void> {
+  if (!QUERY_CACHE_ENABLED || !isRedisEnabled()) return;
+
+  const redis = getRedis();
+  if (!redis) return;
 
   const key = getQueryCacheKey(query, params);
 
-  // Enforce max cache size
-  if (queryCache.size >= QUERY_CACHE_MAX_SIZE) {
-    // Remove oldest entry (first one in iteration)
-    const firstKey = queryCache.keys().next().value;
-    if (firstKey) {
-      queryCache.delete(firstKey);
-    }
-  }
-
-  queryCache.set(key, {
+  const cacheEntry: CachedQueryResult = {
     data,
     timestamp: Date.now(),
     query,
     params,
     rowCount,
-  });
+  };
+
+  try {
+    // Set with TTL (converting ms to seconds for Redis EX, or usage PX)
+    await redis.set(key, JSON.stringify(cacheEntry), "PX", ttlMs);
+  } catch (err) {
+    if (env.NODE_ENV === "development") {
+      logger.error({ err }, "[DbOptimized] Redis set error");
+    }
+  }
 }
 
 /**
- * Clears the query cache.
+ * Clears the query cache (flushes keys with the prefix).
+ * Warning: scan-based clearing can be slow on massive datasets.
  */
-export function clearQueryCache(): void {
-  queryCache.clear();
+export async function clearQueryCache(): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+
+  try {
+    let cursor = "0";
+    do {
+      const result = await redis.scan(
+        cursor,
+        "MATCH",
+        `${CACHE_PREFIX}*`,
+        "COUNT",
+        100,
+      );
+      cursor = result[0];
+      const keys = result[1];
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor !== "0");
+  } catch (err) {
+    logger.error({ err }, "[DbOptimized] Clear cache error");
+  }
 }
 
 /**
- * Clears query cache entries matching a pattern.
+ * Invalidates query cache entries matching a SQL pattern (expensive!).
+ * This iterates all cached queries to check their metadata.
  */
-export function invalidateQueryCache(pattern: string): void {
+export async function invalidateQueryCache(pattern: string): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+
   const regex = new RegExp(pattern);
   let count = 0;
 
-  for (const [key, value] of queryCache.entries()) {
-    if (regex.test(value.query)) {
-      queryCache.delete(key);
-      count++;
-    }
-  }
+  try {
+    let cursor = "0";
+    do {
+      const result = await redis.scan(
+        cursor,
+        "MATCH",
+        `${CACHE_PREFIX}*`,
+        "COUNT",
+        50,
+      );
+      cursor = result[0];
+      const keys = result[1];
 
-  if (env.NODE_ENV === "development" && count > 0) {
-    console.log("[DbOptimized] Invalidated " + count + " query cache entries");
+      if (keys.length > 0) {
+        // We have to get the values to check the query string
+        // This is heavy, use sparingly
+        const pipeline = redis.pipeline();
+        keys.forEach((k) => pipeline.get(k));
+        const entries = await pipeline.exec();
+
+        if (entries) {
+          const keysToDelete: string[] = [];
+          entries.forEach((entry, idx) => {
+            const [err, val] = entry;
+            if (!err && typeof val === "string") {
+              const parsed = JSON.parse(val) as CachedQueryResult;
+              if (regex.test(parsed.query)) {
+                keysToDelete.push(keys[idx]);
+              }
+            }
+          });
+
+          if (keysToDelete.length > 0) {
+            await redis.del(...keysToDelete);
+            count += keysToDelete.length;
+          }
+        }
+      }
+    } while (cursor !== "0");
+
+    logger.info(
+      { count },
+      "[DbOptimized] Invalidated Redis query cache entries",
+    );
+  } catch (err) {
+    logger.error({ err }, "[DbOptimized] Invalidate cache error");
   }
 }
 
@@ -243,7 +322,7 @@ export async function optimizedQuery<T>(
 
   // Check cache first for SELECT queries
   if (useCache && query.trim().toUpperCase().startsWith("SELECT")) {
-    const cached = getCachedQuery(query, params);
+    const cached = await getCachedQuery(query, params);
     if (cached) {
       return {
         rows: cached.data as T[],
@@ -283,7 +362,18 @@ export async function optimizedQuery<T>(
 
   // Cache SELECT results
   if (useCache && query.trim().toUpperCase().startsWith("SELECT")) {
-    setCachedQuery(query, params, result.rows, result.rowCount ?? 0);
+    // don't await the set, let it happen in background
+    setCachedQuery(
+      query,
+      params,
+      result.rows,
+      result.rowCount ?? 0,
+      options.cacheTtl,
+    ).catch((err) =>
+      env.NODE_ENV === "development"
+        ? logger.error({ err }, "Cache set failed")
+        : null,
+    );
   }
 
   return {
@@ -349,14 +439,12 @@ export async function queryWithRetry<T>(
       const delay = Math.min(100 * Math.pow(2, attempt), 1000);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      if (env.NODE_ENV === "development") {
-        console.log(
-          "[DbOptimized] Retry attempt " + (attempt + 1) + " for query",
-        );
-      }
+      logger.warn(
+        { attempt: attempt + 1 },
+        "[DbOptimized] Retry attempt for query",
+      );
     }
   }
-
   throw lastError;
 }
 
@@ -501,8 +589,7 @@ export interface DbStats {
   pool: PoolStats;
   cache: {
     enabled: boolean;
-    size: number;
-    maxSize: number;
+    type: "redis" | "memory";
     ttl: number;
   };
   prepared: {
@@ -517,9 +604,8 @@ export function getDbStats(pool: Pool): DbStats {
   return {
     pool: getPoolStats(pool),
     cache: {
-      enabled: QUERY_CACHE_ENABLED,
-      size: queryCache.size,
-      maxSize: QUERY_CACHE_MAX_SIZE,
+      enabled: QUERY_CACHE_ENABLED && isRedisEnabled(),
+      type: "redis",
       ttl: QUERY_CACHE_TTL_MS,
     },
     prepared: {

@@ -7,7 +7,13 @@ vi.mock("../../src/lib/variables", () => ({
   getDynamicVariables: vi.fn(),
 }));
 
+vi.mock("../../src/lib/rateLimit", () => ({
+  rateLimitApi: vi.fn(),
+  rateLimitResponse: vi.fn(),
+}));
+
 import { getDynamicVariables } from "../../src/lib/variables";
+import { rateLimitApi } from "../../src/lib/rateLimit";
 
 describe("API /variables", () => {
   beforeEach(() => {
@@ -24,7 +30,18 @@ describe("API /variables", () => {
       updatedAt: "2025-01-01T00:00:00.000Z",
     });
 
-    const response = await GET();
+    vi.mocked(rateLimitApi).mockResolvedValue({
+      result: { ok: true, remaining: 99, resetSeconds: 60, limit: 100 },
+      headers: {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "99",
+        "X-RateLimit-Reset": "60",
+      },
+    });
+
+    const response = await GET(
+      new Request("https://example.com/api/variables"),
+    );
     expect(response.status).toBe(200);
   });
 
@@ -38,7 +55,18 @@ describe("API /variables", () => {
     };
     vi.mocked(getDynamicVariables).mockResolvedValue(mockVars);
 
-    const response = await GET();
+    vi.mocked(rateLimitApi).mockResolvedValue({
+      result: { ok: true, remaining: 99, resetSeconds: 60, limit: 100 },
+      headers: {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "99",
+        "X-RateLimit-Reset": "60",
+      },
+    });
+
+    const response = await GET(
+      new Request("https://example.com/api/variables"),
+    );
     const body = await response.json();
 
     expect(body).toEqual({
@@ -56,7 +84,18 @@ describe("API /variables", () => {
       updatedAt: "2025-01-01T00:00:00.000Z",
     });
 
-    const response = await GET();
+    vi.mocked(rateLimitApi).mockResolvedValue({
+      result: { ok: true, remaining: 99, resetSeconds: 60, limit: 100 },
+      headers: {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "99",
+        "X-RateLimit-Reset": "60",
+      },
+    });
+
+    const response = await GET(
+      new Request("https://example.com/api/variables"),
+    );
     const body = await response.json();
 
     expect(body.variables).toHaveProperty("age", 54);
@@ -75,7 +114,18 @@ describe("API /variables", () => {
       updatedAt: "2025-01-01T00:00:00.000Z",
     });
 
-    const response = await GET();
+    vi.mocked(rateLimitApi).mockResolvedValue({
+      result: { ok: true, remaining: 99, resetSeconds: 60, limit: 100 },
+      headers: {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "99",
+        "X-RateLimit-Reset": "60",
+      },
+    });
+
+    const response = await GET(
+      new Request("https://example.com/api/variables"),
+    );
 
     const cacheControl = response.headers.get("Cache-Control");
     expect(cacheControl).toContain("public");
@@ -94,7 +144,18 @@ describe("API /variables", () => {
       updatedAt,
     });
 
-    const response = await GET();
+    vi.mocked(rateLimitApi).mockResolvedValue({
+      result: { ok: true, remaining: 99, resetSeconds: 60, limit: 100 },
+      headers: {
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "99",
+        "X-RateLimit-Reset": "60",
+      },
+    });
+
+    const response = await GET(
+      new Request("https://example.com/api/variables"),
+    );
     const body = await response.json();
 
     expect(body.updatedAt).toBe(updatedAt);

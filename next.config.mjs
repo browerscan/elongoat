@@ -6,17 +6,16 @@ const nextConfig = {
     pagesBufferLength: 3,
   },
 
-  // Standalone output for VPS Docker deployment
-  output: "standalone",
+  // Static export for Cloudflare Pages
+  output: "export",
 
-  // API routes enabled for backend
-  experimental: {
-    serverActions: {
-      allowedOrigins: ["elongoat.io", "api.elongoat.io"],
-    },
+  // Trailing slash for proper static hosting
+  trailingSlash: true,
+
+  // Images: unoptimized for static export (or use remote patterns)
+  images: {
+    unoptimized: true,
   },
-
-  serverExternalPackages: ["drizzle-kit", "esbuild", "pg-native"],
 };
 
 export default nextConfig;

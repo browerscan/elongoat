@@ -4,12 +4,20 @@
  */
 import { NextResponse } from "next/server";
 import { getDbPool } from "../../../../lib/db";
+import { rateLimitApi, rateLimitResponse } from "../../../../lib/rateLimit";
+import { dynamicExport, revalidateExport } from "../../../../lib/apiExport";
 
 // Force dynamic - must query database each time
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Skip for static export build
+export const dynamic = dynamicExport("force-dynamic");
+export const revalidate = revalidateExport(0);
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
+  }
+
   const pool = getDbPool();
   console.log(
     "[API /articles/slugs] Pool status:",
@@ -17,7 +25,10 @@ export async function GET() {
   );
   if (!pool) {
     console.error("[API /articles/slugs] Database pool not available");
-    return NextResponse.json({ slugs: [], error: "Database not connected" });
+    return NextResponse.json(
+      { slugs: [], error: "Database not connected" },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 
   try {
@@ -38,11 +49,15 @@ export async function GET() {
         headers: {
           "Cache-Control":
             "public, s-maxage=3600, stale-while-revalidate=86400",
+          ...(rlHeaders as unknown as HeadersInit),
         },
       },
     );
   } catch (error) {
     console.error("[API /articles/slugs] Error:", error);
-    return NextResponse.json({ slugs: [], error: "Failed to fetch slugs" });
+    return NextResponse.json(
+      { slugs: [], error: "Failed to fetch slugs" },
+      { headers: rlHeaders as unknown as HeadersInit },
+    );
   }
 }

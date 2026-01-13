@@ -5,9 +5,10 @@ import { NextResponse } from "next/server";
 import { getClusterIndex, getPaaIndex } from "../../../lib/indexes";
 import { listVideos } from "../../../lib/videos";
 import { rateLimitApi } from "../../../lib/rateLimit";
+import { dynamicExport } from "../../../lib/apiExport";
 
 // Skip static export - this is a backend-only API route
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 export const revalidate = 60;
 

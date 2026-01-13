@@ -52,9 +52,10 @@ import {
   cacheSearchResult,
   getCacheConfig,
 } from "../../../../lib/ragCache";
+import { dynamicExport } from "../../../../lib/apiExport";
 
 // Skip static export
-export const dynamic = "force-dynamic";
+export const dynamic = dynamicExport("force-dynamic");
 
 // Valid sources for filtering
 const VALID_SOURCES: RagSource[] = ["content_cache", "paa", "cluster"];

@@ -10,7 +10,7 @@ import { recordChatQuestionStat } from "../../../lib/chatAnalytics";
 import { getChatConfig } from "../../../lib/chatConfig";
 import { findPage, findPaaQuestion, findTopic } from "../../../lib/indexes";
 import { getRedis } from "../../../lib/redis";
-import { rateLimit } from "../../../lib/rateLimit";
+import { rateLimitChat, rateLimitResponse } from "../../../lib/rateLimit";
 import { getDynamicVariables } from "../../../lib/variables";
 import { getTranscript, getVideo } from "../../../lib/videos";
 import { listXFollowing, listXTweets } from "../../../lib/x";
@@ -265,28 +265,9 @@ function streamVectorEngineOpenAIStream(params: {
 }
 
 export async function POST(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "anon";
-
-  const rl = await rateLimit({
-    identifier: `rl:chat:${ip}`,
-    limit: 20,
-    windowSeconds: 60 * 60,
-  });
-  if (!rl.ok) {
-    return Response.json(
-      { error: "Rate limit exceeded. Try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(rl.resetSeconds),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": String(rl.resetSeconds),
-        },
-      },
-    );
+  const { result: rlResult, headers: rlHeaders } = await rateLimitChat(req);
+  if (!rlResult.ok) {
+    return rateLimitResponse(rlResult);
   }
 
   const body = await req.json().catch(() => ({}));
@@ -297,15 +278,15 @@ export async function POST(req: NextRequest) {
 
   const vars = await getDynamicVariables();
   const message = sanitize(parsed.data.message);
+  const siteContext = await buildSiteContext(parsed.data.context?.currentPage);
+  const { config: chatConfig, analyticsEnabled } = await getChatConfig();
 
   // Optional: aggregated question stats (no chat history). Disabled by default.
   void recordChatQuestionStat({
     message,
     currentPage: parsed.data.context?.currentPage,
+    analyticsEnabled,
   });
-
-  const siteContext = await buildSiteContext(parsed.data.context?.currentPage);
-  const { config: chatConfig } = await getChatConfig();
 
   const systemPrompt = buildSystemPrompt({
     message,
@@ -345,8 +326,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "X-RateLimit-Remaining": String(rl.remaining),
-        "X-RateLimit-Reset": String(rl.resetSeconds),
+        ...rlHeaders,
         "X-Fallback-Mode": "true",
         ...promptHeaders,
       },
@@ -374,8 +354,7 @@ export async function POST(req: NextRequest) {
             headers: {
               "Content-Type": "text/event-stream",
               "Cache-Control": "no-cache",
-              "X-RateLimit-Remaining": String(rl.remaining),
-              "X-RateLimit-Reset": String(rl.resetSeconds),
+              ...rlHeaders,
               "X-Cache-Hit": "true",
               ...promptHeaders,
             },
@@ -398,8 +377,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "X-RateLimit-Remaining": String(rl.remaining),
-        "X-RateLimit-Reset": String(rl.resetSeconds),
+        ...rlHeaders,
         "X-Fallback-Mode": "true",
         ...promptHeaders,
       },
@@ -449,8 +427,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "X-RateLimit-Remaining": String(rl.remaining),
-        "X-RateLimit-Reset": String(rl.resetSeconds),
+        ...rlHeaders,
         "X-Accel-Buffering": "no",
         ...promptHeaders,
       },
@@ -465,8 +442,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "X-RateLimit-Remaining": String(rl.remaining),
-        "X-RateLimit-Reset": String(rl.resetSeconds),
+        ...rlHeaders,
         "X-Fallback-Mode": "true",
         ...promptHeaders,
       },
