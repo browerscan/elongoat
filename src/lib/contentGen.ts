@@ -2,6 +2,7 @@ import { findPage, findPaaQuestion } from "./indexes";
 import { getCachedContent, setCachedContent } from "./contentCache";
 import { getDynamicVariables } from "./variables";
 import { vectorEngineChatComplete } from "./vectorengine";
+import { getHeatData } from "./keywordHeat";
 import { getEnv } from "./env";
 
 const env = getEnv();
@@ -58,16 +59,20 @@ export async function generateClusterPageContent(params: {
   const model = getContentModel();
   if (!model) throw new Error("VectorEngine content model not configured");
 
+  const maxKeywordVolume = Math.max(
+    1,
+    ...page.topKeywords.map((k) => k.volume),
+  );
   const keywordLines = page.topKeywords
     .slice(0, 12)
-    .map(
-      (k) =>
-        `- ${k.keyword} (vol ${k.volume}, kd ${k.kd}${k.intent ? `, intent ${k.intent}` : ""})`,
-    )
+    .map((k) => {
+      const heat = getHeatData(k.volume, maxKeywordVolume, "en");
+      return `- ${k.keyword} (popularity: ${heat.label})`;
+    })
     .join("\n");
 
   const system = [
-    `You are a senior SEO editor + technical writer with expertise in Elon Musk and his ventures.`,
+    `You are a senior research editor + technical writer with expertise in Elon Musk and his ventures.`,
     `Goal: write a high-quality, fact-safe, non-clickbait Markdown brief for a page in an "Elon Musk knowledge base" site.`,
     `Important: You are NOT writing as Elon. You are an objective analyst.`,
     `Never invent private details or claim insider access. Only use public information.`,
@@ -95,7 +100,7 @@ export async function generateClusterPageContent(params: {
     `6) ## Sources & verification (list reputable sources to check)`,
     `7) ## Freshness note (mention when this information might become outdated)`,
     ``,
-    `Tone: crisp, high signal, mildly techy, SEO-optimized.`,
+    `Tone: crisp, high signal, mildly techy, search-friendly.`,
     `Include relevant keywords naturally from the queries list.`,
     `Add timestamps/timeframes for any time-sensitive information.`,
   ].join("\n");
@@ -242,12 +247,13 @@ function staticClusterMarkdown(
   }[],
 ) {
   const currentDate = new Date().toISOString().split("T")[0];
+  const maxKeywordVolume = Math.max(1, ...topKeywords.map((k) => k.volume));
   const kw = topKeywords
     .slice(0, 12)
-    .map(
-      (k) =>
-        `- ${k.keyword} (vol ${k.volume}, kd ${k.kd}${k.intent ? `, intent ${k.intent}` : ""})`,
-    )
+    .map((k) => {
+      const heat = getHeatData(k.volume, maxKeywordVolume, "en");
+      return `- ${k.keyword} (popularity: ${heat.label})`;
+    })
     .join("\n");
 
   return [

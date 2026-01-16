@@ -7,6 +7,7 @@ import { buildRagContext, formatRagContexts } from "./rag";
 import { vectorEngineChatComplete } from "./vectorengine";
 import { getEnv } from "./env";
 import { analyzeContent, type ContentQualityReport } from "./contentQuality";
+import { getHeatData } from "./keywordHeat";
 
 const env = getEnv();
 
@@ -138,17 +139,21 @@ export async function generateClusterPageContentEnhanced(params: {
   const ragContextFormatted = formatRagContexts(ragResult.contexts);
 
   // Build keyword list
+  const maxKeywordVolume = Math.max(
+    1,
+    ...page.topKeywords.map((k) => k.volume),
+  );
   const keywordLines = page.topKeywords
     .slice(0, 15)
-    .map(
-      (k) =>
-        `- ${k.keyword} (vol ${k.volume}, kd ${k.kd}${k.intent ? `, intent ${k.intent}` : ""})`,
-    )
+    .map((k) => {
+      const heat = getHeatData(k.volume, maxKeywordVolume, "en");
+      return `- ${k.keyword} (popularity: ${heat.label})`;
+    })
     .join("\n");
 
   // Enhanced prompt for 1200+ words
   const prompt = `
-You are a senior SEO content writer and Elon Musk expert writing for an authoritative knowledge base.
+You are a senior research writer and Elon Musk expert writing for an authoritative knowledge base.
 
 PAGE TITLE: ${page.page}
 TOPIC HUB: ${page.topic}
@@ -168,7 +173,7 @@ ${ragContextFormatted}
 
 ---
 
-TASK: Write a comprehensive, SEO-optimized article of AT LEAST 1200 words.
+TASK: Write a comprehensive, search-friendly article of AT LEAST 1200 words.
 
 STRUCTURE (follow strictly):
 1. ## TL;DR
@@ -237,7 +242,7 @@ WRITING GUIDELINES:
 CRITICAL: This is for a knowledge base, NOT a blog. Focus on:
 - Comprehensive information coverage
 - Factual accuracy with timeframes
-- Answering user intent behind search queries
+- Answering what readers are actually trying to learn
 - Being a definitive resource on this topic
 
 Write ONLY the markdown content (no meta-commentary). Begin now:

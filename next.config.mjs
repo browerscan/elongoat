@@ -9,6 +9,10 @@ const nextConfig = {
   // Static export for Cloudflare Pages
   output: "export",
 
+  env: {
+    NEXT_BUILD_TARGET: "export",
+  },
+
   // Trailing slash for proper static hosting
   trailingSlash: true,
 

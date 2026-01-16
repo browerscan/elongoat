@@ -10,12 +10,16 @@ import {
   rateLimitResponse,
 } from "../../../../../../lib/rateLimit";
 
+const isStaticExport = process.env.NEXT_BUILD_TARGET === "export";
+
 // API routes are backend-only - skip during static export
 export function generateStaticParams() {
-  return [{ topic: "__placeholder__", page: "__placeholder__" }];
+  return isStaticExport
+    ? [{ topic: "__placeholder__", page: "__placeholder__" }]
+    : [];
 }
 
-export const dynamic = "error";
+export const dynamic = isStaticExport ? "error" : "force-dynamic";
 
 export async function GET(
   request: NextRequest,

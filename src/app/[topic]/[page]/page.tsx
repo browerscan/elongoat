@@ -41,8 +41,40 @@ import {
   isHowToContent,
 } from "../../../lib/structuredData";
 import { getDynamicVariables } from "../../../lib/variables";
+import { getHeatData, type HeatTier } from "../../../lib/keywordHeat";
 
 export const revalidate = 3600;
+
+const HEAT_STYLES: Record<
+  HeatTier,
+  { text: string; badge: string; dot: string }
+> = {
+  extreme: {
+    text: "text-rose-200",
+    badge: "border-rose-400/30 bg-rose-400/10",
+    dot: "bg-rose-400",
+  },
+  very_high: {
+    text: "text-orange-200",
+    badge: "border-orange-400/30 bg-orange-400/10",
+    dot: "bg-orange-400",
+  },
+  high: {
+    text: "text-amber-200",
+    badge: "border-amber-400/30 bg-amber-400/10",
+    dot: "bg-amber-400",
+  },
+  medium: {
+    text: "text-yellow-200",
+    badge: "border-yellow-400/30 bg-yellow-400/10",
+    dot: "bg-yellow-400",
+  },
+  low: {
+    text: "text-white/60",
+    badge: "border-white/15 bg-white/5",
+    dot: "bg-white/40",
+  },
+};
 
 export async function generateStaticParams() {
   // Try to fetch all article slugs from API (for full static generation)
@@ -127,6 +159,10 @@ export default async function ClusterPage({
     .join(" ")}`;
 
   const keywordsList = page.topKeywords.map((k) => k.keyword).slice(0, 10);
+  const maxKeywordVolume = Math.max(
+    1,
+    ...page.topKeywords.map((k) => k.volume),
+  );
   const clusterUpdated = new Date(cluster.generatedAt);
 
   // Check if content is HowTo-style
@@ -139,7 +175,7 @@ export default async function ClusterPage({
   const jsonLd: Record<string, unknown>[] = [
     generateWebPageSchema({
       title: `${page.page} — ${page.topic}`,
-      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`,
+      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related topics with AI chat and fresh sources.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
       dateModified: clusterUpdated.toISOString(),
       breadcrumbs: [
@@ -152,7 +188,7 @@ export default async function ClusterPage({
     // Use Article with Speakable for voice search optimization
     generateArticleWithSpeakableSchema({
       title: `${page.page} — ${page.topic}`,
-      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`,
+      description: `Explore "${page.page}" in ${page.topic}. ${page.keywordCount.toLocaleString()} related topics with AI chat and fresh sources.`,
       url: `/${page.topicSlug}/${page.pageSlug}`,
       publishedAt: clusterUpdated.toISOString(),
       updatedAt: clusterUpdated.toISOString(),
@@ -251,13 +287,13 @@ export default async function ClusterPage({
           <div className="stat-card group">
             <div className="flex items-center gap-2 text-xs text-white/55">
               <Search className="h-3 w-3 text-accent" />
-              Keywords in Cluster
+              相关话题数
             </div>
             <div className="stat-card-value mt-2">
               {page.keywordCount.toLocaleString()}
             </div>
             <div className="mt-1 text-xs text-white/40">
-              Related search terms
+              你可能会关心的相关内容
             </div>
           </div>
           <div className="stat-card group">
@@ -358,31 +394,34 @@ export default async function ClusterPage({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            {page.topKeywords.map((k, i) => (
-              <div key={k.keyword} className="knowledge-node group">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent shrink-0">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white group-hover:text-accent transition-colors">
-                      {k.keyword}
+            {page.topKeywords.map((k, i) => {
+              const heat = getHeatData(k.volume, maxKeywordVolume, "zh");
+              const heatStyle = HEAT_STYLES[heat.tier];
+              return (
+                <div key={k.keyword} className="knowledge-node group">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white group-hover:text-accent transition-colors">
+                        {k.keyword}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-xs">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 ${heatStyle.badge} ${heatStyle.text}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${heatStyle.dot}`}
+                          />
+                          热度：{heat.label}
+                        </span>
+                      </div>
                     </div>
-                    {k.intent && (
-                      <div className="mt-1 flex items-center gap-1 text-xs text-white/50">
-                        <Zap className="h-3 w-3 text-accent3" />
-                        {k.intent}
-                      </div>
-                    )}
-                    {k.serp_features && (
-                      <div className="mt-1 text-[10px] text-white/40">
-                        {k.serp_features}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -442,7 +481,7 @@ export default async function ClusterPage({
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-white/50">
                     <Search className="h-3 w-3" />
-                    {p.keywordCount.toLocaleString()} keywords
+                    {p.keywordCount.toLocaleString()} related topics
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-accent transition-colors shrink-0" />

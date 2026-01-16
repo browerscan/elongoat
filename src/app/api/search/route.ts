@@ -195,7 +195,7 @@ export async function GET(request: Request) {
           id: page.slug,
           title: page.page,
           snippet: highlightMatch(
-            `Part of ${page.topic} • Keywords: ${page.topKeywords
+            `Part of ${page.topic} • Related topics: ${page.topKeywords
               .slice(0, 3)
               .map((k) => k.keyword)
               .join(", ")}`,

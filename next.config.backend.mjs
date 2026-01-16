@@ -9,6 +9,10 @@ const nextConfig = {
   // Standalone output for VPS Docker deployment
   output: "standalone",
 
+  env: {
+    NEXT_BUILD_TARGET: "backend",
+  },
+
   // API routes enabled for backend
   experimental: {
     serverActions: {

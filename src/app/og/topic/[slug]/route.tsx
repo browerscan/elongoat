@@ -1,10 +1,12 @@
 import { ImageResponse } from "next/og";
 
-export const dynamic = "force-static";
+const isStaticExport = process.env.NEXT_BUILD_TARGET === "export";
+
+export const dynamic = isStaticExport ? "force-static" : "force-dynamic";
 
 // Generate placeholder param for static export
 export function generateStaticParams() {
-  return [{ slug: "__placeholder__" }];
+  return isStaticExport ? [{ slug: "__placeholder__" }] : [];
 }
 
 function titleize(slug: string): string {
@@ -30,8 +32,9 @@ export async function GET(
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "64px",
-        background:
-          "radial-gradient(circle at top left, rgba(99,102,241,0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(16,185,129,0.35), transparent 55%), #040507",
+        backgroundImage:
+          "radial-gradient(circle at top left, rgba(99,102,241,0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(16,185,129,0.35), transparent 55%)",
+        backgroundColor: "#040507",
         color: "#ffffff",
         fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
       }}

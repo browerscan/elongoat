@@ -375,7 +375,7 @@ export function generateClusterPageMetadata(params: {
 }): Metadata {
   const { page, topic, keywordCount, topicSlug, pageSlug } = params;
   const title = `${page} — ${topic}`;
-  const description = `Explore "${page}" in ${topic}. ${keywordCount.toLocaleString()} related keywords with search intent analysis and AI chat.`;
+  const description = `Explore "${page}" in ${topic}. ${keywordCount.toLocaleString()} related topics with AI chat and fresh sources.`;
 
   return generateMetadata({
     title,

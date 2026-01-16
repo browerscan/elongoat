@@ -148,7 +148,7 @@ export default async function TweetPage({
 
               {keywords.length ? (
                 <div className="mt-4 text-xs text-white/50">
-                  Keywords: {keywords.slice(0, 12).join(", ")}
+                  Key topics: {keywords.slice(0, 12).join(", ")}
                 </div>
               ) : null}
             </div>

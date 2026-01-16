@@ -5,13 +5,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { findTopic, listTopicPages } from "../../../../../lib/indexes";
 import { rateLimitApi, rateLimitResponse } from "../../../../../lib/rateLimit";
 
+const isStaticExport = process.env.NEXT_BUILD_TARGET === "export";
+
 // API routes are backend-only - skip during static export
 export function generateStaticParams() {
-  return [{ slug: "__placeholder__" }];
+  return isStaticExport ? [{ slug: "__placeholder__" }] : [];
 }
 
 // API routes are backend-only
-export const dynamic = "error";
+export const dynamic = isStaticExport ? "error" : "force-dynamic";
 
 export async function GET(
   request: NextRequest,

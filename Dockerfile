@@ -2,9 +2,9 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 
-# Python is needed for prebuild script (generate:indexes); keep everything else slim
+# Python is needed for prebuild script (generate:indexes); install full stdlib
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3-minimal \
+  && apt-get install -y --no-install-recommends python3 \
   && rm -rf /var/lib/apt/lists/*
 
 # Skip strict env validation during image build; runtime stage still validates
@@ -17,7 +17,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline --no-audit --cache $NPM_CONFIG_CACHE
 
 COPY . .
-RUN npm run build
+RUN npm run build:backend
 
 FROM node:20-slim AS production
 WORKDIR /app
