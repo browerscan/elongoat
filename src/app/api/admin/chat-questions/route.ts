@@ -6,6 +6,10 @@ import { checkAdminAuthEither } from "../../../../lib/adminAuth";
 import { listTopChatQuestions } from "../../../../lib/chatAnalytics";
 import { getAdminSecurityHeaders } from "../../../../lib/securityHeaders";
 import { rateLimitAdmin } from "../../../../lib/rateLimit";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../../lib/staticExport";
 
 const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -13,6 +17,9 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const { result: rlResult, headers: rlHeaders } = await rateLimitAdmin(req);
   if (!rlResult.ok) {
     return Response.json(

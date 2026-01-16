@@ -14,10 +14,17 @@ import {
   resolveRecommendationQuery,
 } from "../../../lib/recommendations";
 import { dynamicExport } from "../../../lib/apiExport";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../lib/staticExport";
 
 export const dynamic = dynamicExport("force-dynamic");
 
 export async function GET(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const requestId = generateRequestId();
   const startTime = performance.now();
 

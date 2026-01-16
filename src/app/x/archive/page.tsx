@@ -6,6 +6,7 @@ import {
   getTweetStats,
   getTweetCountsByYear,
 } from "../../../lib/muskTweets";
+import { IS_STATIC_EXPORT } from "../../../lib/staticExport";
 
 export const revalidate = 3600; // 1 hour
 
@@ -34,9 +35,9 @@ function formatDate(iso: string): string {
 export default async function TweetArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; page?: string }>;
+  searchParams?: { year?: string; page?: string };
 }) {
-  const params = await searchParams;
+  const params = IS_STATIC_EXPORT ? {} : (searchParams ?? {});
   const year = params.year ? parseInt(params.year, 10) : undefined;
   const page = Math.max(1, parseInt(params.page || "1", 10));
   const limit = 30;

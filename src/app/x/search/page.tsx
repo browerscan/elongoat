@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { searchTweets } from "../../../lib/muskTweets";
+import { IS_STATIC_EXPORT } from "../../../lib/staticExport";
 
 export const revalidate = 0; // Dynamic - no caching for search
 
@@ -31,9 +32,9 @@ function formatDate(iso: string): string {
 export default async function TweetSearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; minLikes?: string }>;
+  searchParams?: { q?: string; minLikes?: string };
 }) {
-  const params = await searchParams;
+  const params = IS_STATIC_EXPORT ? {} : (searchParams ?? {});
   const query = params.q?.trim() || "";
   const minLikes = params.minLikes ? parseInt(params.minLikes, 10) : 0;
 

@@ -3,6 +3,13 @@ import { getRedis, type Redis } from "./redis";
 import { getEnv } from "./env";
 
 const env = getEnv();
+const IS_STATIC_EXPORT = process.env.NEXT_BUILD_TARGET === "export";
+const STATIC_EXPORT_RESULT: RateLimitResult = {
+  ok: true,
+  remaining: Number.MAX_SAFE_INTEGER,
+  resetSeconds: 0,
+  limit: Number.MAX_SAFE_INTEGER,
+};
 
 // ============================================================================
 // Configuration
@@ -305,6 +312,12 @@ function memoryRateLimit(
 export async function rateLimitChat(
   request: Request,
 ): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  if (IS_STATIC_EXPORT) {
+    return {
+      result: STATIC_EXPORT_RESULT,
+      headers: buildRateLimitHeaders(STATIC_EXPORT_RESULT),
+    };
+  }
   const identifier = getClientIdentifier(request);
   const result = await rateLimit({
     identifier,
@@ -322,6 +335,12 @@ export async function rateLimitChat(
 export async function rateLimitAdmin(
   request: Request,
 ): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  if (IS_STATIC_EXPORT) {
+    return {
+      result: STATIC_EXPORT_RESULT,
+      headers: buildRateLimitHeaders(STATIC_EXPORT_RESULT),
+    };
+  }
   const identifier = getClientIdentifier(request);
   const result = await rateLimit({
     identifier,
@@ -339,6 +358,12 @@ export async function rateLimitAdmin(
 export async function rateLimitHealth(
   request: Request,
 ): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  if (IS_STATIC_EXPORT) {
+    return {
+      result: STATIC_EXPORT_RESULT,
+      headers: buildRateLimitHeaders(STATIC_EXPORT_RESULT),
+    };
+  }
   const identifier = getClientIdentifier(request);
   const result = await rateLimit({
     identifier,
@@ -356,6 +381,12 @@ export async function rateLimitHealth(
 export async function rateLimitMetrics(
   request: Request,
 ): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  if (IS_STATIC_EXPORT) {
+    return {
+      result: STATIC_EXPORT_RESULT,
+      headers: buildRateLimitHeaders(STATIC_EXPORT_RESULT),
+    };
+  }
   const identifier = getClientIdentifier(request);
   const result = await rateLimit({
     identifier,
@@ -373,6 +404,12 @@ export async function rateLimitMetrics(
 export async function rateLimitApi(
   request: Request,
 ): Promise<{ result: RateLimitResult; headers: RateLimitHeaders }> {
+  if (IS_STATIC_EXPORT) {
+    return {
+      result: STATIC_EXPORT_RESULT,
+      headers: buildRateLimitHeaders(STATIC_EXPORT_RESULT),
+    };
+  }
   const identifier = getClientIdentifier(request);
   const result = await rateLimit({
     identifier,

@@ -9,6 +9,10 @@ import {
 } from "../../../../../lib/adminAuth";
 import { getAdminSecurityHeaders } from "../../../../../lib/securityHeaders";
 import { rateLimitAdmin } from "../../../../../lib/rateLimit";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../../../lib/staticExport";
 
 const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -19,6 +23,9 @@ const QuerySchema = z.object({
  * Get recent admin audit logs
  */
 export async function GET(req: Request) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   // Rate limit first
   const { result: rlResult, headers: rlHeaders } = await rateLimitAdmin(req);
   if (!rlResult.ok) {

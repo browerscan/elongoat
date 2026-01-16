@@ -6,6 +6,10 @@ import { getClusterIndex, getPaaIndex } from "../../../lib/indexes";
 import { listVideos } from "../../../lib/videos";
 import { rateLimitApi } from "../../../lib/rateLimit";
 import { dynamicExport } from "../../../lib/apiExport";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../lib/staticExport";
 
 // Skip static export - this is a backend-only API route
 export const dynamic = dynamicExport("force-dynamic");
@@ -124,6 +128,9 @@ function highlightMatch(text: string, query: string, maxLength = 160): string {
 }
 
 export async function GET(request: Request) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   // Rate limiting
   const { result: rateLimitResult, headers: rateLimitHeaders } =
     await rateLimitApi(request);

@@ -6,10 +6,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchTweets, getTweetStats } from "../../../../lib/muskTweets";
 import { rateLimitApi, rateLimitResponse } from "../../../../lib/rateLimit";
 import { dynamicExport } from "../../../../lib/apiExport";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../../lib/staticExport";
 
 export const dynamic = dynamicExport("force-dynamic");
 
 export async function GET(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
   if (!rlResult.ok) {
     return rateLimitResponse(rlResult);

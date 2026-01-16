@@ -11,6 +11,7 @@ import { rateLimitMetrics, rateLimitResponse } from "../../../lib/rateLimit";
 import { getAllCircuitBreakerStats } from "../../../lib/circuitBreaker";
 
 const env = getEnv();
+const IS_STATIC_EXPORT = process.env.NEXT_BUILD_TARGET === "export";
 /**
  * Prometheus-compatible Metrics Endpoint
  *
@@ -382,6 +383,12 @@ function formatPrometheusMetrics(metrics: PrometheusMetric[]): string {
 // ============================================================================
 
 export async function GET(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return new Response("Metrics are disabled in static export builds.", {
+      status: 404,
+      headers: createStandardHeaders({ cacheControl: CACHE_CONTROL.NO_STORE }),
+    });
+  }
   const { result: rlResult, headers: rlHeaders } =
     await rateLimitMetrics(request);
   if (!rlResult.ok) {

@@ -5,6 +5,7 @@ import { createHmac, randomBytes, createHash } from "node:crypto";
 import { getEnv } from "./env";
 
 const env = getEnv();
+const IS_STATIC_EXPORT = process.env.NEXT_BUILD_TARGET === "export";
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -202,6 +203,9 @@ export async function createAdminSession(): Promise<{
 export async function validateAdminSession(
   request: Request,
 ): Promise<SessionValidationResult> {
+  if (IS_STATIC_EXPORT) {
+    return { valid: false, reason: "static_export" };
+  }
   const cookieHeader = request.headers.get("cookie");
   if (!cookieHeader) {
     return { valid: false, reason: "no_cookie" };
@@ -294,6 +298,7 @@ export function clearAdminSession(): string {
  * @deprecated Use validateAdminSession for cookie-based auth instead
  */
 export function checkAdminAuth(req: Request): boolean {
+  if (IS_STATIC_EXPORT) return false;
   const token = env.ELONGOAT_ADMIN_TOKEN;
   if (!token) return false;
 
@@ -403,6 +408,7 @@ export function logAdminAction(params: {
   success: boolean;
   reason?: string;
 }): void {
+  if (IS_STATIC_EXPORT) return;
   const ip = getClientIp(params.request);
   const userAgent = params.request.headers.get("user-agent") ?? "unknown";
 

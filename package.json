@@ -29,7 +29,7 @@
     "prebuild": "npm run generate:indexes",
     "dev": "next dev",
     "build": "NEXT_BUILD_TARGET=export next build",
-    "build:frontend": "cp next.config.export.mjs next.config.mjs && NEXT_BUILD_TARGET=export next build",
+    "build:frontend": "node scripts/build_export.mjs",
     "build:backend": "cp next.config.backend.mjs next.config.mjs && NEXT_BUILD_TARGET=backend next build",
     "start": "next start",
     "lint": "next lint",

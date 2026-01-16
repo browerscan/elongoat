@@ -13,13 +13,15 @@ const nextConfig = {
     NEXT_BUILD_TARGET: "export",
   },
 
-  // Trailing slash for proper static hosting
-  trailingSlash: true,
+  // Trailing slash can cause API export path conflicts; disable for static export.
+  trailingSlash: false,
 
   // Images: unoptimized for static export (or use remote patterns)
   images: {
     unoptimized: true,
   },
+
+  // Note: exportPathMap is not supported with the App Router.
 };
 
 export default nextConfig;

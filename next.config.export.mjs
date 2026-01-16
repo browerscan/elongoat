@@ -13,29 +13,15 @@ const nextConfig = {
     NEXT_BUILD_TARGET: "export",
   },
 
-  // Trailing slash for proper static hosting
-  trailingSlash: true,
+  // Trailing slash can cause API export path conflicts; disable for static export.
+  trailingSlash: false,
 
   // Images: unoptimized for static export (or use remote patterns)
   images: {
     unoptimized: true,
   },
 
-  // Exclude API routes from static export
-  exportPathMap: async function (
-    defaultPathMap,
-    { dev, dir, outDir, distDir, buildId },
-  ) {
-    // Filter out API routes from the path map
-    const pathMap = {};
-    for (const [path, page] of Object.entries(defaultPathMap)) {
-      // Skip API routes
-      if (!path.startsWith("/api/")) {
-        pathMap[path] = page;
-      }
-    }
-    return pathMap;
-  },
+  // Note: exportPathMap is not supported with the App Router.
 };
 
 export default nextConfig;

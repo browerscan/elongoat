@@ -11,10 +11,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listArticles } from "../../../lib/articles";
 import { rateLimitApi, rateLimitResponse } from "../../../lib/rateLimit";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../lib/staticExport";
 
 export const revalidate = 3600; // 1 hour cache
 
 export async function GET(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const { result: rlResult, headers: rlHeaders } = await rateLimitApi(request);
   if (!rlResult.ok) {
     return rateLimitResponse(rlResult);

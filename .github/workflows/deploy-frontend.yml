@@ -43,10 +43,7 @@ jobs:
         run: npm run generate:indexes
 
       - name: Build static export
-        run: |
-          # Use export config for Cloudflare Pages static build
-          cp next.config.export.mjs next.config.mjs
-          npm run build
+        run: npm run build:frontend
         env:
           NEXT_PUBLIC_SITE_URL: https://elongoat.io
           NEXT_PUBLIC_API_URL: https://api.elongoat.io

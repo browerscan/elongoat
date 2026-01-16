@@ -5,6 +5,10 @@ import { z } from "zod";
 import { listXTweets } from "../../../../lib/x";
 import { getEnv } from "../../../../lib/env";
 import { rateLimitApi, rateLimitResponse } from "../../../../lib/rateLimit";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../../lib/staticExport";
 
 const env = getEnv();
 const QuerySchema = z.object({
@@ -13,6 +17,9 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const { result: rlResult, headers: rlHeaders } = await rateLimitApi(req);
   if (!rlResult.ok) {
     return rateLimitResponse(rlResult);

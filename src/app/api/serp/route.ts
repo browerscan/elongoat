@@ -34,6 +34,10 @@ import {
   getProxyGridCacheStats,
 } from "../../../lib/proxyGrid";
 import { dynamicExport } from "../../../lib/apiExport";
+import {
+  IS_STATIC_EXPORT,
+  staticExportDisabledResponse,
+} from "../../../lib/staticExport";
 
 // Skip static export
 export const dynamic = dynamicExport("force-dynamic");
@@ -45,6 +49,9 @@ const DEFAULT_LIMIT = 10;
  * GET handler for simple SERP queries
  */
 export async function GET(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query");
   const force = searchParams.get("force") === "true";
@@ -104,6 +111,9 @@ export async function GET(request: NextRequest) {
  * POST handler for advanced SERP queries
  */
 export async function POST(request: NextRequest) {
+  if (IS_STATIC_EXPORT) {
+    return staticExportDisabledResponse();
+  }
   try {
     const body = await request.json();
     const query = body.query?.trim();
